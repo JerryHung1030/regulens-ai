@@ -5,8 +5,7 @@ import sys
 import asyncio
 from typing import Any
 
-from PySide6.QtCore import QFutureWatcher, Qt
-from PySide6.QtConcurrent import run as qt_run
+from PySide6.QtCore import Qt, QThreadPool, QRunnable, Signal, QObject
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -27,7 +26,7 @@ from PySide6.QtWidgets import (
 )
 
 from .api_client import ApiClient
-from .compare_manager import CompareManager, CompareError
+from .compare_manager import CompareManager
 from .export import to_pdf, to_txt
 from .logger import logger
 
@@ -52,6 +51,27 @@ def _load_config(path: Path) -> dict:
     return data
 
 
+class WorkerSignals(QObject):
+    finished = Signal(object)
+    error = Signal(Exception)
+
+
+class Worker(QRunnable):
+    def __init__(self, fn, *args, **kwargs):
+        super().__init__()
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+    def run(self):
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+            self.signals.finished.emit(result)
+        except Exception as e:
+            self.signals.error.emit(e)
+
+
 class MainWindow(QMainWindow):
     """Main application window."""
 
@@ -59,7 +79,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.manager = manager
         self._result: str = ""
-        self._watcher: QFutureWatcher | None = None
+        self.threadpool = QThreadPool()
         self.tray = QSystemTrayIcon(self)
         self.tray.setIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
         self.tray.show()
@@ -173,30 +193,29 @@ class MainWindow(QMainWindow):
                 )
             )
 
-        self._watcher = QFutureWatcher()
-        self._watcher.finished.connect(self._on_compare_done)
-        future = qt_run(task)
-        self._watcher.setFuture(future)
+        worker = Worker(task)
+        worker.signals.finished.connect(self._on_compare_done)
+        worker.signals.error.connect(lambda e: self._on_compare_error(e))
+        self.threadpool.start(worker)
 
-    def _on_compare_done(self) -> None:
-        assert self._watcher is not None
+    def _on_compare_error(self, error: Exception) -> None:
+        self.progress.close()
+        self.compare_btn.setEnabled(True)
+        logger.error("Comparison failed: %s", error)
+        QMessageBox.critical(self, "Error", str(error))
+
+    def _on_compare_done(self, resp: Any) -> None:
         self.progress.close()
         self.compare_btn.setEnabled(True)
         try:
-            resp = self._watcher.result()
-        except CompareError as exc:
+            self._result = resp.result
+            self.viewer.setPlainText(self._result)
+            self.export_txt_btn.setEnabled(True)
+            self.export_pdf_btn.setEnabled(True)
+            logger.info("Comparison completed successfully")
+        except Exception as exc:
             logger.error("Comparison failed: %s", exc)
             QMessageBox.critical(self, "Error", str(exc))
-            return
-        except Exception as exc:  # pragma: no cover - unexpected
-            logger.error("Comparison failed: %s", exc)
-            QMessageBox.critical(self, "Error", str(exc))
-            return
-        self._result = resp.result
-        self.viewer.setPlainText(self._result)
-        self.export_txt_btn.setEnabled(True)
-        self.export_pdf_btn.setEnabled(True)
-        logger.info("Comparison completed successfully")
 
     def _export_txt(self) -> None:
         if not self._result:
