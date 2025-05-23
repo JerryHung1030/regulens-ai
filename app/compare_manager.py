@@ -12,7 +12,11 @@ class CompareError(Exception):
 
 
 class CompareManager:
-    """Handle document loading and comparison."""
+    """Handle document loading and comparison.
+
+    Exposes both synchronous :meth:`compare` and asynchronous
+    :meth:`acompare` helpers.
+    """
 
     def __init__(self, api_client: ApiClient) -> None:
         self.api_client = api_client
