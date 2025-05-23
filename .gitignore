@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+
+# PyInstaller build
+build/
+dist/
+*.spec
+
+# Logs
+logs/
+
+# Test outputs
+htmlcov/
+.coverage
+
+# OS files
+.DS_Store
