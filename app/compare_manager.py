@@ -30,3 +30,12 @@ class CompareManager:
             return self.api_client.compare(input_doc, ref_doc, **params)
         except Exception as exc:
             raise CompareError(str(exc)) from exc
+
+    async def acompare(self, input_path: Path, ref_path: Path, **params: Any) -> CompareResponse:
+        """Asynchronous wrapper around :meth:`ApiClient.acompare`."""
+        input_doc = self.load_json(input_path)
+        ref_doc = self.load_json(ref_path)
+        try:
+            return await self.api_client.acompare(input_doc, ref_doc, **params)
+        except Exception as exc:
+            raise CompareError(str(exc)) from exc
