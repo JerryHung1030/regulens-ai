@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import asyncio
+from typing import Any
 
+from PySide6.QtCore import QFutureWatcher, Qt
+from PySide6.QtConcurrent import run as qt_run
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -17,6 +21,7 @@ from PySide6.QtWidgets import (
     QTextBrowser,
     QVBoxLayout,
     QWidget,
+    QProgressDialog,
 )
 
 from .api_client import ApiClient
@@ -51,6 +56,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.manager = manager
         self._result: str = ""
+        self._watcher: QFutureWatcher | None = None
         self.setWindowTitle("Regulens-AI")
         self._init_ui()
 
@@ -142,13 +148,37 @@ class MainWindow(QMainWindow):
         if not input_path or not ref_path:
             QMessageBox.warning(self, "Missing Files", "Please select both input and reference files")
             return
-        try:
-            resp = self.manager.compare(
-                Path(input_path),
-                Path(ref_path),
-                param=self.param_spin.value(),
+        self.compare_btn.setEnabled(False)
+        self.progress = QProgressDialog("Comparing...", None, 0, 0, self)
+        self.progress.setWindowTitle("Please wait")
+        self.progress.setWindowModality(Qt.WindowModal)
+        self.progress.setCancelButton(None)
+        self.progress.show()
+
+        def task() -> Any:
+            return asyncio.run(
+                self.manager.acompare(
+                    Path(input_path),
+                    Path(ref_path),
+                    param=self.param_spin.value(),
+                )
             )
+
+        self._watcher = QFutureWatcher()
+        self._watcher.finished.connect(self._on_compare_done)
+        future = qt_run(task)
+        self._watcher.setFuture(future)
+
+    def _on_compare_done(self) -> None:
+        assert self._watcher is not None
+        self.progress.close()
+        self.compare_btn.setEnabled(True)
+        try:
+            resp = self._watcher.result()
         except CompareError as exc:
+            QMessageBox.critical(self, "Error", str(exc))
+            return
+        except Exception as exc:  # pragma: no cover - unexpected
             QMessageBox.critical(self, "Error", str(exc))
             return
         self._result = resp.result
