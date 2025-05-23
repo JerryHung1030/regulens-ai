@@ -1,0 +1,4 @@
+# Default parameters for RAGCore-X Compare API
+base_url: "https://api.example.com"
+api_key: "YOUR_API_KEY"
+timeout: 30
