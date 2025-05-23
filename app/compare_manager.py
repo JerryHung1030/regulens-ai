@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .api_client import ApiClient, CompareResponse
+from .logger import logger
 
 
 class CompareError(Exception):
@@ -28,18 +29,26 @@ class CompareManager:
             raise CompareError(str(exc)) from exc
 
     def compare(self, input_path: Path, ref_path: Path, **params: Any) -> CompareResponse:
+        logger.info("Comparing %s to %s", input_path, ref_path)
         input_doc = self.load_json(input_path)
         ref_doc = self.load_json(ref_path)
         try:
-            return self.api_client.compare(input_doc, ref_doc, **params)
+            resp = self.api_client.compare(input_doc, ref_doc, **params)
         except Exception as exc:
+            logger.error("Comparison failed: %s", exc)
             raise CompareError(str(exc)) from exc
+        logger.info("Comparison succeeded")
+        return resp
 
     async def acompare(self, input_path: Path, ref_path: Path, **params: Any) -> CompareResponse:
         """Asynchronous wrapper around :meth:`ApiClient.acompare`."""
         input_doc = self.load_json(input_path)
         ref_doc = self.load_json(ref_path)
+        logger.info("Comparing %s to %s (async)", input_path, ref_path)
         try:
-            return await self.api_client.acompare(input_doc, ref_doc, **params)
+            resp = await self.api_client.acompare(input_doc, ref_doc, **params)
         except Exception as exc:
+            logger.error("Async comparison failed: %s", exc)
             raise CompareError(str(exc)) from exc
+        logger.info("Async comparison succeeded")
+        return resp

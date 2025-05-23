@@ -16,6 +16,7 @@ except Exception:  # pragma: no cover - fallback for minimal environments
 from .api_client import ApiClient
 from .compare_manager import CompareManager, CompareError
 from .export import to_pdf, to_txt
+from .logger import logger
 
 
 def _load_config(path: Path) -> dict:
@@ -46,16 +47,22 @@ def main(argv: list[str] | None = None) -> None:
     client = ApiClient(cfg["base_url"], cfg["api_key"], timeout=cfg.get("timeout", 30))
     manager = CompareManager(client)
 
+    logger.info("CLI compare %s vs %s", args.input, args.reference)
     try:
         resp = manager.compare(args.input, args.reference)
     except CompareError as exc:
+        logger.error("CLI comparison failed: %s", exc)
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
+    else:
+        logger.info("CLI comparison succeeded")
 
     print(resp.result)
     if args.txt:
+        logger.info("Exporting text to %s", args.txt)
         to_txt(resp.result, args.txt)
     if args.pdf:
+        logger.info("Exporting PDF to %s", args.pdf)
         to_pdf(resp.result, args.pdf)
 
 

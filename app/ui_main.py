@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 from .api_client import ApiClient
 from .compare_manager import CompareManager, CompareError
 from .export import to_pdf, to_txt
+from .logger import logger
 
 
 def _load_config(path: Path) -> dict:
@@ -136,6 +137,7 @@ class MainWindow(QMainWindow):
         )
         if path:
             self.input_edit.setText(path)
+            logger.info("Selected input file %s", path)
 
     def _browse_reference(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -146,6 +148,7 @@ class MainWindow(QMainWindow):
         )
         if path:
             self.ref_edit.setText(path)
+            logger.info("Selected reference file %s", path)
 
     def _do_compare(self) -> None:
         input_path = self.input_edit.text()
@@ -153,6 +156,7 @@ class MainWindow(QMainWindow):
         if not input_path or not ref_path:
             QMessageBox.warning(self, "Missing Files", "Please select both input and reference files")
             return
+        logger.info("Starting comparison: %s vs %s", input_path, ref_path)
         self.compare_btn.setEnabled(False)
         self.progress = QProgressDialog("Comparing...", None, 0, 0, self)
         self.progress.setWindowTitle("Please wait")
@@ -181,15 +185,18 @@ class MainWindow(QMainWindow):
         try:
             resp = self._watcher.result()
         except CompareError as exc:
+            logger.error("Comparison failed: %s", exc)
             QMessageBox.critical(self, "Error", str(exc))
             return
         except Exception as exc:  # pragma: no cover - unexpected
+            logger.error("Comparison failed: %s", exc)
             QMessageBox.critical(self, "Error", str(exc))
             return
         self._result = resp.result
         self.viewer.setPlainText(self._result)
         self.export_txt_btn.setEnabled(True)
         self.export_pdf_btn.setEnabled(True)
+        logger.info("Comparison completed successfully")
 
     def _export_txt(self) -> None:
         if not self._result:
@@ -202,6 +209,7 @@ class MainWindow(QMainWindow):
         )
         if path:
             to_txt(self._result, Path(path))
+            logger.info("Exported text to %s", path)
             if self.tray.supportsMessages():
                 self.tray.showMessage("Export Complete", f"Saved text to {path}")
 
@@ -217,9 +225,11 @@ class MainWindow(QMainWindow):
         if path:
             try:
                 to_pdf(self._result, Path(path))
+                logger.info("Exported PDF to %s", path)
                 if self.tray.supportsMessages():
                     self.tray.showMessage("Export Complete", f"Saved PDF to {path}")
             except Exception as exc:
+                logger.error("PDF export failed: %s", exc)
                 QMessageBox.critical(self, "Error", str(exc))
 
 
