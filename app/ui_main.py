@@ -22,6 +22,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QProgressDialog,
+    QSystemTrayIcon,
+    QStyle,
 )
 
 from .api_client import ApiClient
@@ -57,6 +59,9 @@ class MainWindow(QMainWindow):
         self.manager = manager
         self._result: str = ""
         self._watcher: QFutureWatcher | None = None
+        self.tray = QSystemTrayIcon(self)
+        self.tray.setIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
+        self.tray.show()
         self.setWindowTitle("Regulens-AI")
         self._init_ui()
 
@@ -197,6 +202,8 @@ class MainWindow(QMainWindow):
         )
         if path:
             to_txt(self._result, Path(path))
+            if self.tray.supportsMessages():
+                self.tray.showMessage("Export Complete", f"Saved text to {path}")
 
     def _export_pdf(self) -> None:
         if not self._result:
@@ -210,6 +217,8 @@ class MainWindow(QMainWindow):
         if path:
             try:
                 to_pdf(self._result, Path(path))
+                if self.tray.supportsMessages():
+                    self.tray.showMessage("Export Complete", f"Saved PDF to {path}")
             except Exception as exc:
                 QMessageBox.critical(self, "Error", str(exc))
 
