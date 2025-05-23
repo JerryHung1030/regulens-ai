@@ -15,6 +15,9 @@ Regulens-AI is a Windows desktop application for comparing regulation documents 
    python -m app
    ```
 
+The repository also contains example JSON files under `sample_data/` that you
+can use with the CLI or GUI without creating your own documents.
+
 ## Running Tests
 
 The project uses `pytest`. To execute the test suite locally:
@@ -32,5 +35,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. This project is released 
 - `app/` contains the application modules such as `ApiClient`, `CompareManager`, and export helpers.
 - `assets/` stores icons and style sheets (currently empty).
 - `config_default.yaml` provides example API configuration.
+- `sample_data/` contains placeholder input and reference JSON documents.
 
 The design document in `docs/TechSpec.md` describes the planned GUI and full feature set.
