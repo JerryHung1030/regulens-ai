@@ -4,18 +4,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtWidgets import (
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QDoubleSpinBox,
-    QFormLayout,
-    QLineEdit,
-    QSpinBox,
-    QTabWidget,
-    QVBoxLayout,
-)
-
 
 class Settings:
     """Simple settings manager that persists to JSON.

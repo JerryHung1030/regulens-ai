@@ -23,11 +23,11 @@ class Sidebar(QWidget):
     def __init__(self, project_store: ProjectStore, splitter: QSplitter, parent: QWidget | None = None):
         super().__init__(parent)
         self.project_store = project_store
-        self._splitter = splitter # Renamed from self.splitter to self._splitter
+        self._splitter = splitter  # Renamed from self.splitter to self._splitter
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
-        main_layout.setSpacing(2) # Consistent spacing
+        main_layout.setSpacing(2)  # Consistent spacing
 
         # Top row for buttons
         top_row_layout = QHBoxLayout()
@@ -48,18 +48,20 @@ class Sidebar(QWidget):
         self._btn_toggle.clicked.connect(self._toggle)
         top_row_layout.addWidget(self._btn_toggle)
         
-        # Set initial icon and tooltip based on splitter state
-        if self._splitter.sizes()[0] == 0:
+        # ---- 安全取得 splitter 第一區塊尺寸 --------------------------
+        sizes = self._splitter.sizes()
+        first_size = sizes[0] if sizes else 1      # 如果還沒有 child，先視為展開
+
+        if first_size == 0:
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
             self._btn_toggle.setToolTip("Expand sidebar")
         else:
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
             self._btn_toggle.setToolTip("Collapse sidebar")
 
-
         # Add project button
         self.btn_add_project = QToolButton()
-        self.btn_add_project.setText("＋") # More compact for a top bar
+        self.btn_add_project.setText("＋")  # More compact for a top bar
         self.btn_add_project.setToolTip("Create a new project")
         self.btn_add_project.setStyleSheet("""
             QToolButton {
@@ -74,7 +76,7 @@ class Sidebar(QWidget):
         """)
         self.btn_add_project.clicked.connect(self.add_project_requested.emit)
         top_row_layout.addWidget(self.btn_add_project)
-        top_row_layout.addStretch(1) # Push buttons to the left
+        top_row_layout.addStretch(1)  # Push buttons to the left
 
         main_layout.addLayout(top_row_layout)
         
@@ -98,9 +100,8 @@ class Sidebar(QWidget):
         main_layout.addWidget(self.list_projects)
 
         self.list_projects.itemClicked.connect(self._on_project_clicked)
-        self.project_store.changed.connect(self._refresh_project_list) # Renamed for clarity
+        self.project_store.changed.connect(self._refresh_project_list)  # Renamed for clarity
         self._refresh_project_list()
-
 
     def _toggle(self):
         sizes = self._splitter.sizes()
@@ -120,7 +121,7 @@ class Sidebar(QWidget):
 
     def _on_project_clicked(self, item: QListWidgetItem):
         project = item.data(Qt.UserRole) 
-        if isinstance(project, CompareProject): # Ensure it's the correct type
+        if isinstance(project, CompareProject):  # Ensure it's the correct type
             self.project_selected.emit(project)
 
     def _refresh_project_list(self):
@@ -133,7 +134,7 @@ class Sidebar(QWidget):
         new_current_item = None
         for proj in self.project_store.projects:
             item = QListWidgetItem(proj.name)
-            item.setData(Qt.UserRole, proj) # Associate CompareProject object
+            item.setData(Qt.UserRole, proj)  # Associate CompareProject object
             self.list_projects.addItem(item)
             if current_project_data == proj:
                 new_current_item = item
@@ -141,7 +142,7 @@ class Sidebar(QWidget):
         if new_current_item:
             self.list_projects.setCurrentItem(new_current_item)
         elif self.list_projects.count() > 0:
-            self.list_projects.setCurrentRow(0) # Select first item if previous selection is gone
+            self.list_projects.setCurrentRow(0)  # Select first item if previous selection is gone
             # Emit project_selected for the newly selected first item
             first_item_project = self.list_projects.item(0).data(Qt.UserRole)
             if isinstance(first_item_project, CompareProject):

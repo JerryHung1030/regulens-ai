@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QStackedWidget, QLabel, QListWidgetItem, QToolButton
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QStackedWidget, QLabel
 from PySide6.QtCore import Qt, QSettings
 
 from app.stores.project_store import ProjectStore
@@ -15,28 +15,28 @@ class Workspace(QWidget):
     def __init__(self, project_store: ProjectStore, parent: QWidget | None = None):
         super().__init__(parent)
         self.project_store = project_store
-        self.main_window = parent # To access MainWindow's _run_compare, etc.
+        self.main_window = parent  # To access MainWindow's _run_compare, etc.
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0) # Use full space
+        layout.setContentsMargins(0, 0, 0, 0)  # Use full space
 
         self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter.setSizes([220, 680])  # Set default sizes first
         
-        self.sidebar = Sidebar(self.project_store, self.splitter) # Pass splitter
+        # 創建 Sidebar
+        self.sidebar = Sidebar(self.project_store, self.splitter)  # Pass splitter
         self.splitter.addWidget(self.sidebar)
 
         self.stack = QStackedWidget()
         self.splitter.addWidget(self.stack)
 
-        self.splitter.setStretchFactor(1, 1) # Main content area (stack) should expand
+        self.splitter.setStretchFactor(1, 1)  # Main content area (stack) should expand
         
-        # Restore splitter state (similar to original MainWindow)
+        # 在設置完所有組件後，再從設置中恢復狀態
         sett = QSettings("Regulens", "Regulens‑AI")
         if sett.contains("workspace_splitter"):
             self.splitter.restoreState(sett.value("workspace_splitter", type=bytes))
-        else:
-            self.splitter.setSizes([220, 680]) # Default sizes
-
+        
         layout.addWidget(self.splitter)
         self.setLayout(layout)
 
@@ -44,18 +44,17 @@ class Workspace(QWidget):
         self.sidebar.project_selected.connect(self._show_project_in_stack)
         self.sidebar.add_project_requested.connect(self._add_new_project)
 
-        self._refresh_project_views() # Initial population and view setup
+        self._refresh_project_views()
         
         if not self.project_store.projects:
             self.show_default_message()
         elif self.sidebar.list_projects.count() > 0:
-             # Select the first project by default if any exist
+            # Select the first project by default if any exist
             self.sidebar.list_projects.setCurrentRow(0)
             first_project_name = self.sidebar.list_projects.item(0).text()
             first_project = self.project_store.get_project_by_name(first_project_name)
             if first_project:
                 self._show_project_in_stack(first_project)
-
 
     def show_default_message(self):
         default_label = QLabel("Select a project from the sidebar or create a new one.")
@@ -81,22 +80,20 @@ class Workspace(QWidget):
                 self._show_project_in_stack(proj)
                 break
 
-
     def _clear_stack(self):
         """Removes all widgets from the stack and deletes them."""
         while self.stack.count() > 0:
             widget = self.stack.widget(0)
             self.stack.removeWidget(widget)
-            if widget: # Check if widget is not None
-                 widget.deleteLater()
-
+            if widget:  # Check if widget is not None
+                widget.deleteLater()
 
     def _refresh_project_views(self):
         """
         Refreshes the sidebar's project list and ensures the stack
         is either showing the current project or a default message.
         """
-        self.sidebar.refresh_project_list() # This will update the QListWidget in Sidebar
+        self.sidebar._refresh_project_list()  # This will update the QListWidget in Sidebar
 
         current_project_name_in_sidebar = None
         if self.sidebar.list_projects.currentItem():
@@ -109,27 +106,25 @@ class Workspace(QWidget):
         if current_project_name_in_sidebar:
             project_to_display = self.project_store.get_project_by_name(current_project_name_in_sidebar)
             if project_to_display:
-                 self._show_project_in_stack(project_to_display)
+                self._show_project_in_stack(project_to_display)
             else:
                 # The currently selected project in sidebar might have been deleted
-                self.sidebar.list_projects.setCurrentRow(0) # Select first if available
+                self.sidebar.list_projects.setCurrentRow(0)  # Select first if available
                 if self.sidebar.list_projects.count() > 0:
                     first_project_name = self.sidebar.list_projects.item(0).text()
                     first_project = self.project_store.get_project_by_name(first_project_name)
                     if first_project:
                         self._show_project_in_stack(first_project)
-                else: # Should not happen if project_store.projects is not empty
+                else:  # Should not happen if project_store.projects is not empty
                     self.show_default_message()
-        elif self.project_store.projects: # Projects exist, but none selected in sidebar
-            self.sidebar.list_projects.setCurrentRow(0) # Select first project
+        elif self.project_store.projects:  # Projects exist, but none selected in sidebar
+            self.sidebar.list_projects.setCurrentRow(0)  # Select first project
             first_project_name = self.sidebar.list_projects.item(0).text()
             project = self.project_store.get_project_by_name(first_project_name)
             if project:
-                 self._show_project_in_stack(project)
-        else: # No projects and nothing selected
+                self._show_project_in_stack(project)
+        else:  # No projects and nothing selected
             self.show_default_message()
-
-
 
     def _show_project_in_stack(self, project: CompareProject | None):
         if project is None:
@@ -152,25 +147,24 @@ class Workspace(QWidget):
             # Check if a viewer for this project already exists
             # This is simplified; real caching/management of widgets would be more complex
             viewer = ResultsViewer(project)
-            viewer.edit_requested.connect(self._switch_to_editor) # Connect new signal
+            viewer.edit_requested.connect(self._switch_to_editor)  # Connect new signal
             self.stack.addWidget(viewer)
             self.stack.setCurrentWidget(viewer)
-            project.viewer_idx = self.stack.indexOf(viewer) # Update index
+            project.viewer_idx = self.stack.indexOf(viewer)  # Update index
         else:
             editor = ProjectEditor(project)
             # Connect compare_requested to MainWindow's _run_compare (or a method in Workspace)
             # This requires main_window to be passed or a signal emitted upwards.
             if self.main_window and hasattr(self.main_window, "_run_compare"):
-                 editor.compare_requested.connect(self.main_window._run_compare)
+                editor.compare_requested.connect(self.main_window._run_compare)
             
             # Connect project modification signals
-            project.updated.connect(self.project_store._save) # Save when project details change
+            project.updated.connect(self.project_store._save)  # Save when project details change
             project.deleted.connect(lambda p=project: self.project_store.remove(p))
-
 
             self.stack.addWidget(editor)
             self.stack.setCurrentWidget(editor)
-            project.editor_idx = self.stack.indexOf(editor) # Update index
+            project.editor_idx = self.stack.indexOf(editor)  # Update index
             
     def _show_project_editor(self, project: CompareProject):
         # This is a helper if navigating back from ResultsViewer to ProjectEditor
@@ -178,26 +172,26 @@ class Workspace(QWidget):
         editor = ProjectEditor(project)
         if self.main_window and hasattr(self.main_window, "_run_compare"):
             editor.compare_requested.connect(self.main_window._run_compare)
-        project.updated.connect(self.project_store._save) # Save when project details change
+        project.updated.connect(self.project_store._save)  # Save when project details change
         # Ensure project.deleted is connected to ProjectStore.remove
         # This might be better done once when the project is first added to the store or when editor is first created
         # To avoid multiple connections if _show_project_editor is called multiple times for the same project.
         # However, QObject's signal/slot mechanism should handle duplicate connections gracefully (only connects once).
-        try: # Disconnect first to be safe, then reconnect
+        try:  # Disconnect first to be safe, then reconnect
             project.deleted.disconnect(self.project_store.remove)
-        except RuntimeError: # It's fine if it wasn't connected
+        except RuntimeError:  # It's fine if it wasn't connected
             pass
         project.deleted.connect(self.project_store.remove)
 
         self.stack.addWidget(editor)
         self.stack.setCurrentWidget(editor)
         project.editor_idx = self.stack.indexOf(editor)
-        project.viewer_idx = -1 # Clear viewer index as we are back to editor
+        project.viewer_idx = -1  # Clear viewer index as we are back to editor
 
     def _switch_to_editor(self, project: CompareProject):
         """Switches the view to the ProjectEditor for the given project."""
         # This method is connected to ResultsViewer.edit_requested
-        self._clear_stack() # Clear current widget (ResultsViewer)
+        self._clear_stack()  # Clear current widget (ResultsViewer)
         
         # Create and show the editor for this project
         editor = ProjectEditor(project)
@@ -222,7 +216,7 @@ class Workspace(QWidget):
         self.stack.addWidget(editor)
         self.stack.setCurrentWidget(editor)
         project.editor_idx = self.stack.indexOf(editor)
-        project.viewer_idx = -1 # Ensure viewer_idx is reset
+        project.viewer_idx = -1  # Ensure viewer_idx is reset
 
     def show_project_results(self, project: CompareProject):
         """
@@ -234,7 +228,7 @@ class Workspace(QWidget):
             return
 
         logger.info(f"Displaying results for project: {project.name}")
-        self._clear_stack() # Clear current widget (likely ProjectEditor)
+        self._clear_stack()  # Clear current widget (likely ProjectEditor)
 
         viewer = ResultsViewer(project)
         viewer.edit_requested.connect(self._switch_to_editor)
@@ -256,7 +250,7 @@ class Workspace(QWidget):
         # Project results are part of project object, which should be saved by ProjectStore
         # if CompareProject.changed signal was emitted after results were added.
         # If not, explicitly save here or ensure CompareProject emits 'changed' or 'updated'.
-        self.project_store._save() # Explicitly save after results are added.
+        self.project_store._save()  # Explicitly save after results are added.
 
     def closeEvent(self, event):
         """Save splitter state when the workspace (or main window) is closed."""
