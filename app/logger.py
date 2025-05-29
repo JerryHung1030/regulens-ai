@@ -13,5 +13,5 @@ logger.add(
     rotation="12:00",
     retention="7 days",
     enqueue=True,
-    level="INFO",
+    level="DEBUG",
 )

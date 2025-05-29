@@ -1,5 +1,4 @@
 import json
-from types import SimpleNamespace
 from urllib import request
 
 from app.api_client import ApiClient, CompareResponse
@@ -26,11 +25,26 @@ def test_compare_payload(monkeypatch):
     monkeypatch.setattr(request, 'urlopen', fake_urlopen)
 
     client = ApiClient('http://example.com', 'token')
-    resp = client.compare({'a': 1}, {'b': 2}, param=3)
+    # Adjust the call to match the new signature: project_id, input_doc_content, ref_doc_content, **scenario_params
+    resp = client.compare(
+        project_id="test_project",
+        input_doc_content={'a': 1},
+        ref_doc_content={'b': 2},
+        param_in_scenario=3  # This will go into scenario_params
+    )
 
     assert isinstance(resp, CompareResponse)
     payload = json.loads(captured['data'].decode())
-    assert payload['input'] == {'a': 1}
-    assert payload['reference'] == {'b': 2}
-    assert payload['param'] == 3
-    assert captured['url'].endswith('/v1/compare')
+
+    # Verify the new payload structure
+    assert payload['project_id'] == "test_project"
+    assert payload['input_data']['level1'][0]['text'] == {'a': 1}
+    assert payload['input_data']['level1'][0]['sid'] == "input_test_project"
+    assert payload['input_data']['level1'][0]['metadata']['project'] == "test_project"
+
+    assert payload['reference_data']['level1'][0]['text'] == {'b': 2}
+    assert payload['reference_data']['level1'][0]['sid'] == "ref_test_project"
+    assert payload['reference_data']['level1'][0]['metadata']['project'] == "test_project"
+
+    assert payload['scenario'] == {'param_in_scenario': 3}  # Check scenario_params
+    assert captured['url'].endswith('/api/v1/rag')  # Check new endpoint

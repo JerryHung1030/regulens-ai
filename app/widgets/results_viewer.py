@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import Qt # Assuming Qt might be needed for some features not explicitly listed but common in widgets
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -16,20 +14,21 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QStyle,
 )
-from PySide6.QtCore import Signal # Added Signal import
+from PySide6.QtCore import Signal  # Added Signal import
 
 from app.models.project import CompareProject
 
 
 class ResultsViewer(QWidget):
     """顯示結果 (Markdown) – Tab 每個外規一頁"""
-    edit_requested = Signal(CompareProject) # New signal
+    edit_requested = Signal(CompareProject)  # New signal
 
     def __init__(self, project: CompareProject, parent: QWidget | None = None):
         super().__init__(parent)
         self.project = project
         self._build_ui()
         self._refresh()
+        self.project.changed.connect(self._refresh)  # Connect to project's changed signal
 
     def _build_ui(self):
         lay = QVBoxLayout(self)
@@ -124,7 +123,6 @@ class ResultsViewer(QWidget):
     def _go_back(self):
         self.edit_requested.emit(self.project)
 
-
     def _export_results(self):
         path, _ = QFileDialog.getSaveFileName(
             self,
@@ -150,12 +148,12 @@ class ResultsViewer(QWidget):
         """更新 UI 顯示"""
         # 更新標題
         title = self.findChild(QLabel)
-        if title: # Check if title exists to prevent errors during initial build or if UI changes
+        if title:  # Check if title exists to prevent errors during initial build or if UI changes
             title.setText(f"<h2>{self.project.name} - 比較結果</h2>")
         
         # 更新標籤頁內容
         tabs = self.findChild(QTabWidget)
-        if tabs: # Check if tabs exists
+        if tabs:  # Check if tabs exists
             for i in range(tabs.count()):
                 # Ensure index is within bounds of ref_paths
                 if i < len(self.project.ref_paths):
@@ -164,6 +162,6 @@ class ResultsViewer(QWidget):
                     view = tabs.widget(i)
                     if isinstance(view, QTextBrowser):
                         view.setMarkdown(md)
-                else: # Handle case where tab count might mismatch ref_paths (e.g. during dynamic updates)
+                else:  # Handle case where tab count might mismatch ref_paths (e.g. during dynamic updates)
                     # Optionally log a warning or handle error
                     pass

@@ -84,6 +84,18 @@ class SettingsDialog(QDialog):
         self.th_spin.setSingleStep(0.05)
         w.addRow("Threshold", self.th_spin)
 
+        self.role_desc_edit = QLineEdit()
+        w.addRow("Role Description", self.role_desc_edit)
+
+        self.ref_desc_edit = QLineEdit()
+        w.addRow("Reference Description", self.ref_desc_edit)
+
+        self.input_desc_edit = QLineEdit()
+        w.addRow("Input Description", self.input_desc_edit)
+
+        self.llm_name_edit = QLineEdit()
+        w.addRow("LLM Name", self.llm_name_edit)
+
         container = QDialog()
         container.setLayout(w)
         return container
@@ -101,6 +113,11 @@ class SettingsDialog(QDialog):
         self.k_spin.setValue(int(s.get("rag.rag_k", 5)))
         self.th_spin.setValue(float(s.get("rag.cof_threshold", 0.5)))
 
+        self.role_desc_edit.setText(s.get("rag_role_desc", ""))
+        self.ref_desc_edit.setText(s.get("rag_reference_desc", ""))
+        self.input_desc_edit.setText(s.get("rag_input_desc", ""))
+        self.llm_name_edit.setText(s.get("rag_llm_name", "openai"))
+
     def _save(self):
         s = self.settings
         s.set("base_url", self.base_edit.text().strip())
@@ -111,4 +128,8 @@ class SettingsDialog(QDialog):
         s.set("rag.rag_k", self.k_spin.value())
         s.set("rag.cof_threshold", round(self.th_spin.value(), 2))
 
-        self.accept() 
+        s.set("rag_role_desc", self.role_desc_edit.text().strip())
+        s.set("rag_reference_desc", self.ref_desc_edit.text().strip())
+        s.set("rag_input_desc", self.input_desc_edit.text().strip())
+        s.set("rag_llm_name", self.llm_name_edit.text().strip())
+        self.accept()

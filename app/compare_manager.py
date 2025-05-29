@@ -28,25 +28,25 @@ class CompareManager:
         except Exception as exc:  # pragma: no cover - simple error wrap
             raise CompareError(str(exc)) from exc
 
-    def compare(self, input_path: Path, ref_path: Path, **params: Any) -> CompareResponse:
-        logger.info("Comparing %s to %s", input_path, ref_path)
-        input_doc = self.load_json(input_path)
-        ref_doc = self.load_json(ref_path)
+    def compare(self, project_id: str, input_path: Path, ref_path: Path, **scenario_params: Any) -> CompareResponse:
+        logger.info("Comparing %s to %s for project %s", input_path, ref_path, project_id)
+        input_doc_content = self.load_json(input_path)
+        ref_doc_content = self.load_json(ref_path)
         try:
-            resp = self.api_client.compare(input_doc, ref_doc, **params)
+            resp = self.api_client.compare(project_id, input_doc_content, ref_doc_content, **scenario_params)
         except Exception as exc:
             logger.error("Comparison failed: %s", exc)
             raise CompareError(str(exc)) from exc
         logger.info("Comparison succeeded")
         return resp
 
-    async def acompare(self, input_path: Path, ref_path: Path, **params: Any) -> CompareResponse:
+    async def acompare(self, project_id: str, input_path: Path, ref_path: Path, **scenario_params: Any) -> CompareResponse:
         """Asynchronous wrapper around :meth:`ApiClient.acompare`."""
-        input_doc = self.load_json(input_path)
-        ref_doc = self.load_json(ref_path)
-        logger.info("Comparing %s to %s (async)", input_path, ref_path)
+        input_doc_content = self.load_json(input_path)
+        ref_doc_content = self.load_json(ref_path)
+        logger.info("Comparing %s to %s for project %s (async)", input_path, ref_path, project_id)
         try:
-            resp = await self.api_client.acompare(input_doc, ref_doc, **params)
+            resp = await self.api_client.acompare(project_id, input_doc_content, ref_doc_content, **scenario_params)
         except Exception as exc:
             logger.error("Async comparison failed: %s", exc)
             raise CompareError(str(exc)) from exc

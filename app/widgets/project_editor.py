@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -186,8 +185,7 @@ class ProjectEditor(QWidget):
             text=self.project.name
         )
         if ok and name:
-            self.project.rename(name) # Emits project.updated
-
+            self.project.rename(name)  # Emits project.updated
 
     def _delete_project(self):
         reply = QMessageBox.question(
@@ -199,7 +197,6 @@ class ProjectEditor(QWidget):
         )
         if reply == QMessageBox.Yes:
             self.project.deleted.emit()
-
 
     # ------ File pickers ----------------------------------------------
     def _choose_input(self):

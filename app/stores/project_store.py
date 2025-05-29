@@ -52,20 +52,23 @@ class ProjectStore(QObject):
             # be cleaned up on deletion, that logic would be elsewhere.
             try:
                 proj.deleted.disconnect()
-            except (AttributeError, RuntimeError): # Disconnect may fail if not connected or already deleted
+            except (AttributeError, RuntimeError):  # Disconnect may fail if not connected or already deleted
                 pass
             try:
                 proj.updated.disconnect()
             except (AttributeError, RuntimeError):
-                 pass
+                pass
             try:
-                proj.changed.disconnect()
+                proj.changed.disconnect()  # Disconnect from the project's changed signal
             except (AttributeError, RuntimeError):
-                 pass
+                pass
+            # proj.updated.disconnect(self._save) # Disconnect from updated if it was connected to _save
+            # proj.deleted.disconnect(self.remove) # Disconnect from deleted if it was connected to remove
 
-            self._save()
-            self.changed.emit()
-        except ValueError: # Project not in list
+            self._save()  # This will now also emit self.changed
+            # self.changed.emit() # No longer needed here as _save now emits it
+
+        except ValueError:  # Project not in list
             pass
 
     def get_project_by_name(self, name: str) -> CompareProject | None:
@@ -79,11 +82,11 @@ class ProjectStore(QObject):
         # For now, let's assume name is the unique identifier for simplicity as per current structure
         # If CompareProject gets a unique ID field later, this method can be updated.
         for proj in self.projects:
-            if str(id(proj)) == project_id: # Example, not robust if id can change or is not what's used
+            if str(id(proj)) == project_id:  # Example, not robust if id can change or is not what's used
                 return proj
-        return self.get_project_by_name(project_id) # Fallback to name if id is not used this way.
-                                                  # This part needs clarification based on how projects are identified.
-                                                  # For now, using name as a proxy for ID.
+        return self.get_project_by_name(project_id)  # Fallback to name if id is not used this way.
+        # This part needs clarification based on how projects are identified.
+        # For now, using name as a proxy for ID.
 
     def update_project(self, project_to_update: CompareProject, new_data: dict):
         """
@@ -98,7 +101,7 @@ class ProjectStore(QObject):
 
         # Find the project and update its attributes
         for i, proj in enumerate(self.projects):
-            if proj == project_to_update: # Or match by a unique ID
+            if proj == project_to_update:  # Or match by a unique ID
                 # Example of updating:
                 # proj.name = new_data.get("name", proj.name)
                 # proj.input_path = Path(new_data["input_path"]) if new_data.get("input_path") else proj.input_path
@@ -106,13 +109,13 @@ class ProjectStore(QObject):
                 # This is overly simplistic. Real updates would likely be handled by modifying the
                 # CompareProject instance directly, then calling _save and emitting signals.
                 # The 'updated' signal on CompareProject should be emitted after such changes.
-                self._save()
-                self.changed.emit() # Indicates the list of projects or their state has changed.
+                self._save()  # This will now also emit self.changed
+                # self.changed.emit() # No longer needed here as _save now emits it
                 break
         # If CompareProject emits 'updated' signal, ProjectStore can connect to it
         # for each project to automatically call _save().
         # Example connection in add(): proj.updated.connect(self._save)
         # And disconnect in remove(): proj.updated.disconnect(self._save)
-        pass # Placeholder for update logic. Actual updates are more likely to be handled by modifying
-             # the project instance and then calling _save.
-             # The presence of this method is more for conceptual completeness.
+        pass  # Placeholder for update logic. Actual updates are more likely to be handled by modifying
+        # the project instance and then calling _save.
+        # The presence of this method is more for conceptual completeness.

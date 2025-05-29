@@ -26,6 +26,7 @@ class CompareProject(QObject):
     def rename(self, new_name: str):
         self.name = new_name
         self.updated.emit()
+        self.changed.emit()  # Ensure ProjectEditor and ResultsViewer refresh
 
     @property
     def ready(self) -> bool:

@@ -34,10 +34,10 @@ class IntroPage(QWidget):
         btn_start.clicked.connect(self.start_requested.emit)
         button_layout.addWidget(btn_start)
 
-        btn_settings = QPushButton("Settings")
-        btn_settings.setFixedHeight(38)
-        btn_settings.setStyleSheet("border-radius:19px; padding:0 24px;")
-        btn_settings.clicked.connect(self.settings_requested.emit)
-        button_layout.addWidget(btn_settings)
+        # btn_settings is removed
+        # btn_settings.setFixedHeight(38)
+        # btn_settings.setStyleSheet("border-radius:19px; padding:0 24px;")
+        # btn_settings.clicked.connect(self.settings_requested.emit)
+        # button_layout.addWidget(btn_settings)
 
         main_layout.addLayout(button_layout)
