@@ -5,11 +5,15 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
+    QFileDialog,
     QFormLayout,
+    QHBoxLayout,
     QLineEdit,
+    QPushButton,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
+    QWidget,
 )
 
 from .settings import Settings
@@ -37,7 +41,9 @@ class SettingsDialog(QDialog):
     def _init_ui(self) -> None:
         tabs = QTabWidget(self)
         tabs.addTab(self._build_general_tab(), "General")
-        tabs.addTab(self._build_rag_tab(), "RAG")
+        tabs.addTab(self._build_models_tab(), "Models")
+        tabs.addTab(self._build_retrieval_tab(), "Retrieval")
+        tabs.addTab(self._build_output_tab(), "Output")
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
         buttons.accepted.connect(self._save)
@@ -48,88 +54,143 @@ class SettingsDialog(QDialog):
         layout.addWidget(buttons)
 
     # ----- per‑tab builders ------------------------------------------------
-    def _build_general_tab(self):
+    def _build_general_tab(self) -> QWidget:
         w = QFormLayout()
-
-        self.base_edit = QLineEdit()
-        w.addRow("Base URL", self.base_edit)
 
         self.key_edit = QLineEdit()
         self.key_edit.setEchoMode(QLineEdit.Password)
         w.addRow("OpenAI API Key", self.key_edit)
 
         self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(1, 120)
-        w.addRow("Timeout (s)", self.timeout_spin)
+        self.timeout_spin.setRange(1, 300) # Increased range for potentially longer OpenAI calls
+        w.addRow("OpenAI Client Timeout (s)", self.timeout_spin)
 
-        # wrap the form into QWidget for QTabWidget
-        container = QDialog()  # lightweight widget
+        container = QWidget()
         container.setLayout(w)
         return container
 
-    def _build_rag_tab(self):
+    def _build_models_tab(self) -> QWidget:
         w = QFormLayout()
 
-        self.dir_combo = QComboBox()
-        self.dir_combo.addItems(["forward", "reverse", "both"])
-        w.addRow("Direction", self.dir_combo)
+        self.embedding_model_combo = QComboBox()
+        self.embedding_model_combo.addItems([
+            "text-embedding-3-large", 
+            "text-embedding-3-small", 
+            "text-embedding-ada-002"
+        ])
+        w.addRow("Embedding Model", self.embedding_model_combo)
 
-        self.k_spin = QSpinBox()
-        self.k_spin.setRange(1, 20)
-        w.addRow("rag_k", self.k_spin)
+        self.llm_model_combo = QComboBox()
+        self.llm_model_combo.addItems(["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"])
+        w.addRow("LLM Model", self.llm_model_combo)
+        
+        local_model_layout = QHBoxLayout()
+        self.local_model_path_edit = QLineEdit()
+        local_model_layout.addWidget(self.local_model_path_edit)
+        local_model_button = QPushButton("Browse...")
+        local_model_button.clicked.connect(self._browse_local_model_path)
+        local_model_layout.addWidget(local_model_button)
+        w.addRow("Local Model Path (Optional)", local_model_layout)
 
-        self.th_spin = QDoubleSpinBox()
-        self.th_spin.setDecimals(2)
-        self.th_spin.setRange(0.0, 1.0)
-        self.th_spin.setSingleStep(0.05)
-        w.addRow("Threshold", self.th_spin)
-
-        self.role_desc_edit = QLineEdit()
-        w.addRow("Role Description", self.role_desc_edit)
-
-        self.ref_desc_edit = QLineEdit()
-        w.addRow("Reference Description", self.ref_desc_edit)
-
-        self.input_desc_edit = QLineEdit()
-        w.addRow("Input Description", self.input_desc_edit)
-
-        self.llm_name_edit = QLineEdit()
-        w.addRow("LLM Name", self.llm_name_edit)
-
-        container = QDialog()
+        container = QWidget()
         container.setLayout(w)
         return container
+
+    def _build_retrieval_tab(self) -> QWidget:
+        w = QFormLayout()
+
+        self.top_k_proc_spin = QSpinBox()
+        self.top_k_proc_spin.setRange(1, 25)
+        w.addRow("Top-K Procedure Matches", self.top_k_proc_spin)
+
+        self.top_m_evid_spin = QSpinBox()
+        self.top_m_evid_spin.setRange(1, 25)
+        w.addRow("Top-M Evidence Matches", self.top_m_evid_spin)
+
+        self.score_thresh_spin = QDoubleSpinBox()
+        self.score_thresh_spin.setDecimals(2)
+        self.score_thresh_spin.setRange(0.0, 1.0)
+        self.score_thresh_spin.setSingleStep(0.05)
+        w.addRow("Score Threshold (Match Filtering)", self.score_thresh_spin)
+        
+        container = QWidget()
+        container.setLayout(w)
+        return container
+
+    def _build_output_tab(self) -> QWidget:
+        w = QFormLayout()
+
+        report_theme_layout = QHBoxLayout()
+        self.report_theme_edit = QLineEdit()
+        report_theme_layout.addWidget(self.report_theme_edit)
+        report_theme_button = QPushButton("Browse CSS...")
+        report_theme_button.clicked.connect(self._browse_report_theme)
+        report_theme_layout.addWidget(report_theme_button)
+        w.addRow("Report Theme CSS", report_theme_layout)
+
+        self.language_combo = QComboBox()
+        self.language_combo.addItems(["en", "zh"]) # English, Chinese
+        w.addRow("Report Language", self.language_combo)
+        
+        container = QWidget()
+        container.setLayout(w)
+        return container
+        
+    # --- File Dialog Helpers ---
+    def _browse_local_model_path(self):
+        # Could be a file or directory depending on how local models are loaded
+        # For now, let's assume it could be either, or prefer directory
+        path, _ = QFileDialog.getExistingDirectory(self, "Select Local Model Directory or File")
+        if path:
+            self.local_model_path_edit.setText(path)
+
+    def _browse_report_theme(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select Report Theme CSS File", "", "CSS Files (*.css)")
+        if path:
+            self.report_theme_edit.setText(path)
 
     # ---------------------------------------------------------------------
     # load / save helpers
     # ---------------------------------------------------------------------
     def _load(self):
         s = self.settings
-        self.base_edit.setText(s.get("base_url", ""))
-        self.key_edit.setText(s.get("api_key", ""))
-        self.timeout_spin.setValue(int(s.get("timeout", 30)))
+        # General Tab
+        self.key_edit.setText(s.get("openai_api_key", "")) # Changed key name to be more specific
+        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60))) # Changed key name
 
-        self.dir_combo.setCurrentText(s.get("rag.direction", "both"))
-        self.k_spin.setValue(int(s.get("rag.rag_k", 5)))
-        self.th_spin.setValue(float(s.get("rag.cof_threshold", 0.5)))
+        # Models Tab
+        self.embedding_model_combo.setCurrentText(s.get("embedding_model", "text-embedding-3-large"))
+        self.llm_model_combo.setCurrentText(s.get("llm_model", "gpt-4o"))
+        self.local_model_path_edit.setText(s.get("local_model_path", ""))
 
-        self.role_desc_edit.setText(s.get("rag_role_desc", ""))
-        self.ref_desc_edit.setText(s.get("rag_reference_desc", ""))
-        self.input_desc_edit.setText(s.get("rag_input_desc", ""))
-        self.llm_name_edit.setText(s.get("rag_llm_name", "openai"))
+        # Retrieval Tab
+        self.top_k_proc_spin.setValue(int(s.get("top_k_procedure", 5)))
+        self.top_m_evid_spin.setValue(int(s.get("top_m_evidence", 5)))
+        self.score_thresh_spin.setValue(float(s.get("score_threshold", 0.7)))
+
+        # Output Tab
+        self.report_theme_edit.setText(s.get("report_theme", "default.css"))
+        self.language_combo.setCurrentText(s.get("language", "en"))
+
 
     def _save(self):
         s = self.settings
-        s.set("base_url", self.base_edit.text().strip())
-        s.set("api_key", self.key_edit.text().strip())
-        s.set("timeout", self.timeout_spin.value())
+        # General Tab
+        s.set("openai_api_key", self.key_edit.text().strip())
+        s.set("openai_client_timeout", self.timeout_spin.value())
 
-        s.set("rag.direction", self.dir_combo.currentText())
-        s.set("rag.rag_k", self.k_spin.value())
-        s.set("rag.cof_threshold", round(self.th_spin.value(), 2))
+        # Models Tab
+        s.set("embedding_model", self.embedding_model_combo.currentText())
+        s.set("llm_model", self.llm_model_combo.currentText())
+        s.set("local_model_path", self.local_model_path_edit.text().strip())
 
-        s.set("rag_role_desc", self.role_desc_edit.text().strip())
-        s.set("rag_reference_desc", self.ref_desc_edit.text().strip())
-        s.set("rag_input_desc", self.input_desc_edit.text().strip())
-        s.set("rag_llm_name", self.llm_name_edit.text().strip())
+        # Retrieval Tab
+        s.set("top_k_procedure", self.top_k_proc_spin.value())
+        s.set("top_m_evidence", self.top_m_evid_spin.value())
+        s.set("score_threshold", round(self.score_thresh_spin.value(), 2))
+        
+        # Output Tab
+        s.set("report_theme", self.report_theme_edit.text().strip())
+        s.set("language", self.language_combo.currentText())
+        
         self.accept()

@@ -34,3 +34,14 @@ typing_extensions==4.13.2
 weasyprint==65.1
 webencodings==0.5.1
 zopfli==0.2.3.post1
+openai
+faiss-cpu
+tiktoken
+langchain
+pypdf
+python-docx
+pandas
+pyarrow
+markdown
+pdfkit
+vcrpy
