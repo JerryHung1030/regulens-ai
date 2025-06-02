@@ -1,11 +1,10 @@
 import json
 import os
-import re
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Callable
 
 from app.logger import logger
 
-import openai # type: ignore
+import openai  # type: ignore
 from pydantic import BaseModel, ValidationError
 
 # Adjust import based on project structure and PYTHONPATH
@@ -16,8 +15,9 @@ except ImportError:
     import sys
     from pathlib import Path
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-    from app.models.assessments import TripleAssessment # type: ignore
-    from app.pipeline.cache import CacheService # type: ignore
+    from app.models.assessments import TripleAssessment  # type: ignore
+    from app.pipeline.cache import CacheService  # type: ignore
+
 
 # Helper Pydantic model for LLM's expected JSON structure for validation
 class LLMJudgeResponse(BaseModel):
@@ -34,7 +34,7 @@ class LLMJudgeResponse(BaseModel):
             raise ValueError(f"Invalid status: {status}. Must be one of 'Pass', 'Partial', 'Fail', 'Inconclusive'.")
         
         confidence = values.get('confidence_score')
-        if not (0.0 <= confidence <= 1.0) : # type: ignore
+        if not (0.0 <= confidence <= 1.0):  # type: ignore
             raise ValueError(f"Invalid confidence_score: {confidence}. Must be between 0.0 and 1.0.")
         return values
 
@@ -45,13 +45,22 @@ def assess_triplet_with_llm(
     control_chunk_text: str, procedure_chunk_text: str, evidence_chunk_text: str,
     cache_service: CacheService,
     openai_api_key: Optional[str] = None,
-    llm_model_name: str = "gpt-4o" # Default model
+    llm_model_name: str = "gpt-4o",  # Default model
+    cancel_cb: Optional[Callable[[], bool]] = None  # Added cancel_cb
 ) -> Optional[TripleAssessment]:
+
+    # Check for cancellation before doing anything expensive
+    if cancel_cb and cancel_cb():
+        logger.info(f"LLM assessment cancelled for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}")
+        # Option 1: Return None, pipeline continues if it can
+        # return None 
+        # Option 2: Raise an exception, pipeline stops (consistent with run_pipeline)
+        raise RuntimeError("Cancelled by user before LLM assessment.")
 
     # Create a robust cache key. Consider hashing parts if they are very long.
     # For now, use model name and the three text snippets.
     cache_key_parts = [
-        "llm_judge_assessment_v1", # Added version to allow future prompt changes
+        "llm_judge_assessment_v1",  # Added version to allow future prompt changes
         llm_model_name, 
         control_chunk_text, 
         procedure_chunk_text, 
@@ -66,8 +75,13 @@ def assess_triplet_with_llm(
 
     # print(f"Performing LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id} using {llm_model_name}...")
 
-    llm_response_content_str: Optional[str] = None # For use in error messages if JSON parsing fails
+    llm_response_content_str: Optional[str] = None  # For use in error messages if JSON parsing fails
     try:
+        # Check for cancellation again before the API call
+        if cancel_cb and cancel_cb():
+            logger.info(f"LLM assessment cancelled just before API call for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}")
+            raise RuntimeError("Cancelled by user before LLM API call.")
+
         client = openai.OpenAI(api_key=openai_api_key if openai_api_key else os.environ.get("OPENAI_API_KEY"))
 
         system_prompt = ("You are an expert compliance auditor. Analyze the provided Control, Procedure, and Evidence excerpts. "
@@ -105,8 +119,8 @@ Based on your analysis, provide a JSON response with the following fields:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            response_format={"type": "json_object"}, # For compatible models like gpt-4o and gpt-3.5-turbo-1106+
-            temperature=0.2 # Lower temperature for more deterministic, factual output
+            response_format={"type": "json_object"},  # For compatible models like gpt-4o and gpt-3.5-turbo-1106+
+            temperature=0.2  # Lower temperature for more deterministic, factual output
         )
 
         llm_response_content_str = response.choices[0].message.content
@@ -115,7 +129,7 @@ Based on your analysis, provide a JSON response with the following fields:
             # Remove potential markdown fences and leading/trailing whitespace
             if llm_response_content_str.startswith("```json"):
                 llm_response_content_str = llm_response_content_str[7:]
-            if llm_response_content_str.startswith("```"): # If just ``` not ```json
+            if llm_response_content_str.startswith("```"):  # If just ``` not ```json
                 llm_response_content_str = llm_response_content_str[3:]
             if llm_response_content_str.endswith("```"):
                 llm_response_content_str = llm_response_content_str[:-3]
@@ -140,7 +154,7 @@ Based on your analysis, provide a JSON response with the following fields:
             status=parsed_llm_response.status,
             analysis=parsed_llm_response.analysis,
             improvement_suggestion=parsed_llm_response.improvement_suggestion,
-            score=parsed_llm_response.confidence_score, # Using confidence_score as main score
+            score=parsed_llm_response.confidence_score,  # Using confidence_score as main score
             llm_raw_output=llm_json_output 
         )
 
@@ -154,16 +168,17 @@ Based on your analysis, provide a JSON response with the following fields:
         logger.error(f"OpenAI API Rate Limit Exceeded during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}")
     except openai.AuthenticationError as e:
         logger.error(f"OpenAI API Authentication Error for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}. Check your API key.")
-    except openai.APIError as e: # Catch other OpenAI API errors
+    except openai.APIError as e:  # Catch other OpenAI API errors
         logger.error(f"OpenAI API error during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}")
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON from LLM response for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}. Response: '{llm_response_content_str}'")
-    except ValidationError as e: # Pydantic validation error
+    except ValidationError as e:  # Pydantic validation error
         logger.error(f"LLM response JSON schema validation error for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}. Response: '{llm_response_content_str}'")
     except Exception as e:
         logger.error(f"Unexpected error during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}", exc_info=True)
     
     return None
+
 
 if __name__ == '__main__':
     from pathlib import Path
@@ -180,7 +195,7 @@ if __name__ == '__main__':
     if not api_key_env:
         print("\nWARNING: OPENAI_API_KEY environment variable not set. Live API call test will be skipped.")
     else:
-        print(f"\nFound OPENAI_API_KEY. Will attempt live API call with model 'gpt-3.5-turbo'.")
+        print("\nFound OPENAI_API_KEY. Will attempt live API call with model 'gpt-3.5-turbo'.")
         # Using a cheaper/faster model for testing. 
         # The prompt is designed for gpt-4o's capabilities, so gpt-3.5-turbo might not perform as well or follow JSON format as strictly.
         # For production, ensure the model used matches the prompt's expectations.
@@ -203,7 +218,7 @@ if __name__ == '__main__':
             print("\nLLM Assessment Result (Test 1):")
             print(assessment_res.model_dump_json(indent=2))
             assert assessment_res.status in ["Pass", "Partial", "Fail", "Inconclusive"]
-            assert 0.0 <= assessment_res.score <= 1.0 # type: ignore
+            assert 0.0 <= assessment_res.score <= 1.0  # type: ignore
             print("Live API call test passed.")
             
             print("\n--- Test 2: Load LLM Assessment from Cache ---")
@@ -221,7 +236,7 @@ if __name__ == '__main__':
             if cached_assessment_res:
                 print("Cached LLM Assessment Result (Test 2):")
                 print(cached_assessment_res.model_dump_json(indent=2))
-                assert cached_assessment_res.analysis == assessment_res.analysis # Key check for cache hit
+                assert cached_assessment_res.analysis == assessment_res.analysis  # Key check for cache hit
                 assert cached_assessment_res.llm_raw_output == assessment_res.llm_raw_output
                 print("Cache hit test passed.")
         else:

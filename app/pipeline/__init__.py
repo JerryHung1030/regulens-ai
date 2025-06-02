@@ -6,37 +6,38 @@ import json
 import collections
 
 # Third-party Imports
-import faiss # type: ignore
+import faiss  # type: ignore
 
 # Project-specific Imports
 # Models
-from app.settings import Settings # For PipelineSettings.from_settings
-from pydantic import BaseModel, Field # For PipelineSettings definition
+from app.settings import Settings  # For PipelineSettings.from_settings
+from pydantic import BaseModel, Field  # For PipelineSettings definition
 
 try:
     from app.models.project import CompareProject
     # from app.models.settings import PipelineSettings # Removed this import
-    from app.models.docs import RawDoc, NormDoc, EmbedSet, IndexMeta
+    from app.models.docs import RawDoc, NormDoc, EmbedSet
     from app.models.assessments import TripleAssessment, PairAssessment, MatchSet
-except ImportError: # Fallback for potential execution context issues
+except ImportError:  # Fallback for potential execution context issues
     import sys
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-    from app.models.project import CompareProject # type: ignore
+    from app.models.project import CompareProject  # type: ignore
     # from app.models.settings import PipelineSettings # type: ignore # Removed this import
-    from app.models.docs import RawDoc, NormDoc, EmbedSet, IndexMeta # type: ignore
-    from app.models.assessments import TripleAssessment, PairAssessment, MatchSet # type: ignore
+    from app.models.docs import RawDoc, NormDoc, EmbedSet  # type: ignore
+    from app.models.assessments import TripleAssessment, PairAssessment, MatchSet  # type: ignore
+
 
 # Define PipelineSettings directly here or import from a dedicated app.pipeline.settings file
 class PipelineSettings(BaseModel):
     openai_api_key: str = Field(default="")
-    embedding_model: str = Field(default="default_embedding_model") # Matches test default
-    llm_model: str = Field(default="default_llm_model") # Matches test default
+    embedding_model: str = Field(default="default_embedding_model")  # Matches test default
+    llm_model: str = Field(default="default_llm_model")  # Matches test default
     # Fields from the original app.models.settings.ArchivedPipelineSettings that might be relevant:
     local_model_path: Optional[Path] = Field(default=None)
     top_k_procedure: int = Field(default=5)
     top_m_evidence: int = Field(default=5)
     score_threshold: float = Field(default=0.7)
-    report_theme: str = Field(default="default.css") # Or simply "default"
+    report_theme: str = Field(default="default.css")  # Or simply "default"
     language: str = Field(default="en")
 
     @classmethod
@@ -53,10 +54,11 @@ class PipelineSettings(BaseModel):
             language=settings.get("language", "en")
         )
 
+
 # Pipeline Modules
 from .ingestion import ingest_documents
 from .normalize import normalize_document
-from .embed import generate_embeddings, EmbedSetList # EmbedSetList for caching lists
+from .embed import generate_embeddings  # EmbedSetList for caching lists
 from .index import create_or_load_index
 from .retrieve import retrieve_similar_chunks
 from .judge_llm import assess_triplet_with_llm
@@ -67,20 +69,25 @@ from .cache import CacheService
 
 # Main Pipeline Orchestration Function
 def run_pipeline(
-    project: CompareProject, 
-    settings: PipelineSettings, 
-    progress_callback: Optional[Callable[[int, int, str], None]] = None
+    project: CompareProject,
+    settings: PipelineSettings,
+    progress_callback: Optional[Callable[[int, int, str, int], None]] = None,  # Added percent_complete
+    cancel_cb: Optional[Callable[[], bool]] = None  # Added cancel_cb
 ) -> Optional[Path]:
     """
     Runs the full compliance assessment pipeline.
+    Supports progress updates and cancellation.
     """
 
     def _update_progress(current_step: int, total_steps: int, message: str):
         if progress_callback:
-            progress_callback(current_step, total_steps, message)
-        print(f"Progress: {current_step}/{total_steps} - {message}") # Also print to console
+            percent_complete = int((current_step / total_steps) * 100) if total_steps > 0 else 0
+            # Ensure percent is capped at 100, especially for final step
+            percent_complete = min(percent_complete, 100)
+            progress_callback(current_step, total_steps, message, percent_complete)
+        print(f"Progress: {current_step}/{total_steps} - {message}")  # Also print to console
 
-    total_pipeline_stages = 8 # A-H
+    total_pipeline_stages = 8  # A-H
     current_stage_num = 0
 
     # 1. Setup
@@ -124,7 +131,7 @@ def run_pipeline(
     evidence_raw_docs: List[RawDoc] = []
     if project.evidences_dir and project.evidences_dir.exists():
         evidence_raw_docs = ingest_documents(project.evidences_dir, "evidence")
-        if not evidence_raw_docs: # Warning, not critical if some C-P pairs might not need evidence directly
+        if not evidence_raw_docs:  # Warning, not critical if some C-P pairs might not need evidence directly
             _update_progress(current_stage_num, total_pipeline_stages, "Warning: No evidence documents were ingested.")
     else:
         _update_progress(current_stage_num, total_pipeline_stages, "Warning: Evidences directory not specified or does not exist. Proceeding without evidence.")
@@ -141,6 +148,10 @@ def run_pipeline(
     procedures_norm_map: Dict[str, NormDoc] = {doc.id: doc for doc in procedure_norm_docs}
     # evidence_norm_map is not strictly needed if we use evidence_embed_sets_map later for text
 
+    # Populate the maps in the project object
+    project.control_norm_docs_map = controls_norm_map
+    project.procedure_norm_docs_map = procedures_norm_map
+
     # --- Stage C: Embedding ---
     current_stage_num += 1
     _update_progress(current_stage_num, total_pipeline_stages, "Stage 4/8: Generating embeddings...")
@@ -150,26 +161,29 @@ def run_pipeline(
     for doc in control_norm_docs:
         embeds = generate_embeddings(doc, cache_service, settings.openai_api_key, settings.embedding_model)
         control_embed_sets_all.extend(embeds)
-        for es in embeds: all_embed_sets_map[es.id] = es
+        for es in embeds:
+            all_embed_sets_map[es.id] = es
 
     procedure_embed_sets_all: List[EmbedSet] = []
     for doc in procedure_norm_docs:
         embeds = generate_embeddings(doc, cache_service, settings.openai_api_key, settings.embedding_model)
         procedure_embed_sets_all.extend(embeds)
-        for es in embeds: all_embed_sets_map[es.id] = es
+        for es in embeds:
+            all_embed_sets_map[es.id] = es
         
     evidence_embed_sets_all: List[EmbedSet] = []
-    for doc in evidence_norm_docs: # If evidence_norm_docs is empty, this loop is skipped
+    for doc in evidence_norm_docs:  # If evidence_norm_docs is empty, this loop is skipped
         embeds = generate_embeddings(doc, cache_service, settings.openai_api_key, settings.embedding_model)
         evidence_embed_sets_all.extend(embeds)
-        for es in embeds: all_embed_sets_map[es.id] = es
+        for es in embeds:
+            all_embed_sets_map[es.id] = es
 
     if not control_embed_sets_all or not procedure_embed_sets_all:
         _update_progress(current_stage_num, total_pipeline_stages, "CRITICAL ERROR: Failed to generate embeddings for controls or procedures.")
         return None
-    if not evidence_embed_sets_all and evidence_raw_docs: # if raw evidence existed but no embeddings
-         _update_progress(current_stage_num, total_pipeline_stages, "Warning: Failed to generate embeddings for evidence documents.")
-         # Pipeline can proceed, but LLM might not have evidence text for some assessments.
+    if not evidence_embed_sets_all and evidence_raw_docs:  # if raw evidence existed but no embeddings
+        _update_progress(current_stage_num, total_pipeline_stages, "Warning: Failed to generate embeddings for evidence documents.")
+        # Pipeline can proceed, but LLM might not have evidence text for some assessments.
 
     # --- Stage D: Indexing ---
     current_stage_num += 1
@@ -177,26 +191,29 @@ def run_pipeline(
 
     control_idx_meta = create_or_load_index(control_embed_sets_all, index_root_dir, "control", settings.embedding_model)
     procedure_idx_meta = create_or_load_index(procedure_embed_sets_all, index_root_dir, "procedure", settings.embedding_model)
-    evidence_idx_meta = create_or_load_index(evidence_embed_sets_all, index_root_dir, "evidence", settings.embedding_model) # Optional for some flows
+    evidence_idx_meta = create_or_load_index(evidence_embed_sets_all, index_root_dir, "evidence", settings.embedding_model)  # Optional for some flows
 
     if not control_idx_meta or not procedure_idx_meta:
         _update_progress(current_stage_num, total_pipeline_stages, "CRITICAL ERROR: Failed to create/load indexes for controls or procedures.")
         return None
-    if not evidence_idx_meta and evidence_embed_sets_all: # If there were evidence embeddings but index failed
+    if not evidence_idx_meta and evidence_embed_sets_all:  # If there were evidence embeddings but index failed
         _update_progress(current_stage_num, total_pipeline_stages, "Warning: Failed to create/load index for evidence. Evidence matching may be impacted.")
 
     # Load FAISS indexes and ID maps into memory
     try:
         control_faiss_index = faiss.read_index(str(control_idx_meta.index_file_path)) if control_idx_meta else None
-        with open(control_idx_meta.id_mapping_path, 'r') as f: control_id_map = json.load(f) if control_idx_meta else []
+        with open(control_idx_meta.id_mapping_path, 'r') as f:
+            control_id_map = json.load(f) if control_idx_meta else []
         
         procedure_faiss_index = faiss.read_index(str(procedure_idx_meta.index_file_path)) if procedure_idx_meta else None
-        with open(procedure_idx_meta.id_mapping_path, 'r') as f: procedure_id_map = json.load(f) if procedure_idx_meta else []
+        with open(procedure_idx_meta.id_mapping_path, 'r') as f:
+            procedure_id_map = json.load(f) if procedure_idx_meta else []
 
         evidence_faiss_index = faiss.read_index(str(evidence_idx_meta.index_file_path)) if evidence_idx_meta and evidence_idx_meta.index_file_path.exists() else None
         evidence_id_map: List[str] = []
         if evidence_idx_meta and evidence_idx_meta.id_mapping_path.exists():
-            with open(evidence_idx_meta.id_mapping_path, 'r') as f: evidence_id_map = json.load(f)
+            with open(evidence_idx_meta.id_mapping_path, 'r') as f:
+                evidence_id_map = json.load(f)
             
     except Exception as e:
         _update_progress(current_stage_num, total_pipeline_stages, f"CRITICAL ERROR: Failed to load FAISS index objects or ID maps: {e}")
@@ -212,23 +229,59 @@ def run_pipeline(
     # Each control chunk search for procedures is one "major" step in this part of the loop.
     # Further evidence searches and LLM calls happen within that.
     num_control_chunks = len(control_embed_sets_all)
-    total_main_loop_steps = num_control_chunks 
-    current_main_loop_step = 0
+    # total_main_loop_steps = num_control_chunks # This was for the sub-progress display
+    # current_main_loop_step = 0 # This was for the sub-progress display
+
+    # For overall progress reporting, we'll use current_stage_num and total_pipeline_stages
+    # The loop itself represents one of the total_pipeline_stages.
+    # We can provide finer-grained progress within this stage using the loop variables.
 
     for i, query_control_es in enumerate(control_embed_sets_all):
-        _update_progress(
-            i + 1, 
-            total_main_loop_steps, 
-            f"Processing Control Chunk {query_control_es.id} ({i+1}/{num_control_chunks})"
-        )
+        if cancel_cb and cancel_cb():
+            _update_progress(current_stage_num, total_pipeline_stages, "Operation cancelled by user.")
+            raise RuntimeError("Cancelled by user during Stage 6: Retrieval and LLM assessments.")
 
-        if not procedure_faiss_index or not procedure_id_map: # Should have been caught by CRITICAL ERROR above
-             _update_progress(current_stage_num, total_pipeline_stages, "Skipping procedure matching for control chunk due to missing procedure index.")
-             continue
+        # Update progress for each control chunk processed within Stage 6
+        # This provides more granular feedback than just start/end of Stage 6
+        # Calculate percentage within stage 6: (i / num_control_chunks) * 100
+        # Overall percentage: ((current_stage_num -1 + (i / num_control_chunks)) / total_pipeline_stages) * 100
+        
+        # Let's use a simpler approach: update the main stage progress message,
+        # and the percentage will be based on the current_stage_num for the stage itself.
+        # The ProgressPanel's text log will show the detailed "Processing Control Chunk..."
+        
+        # The main _update_progress for Stage 6 (Retrieval and LLM) is called once before this loop.
+        # For more detailed progress *within* stage 6, we can call progress_callback directly
+        # with a specific message for the sub-step and a percentage reflecting progress *within* stage 6.
+        if progress_callback:
+            # Calculate percentage for this sub-step within stage 6
+            # Example: stage 6 is, say, 50% to 75% of total. This sub-step is part of that 25% window.
+            # For simplicity, we'll pass the main stage number (current_stage_num)
+            # and let the message describe the sub-operation. The percentage will be for the main stage.
+            # A more complex calculation could map i/num_control_chunks to a fraction of the stage's overall percentage.
+            
+            # Simplest: just update the text log via a specific call if needed,
+            # or rely on the _update_progress call at the start of Stage 6 and its general message.
+            # The current _update_progress in MainWindow already sends overall stage and percentage.
+            # The detailed message "Processing Control Chunk..." can be sent as the stage_msg.
+            # So, we update the main stage message here.
+            
+            # Update the message for the current stage to reflect the sub-task
+            # The current_stage_num is 6 here.
+            # The percentage is calculated by _update_progress for stage 6 / 8.
+            _update_progress(
+                current_stage_num,  # Current main stage (e.g., 6)
+                total_pipeline_stages,  # Total main stages (e.g., 8)
+                f"Stage 6/{total_pipeline_stages}: Processing Control Chunk {query_control_es.id} ({i + 1}/{num_control_chunks})"
+            )
+
+        if not procedure_faiss_index or not procedure_id_map:
+            _update_progress(current_stage_num, total_pipeline_stages, "Warning: Skipping procedure matching for control chunk due to missing procedure index.")
+            continue
 
         proc_matches: List[MatchSet] = retrieve_similar_chunks(
             query_embed_set=query_control_es,
-            target_index_meta=procedure_idx_meta, # type: ignore
+            target_index_meta=procedure_idx_meta,  # type: ignore
             target_embed_sets_map=all_embed_sets_map,
             k_results=settings.top_k_procedure,
             faiss_index_obj=procedure_faiss_index,
@@ -244,21 +297,31 @@ def run_pipeline(
             # If no evidence index or no evidence embeddings, we can't find evidence matches
             if not evidence_faiss_index or not evidence_id_map or not evidence_idx_meta or not evidence_embed_sets_all:
                 # Create an assessment based on Control-Procedure only
-                # print(f"Note: No evidence index/data available for C:{query_control_es.id} P:{matched_proc_es.id}. Assessing C-P pair directly.")
                 assessment = assess_triplet_with_llm(
-                    control_doc_id=query_control_es.norm_doc_id, procedure_doc_id=matched_proc_es.norm_doc_id, evidence_doc_id="N/A_NoEvidenceIndex",
-                    control_chunk_id=query_control_es.id, procedure_chunk_id=matched_proc_es.id, evidence_chunk_id="N/A_NoEvidenceIndex",
-                    control_chunk_text=query_control_es.chunk_text, procedure_chunk_text=matched_proc_es.chunk_text, evidence_chunk_text="No specific evidence chunk applicable due to missing evidence index or data.",
-                    cache_service=cache_service, openai_api_key=settings.openai_api_key, llm_model_name=settings.llm_model
+                    control_doc_id=query_control_es.norm_doc_id,
+                    procedure_doc_id=matched_proc_es.norm_doc_id,
+                    evidence_doc_id="N/A_NoEvidenceIndex",
+                    control_chunk_id=query_control_es.id,
+                    procedure_chunk_id=matched_proc_es.id,
+                    evidence_chunk_id="N/A_NoEvidenceIndex",
+                    control_chunk_text=query_control_es.chunk_text,
+                    procedure_chunk_text=matched_proc_es.chunk_text,
+                    evidence_chunk_text="No specific evidence chunk applicable due to missing evidence index or data.",
+                    cache_service=cache_service,
+                    openai_api_key=settings.openai_api_key,
+                    llm_model_name=settings.llm_model,
+                    cancel_cb=cancel_cb  # Pass cancel_cb
                 )
                 if assessment:
                     all_triple_assessments_list.append(assessment)
-                continue # Move to next procedure match
+                if cancel_cb and cancel_cb():  # Check after LLM call
+                    raise RuntimeError("Cancelled by user during LLM assessment (no evidence index).")
+                continue  # Move to next procedure match
 
             # Proceed with evidence matching
             evid_matches: List[MatchSet] = retrieve_similar_chunks(
                 query_embed_set=matched_proc_es,
-                target_index_meta=evidence_idx_meta, # type: ignore
+                target_index_meta=evidence_idx_meta,  # type: ignore
                 target_embed_sets_map=all_embed_sets_map,
                 k_results=settings.top_m_evidence,
                 faiss_index_obj=evidence_faiss_index,
@@ -266,19 +329,30 @@ def run_pipeline(
             )
 
             if not evid_matches:
-                # print(f"Note: No evidence chunks found similar to P-Chunk:{matched_proc_es.id} for C-Chunk:{query_control_es.id}. Assessing C-P-NoSpecificEvidence.")
                 assessment = assess_triplet_with_llm(
-                    control_doc_id=query_control_es.norm_doc_id, procedure_doc_id=matched_proc_es.norm_doc_id, evidence_doc_id="N/A_NoMatchingEvidence",
-                    control_chunk_id=query_control_es.id, procedure_chunk_id=matched_proc_es.id, evidence_chunk_id="N/A_NoMatchingEvidence",
-                    control_chunk_text=query_control_es.chunk_text, procedure_chunk_text=matched_proc_es.chunk_text, evidence_chunk_text="No specific evidence chunk found to be relevant after search.",
-                    cache_service=cache_service, openai_api_key=settings.openai_api_key, llm_model_name=settings.llm_model
+                    control_doc_id=query_control_es.norm_doc_id,
+                    procedure_doc_id=matched_proc_es.norm_doc_id,
+                    evidence_doc_id="N/A_NoMatchingEvidence",
+                    control_chunk_id=query_control_es.id,
+                    procedure_chunk_id=matched_proc_es.id,
+                    evidence_chunk_id="N/A_NoMatchingEvidence",
+                    control_chunk_text=query_control_es.chunk_text,
+                    procedure_chunk_text=matched_proc_es.chunk_text,
+                    evidence_chunk_text="No specific evidence chunk found to be relevant after search.",
+                    cache_service=cache_service,
+                    openai_api_key=settings.openai_api_key,
+                    llm_model_name=settings.llm_model,
+                    cancel_cb=cancel_cb  # Pass cancel_cb
                 )
                 if assessment:
                     all_triple_assessments_list.append(assessment)
-                continue # Move to next procedure match
-
+                if cancel_cb and cancel_cb():  # Check after LLM call
+                    raise RuntimeError("Cancelled by user during LLM assessment (no matching evidence).")
+                continue  # Move to next procedure match
 
             for evid_match in evid_matches:
+                if cancel_cb and cancel_cb():
+                    raise RuntimeError("Cancelled by user before individual evidence LLM assessment.")
                 matched_evid_es = all_embed_sets_map.get(evid_match.matched_embed_set_id)
                 if not matched_evid_es:
                     print(f"Warning: Matched evidence EmbedSet ID {evid_match.matched_embed_set_id} not found in map. Skipping.")
@@ -296,15 +370,20 @@ def run_pipeline(
                     evidence_chunk_text=matched_evid_es.chunk_text,
                     cache_service=cache_service,
                     openai_api_key=settings.openai_api_key,
-                    llm_model_name=settings.llm_model
+                    llm_model_name=settings.llm_model,
+                    cancel_cb=cancel_cb  # Pass cancel_cb
                 )
                 if assessment:
                     all_triple_assessments_list.append(assessment)
-        
-        current_main_loop_step +=1 # Update progress based on outer loop (control chunks)
-        # More granular progress can be added inside the loops if progress_callback is very responsive
+                if cancel_cb and cancel_cb():  # Check after each LLM call
+                    raise RuntimeError("Cancelled by user during LLM assessment with evidence.")
+        # current_main_loop_step was removed, main stage progress is handled by the _update_progress call
+        # at the start of the loop for each control_embed_set.
 
     # --- Stage G (Post-Loop): Aggregation ---
+    if cancel_cb and cancel_cb():
+        _update_progress(current_stage_num, total_pipeline_stages, "Operation cancelled by user before Aggregation.")
+        raise RuntimeError("Cancelled by user before Stage 7: Aggregation.")
     current_stage_num += 1
     _update_progress(current_stage_num, total_pipeline_stages, "Stage 7/8: Aggregating assessments...")
     
@@ -316,7 +395,7 @@ def run_pipeline(
 
     for (c_doc_id, p_doc_id), group_of_triples in grouped_triples.items():
         pair_assessment = aggregate_assessments_for_pair(c_doc_id, p_doc_id, group_of_triples)
-        if pair_assessment: # aggregate_assessments_for_pair always returns a PairAssessment
+        if pair_assessment:  # aggregate_assessments_for_pair always returns a PairAssessment
             all_pair_assessments.append(pair_assessment)
 
     project.set_results(all_pair_assessments)
@@ -336,15 +415,19 @@ def run_pipeline(
         potential_css_path = Path(settings.report_theme)
         if potential_css_path.exists() and potential_css_path.is_file():
             css_path_to_use = potential_css_path.resolve()
-            _update_progress(current_stage_num, total_pipeline_stages, f"Stage 8/8: Using custom report theme: {css_path_to_use}")
+            _update_progress(current_stage_num, total_pipeline_stages, f"Stage 8/{total_pipeline_stages}: Using custom report theme: {css_path_to_use}")
         else:
-            _update_progress(current_stage_num, total_pipeline_stages, f"Stage 8/8: Warning - Custom report theme '{settings.report_theme}' not found or not a file. Using default styling.")
+            _update_progress(current_stage_num, total_pipeline_stages, f"Stage 8/{total_pipeline_stages}: Warning - Custom report theme '{settings.report_theme}' not found or not a file. Using default styling.")
+    
+    if cancel_cb and cancel_cb():
+        _update_progress(current_stage_num, total_pipeline_stages, "Operation cancelled by user before Report Generation.")
+        raise RuntimeError("Cancelled by user before Stage 8: Report Generation.")
 
     markdown_report_path = generate_report(
         all_pair_assessments=all_pair_assessments,
         controls_map=controls_norm_map,
         procedures_map=procedures_norm_map,
-        evidences_map=all_embed_sets_map, # Pass the map of all EmbedSets
+        evidences_map=all_embed_sets_map,  # Pass the map of all EmbedSets
         report_output_dir=output_dir,
         report_filename_base=report_filename_base,
         report_theme_css_path=css_path_to_use,
@@ -353,11 +436,12 @@ def run_pipeline(
 
     if markdown_report_path:
         _update_progress(total_pipeline_stages, total_pipeline_stages, f"Pipeline completed. Report generated: {markdown_report_path}")
-        project.report_path = markdown_report_path # Update project object with report path
+        project.report_path = markdown_report_path  # Update project object with report path
     else:
         _update_progress(total_pipeline_stages, total_pipeline_stages, "Pipeline completed, but report generation failed.")
 
     return markdown_report_path
+
 
 if __name__ == '__main__':
     # This is a placeholder for a test execution.

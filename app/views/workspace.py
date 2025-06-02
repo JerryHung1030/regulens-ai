@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QStackedWidget, QLabel
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QStackedWidget, QLabel, QApplication  # Added QApplication
 from PySide6.QtCore import Qt, QSettings
 
 from app.stores.project_store import ProjectStore
@@ -54,15 +54,15 @@ class Workspace(QWidget):
         elif self.sidebar.list_projects.count() > 0:
             # Select the first project by default if any exist
             first_project_item = self.sidebar.list_projects.item(0)
-            if first_project_item: # Check if item exists
-                self.sidebar.list_projects.setCurrentItem(first_project_item) # Ensure selection visually
-                first_project = first_project_item.data(Qt.UserRole) # Fetch CompareProject object
-                if first_project: # Check if project object is valid
+            if first_project_item:  # Check if item exists
+                self.sidebar.list_projects.setCurrentItem(first_project_item)  # Ensure selection visually
+                first_project = first_project_item.data(Qt.UserRole)  # Fetch CompareProject object
+                if first_project:  # Check if project object is valid
                     self._show_project_in_stack(first_project)
-                else: # Fallback or error logging if data is not CompareProject
+                else:  # Fallback or error logging if data is not CompareProject
                     logger.error("First project item in sidebar has invalid data.")
                     self.show_default_message()
-            else: # Fallback if item(0) somehow doesn't exist despite count > 0
+            else:  # Fallback if item(0) somehow doesn't exist despite count > 0
                 self.show_default_message()
 
     def show_default_message(self):
@@ -119,12 +119,6 @@ class Workspace(QWidget):
         """
         self.sidebar.refresh_project_list()  # This will update the QListWidget in Sidebar
 
-        current_project_name_in_sidebar = None
-        if self.sidebar.list_projects.currentItem():
-            # Use UserRole to get the project object directly
-            current_project_object = self.sidebar.list_projects.currentItem().data(Qt.UserRole)
-            # current_project_name_in_sidebar = self.sidebar.list_projects.currentItem().text() # Old way
-
         if not self.project_store.projects:
             self.show_default_message()
             return
@@ -134,28 +128,28 @@ class Workspace(QWidget):
             project_to_display = self.sidebar.list_projects.currentItem().data(Qt.UserRole)
             if isinstance(project_to_display, CompareProject):
                 self._show_project_in_stack(project_to_display)
-            else: # Should not happen if sidebar items are correctly populated
+            else:  # Should not happen if sidebar items are correctly populated
                 logger.error("Selected item in sidebar does not contain valid project data.")
                 # Fallback: try selecting the first available project if current is invalid
                 if self.sidebar.list_projects.count() > 0:
                     first_item = self.sidebar.list_projects.item(0)
                     first_project = first_item.data(Qt.UserRole) if first_item else None
                     if isinstance(first_project, CompareProject):
-                        self.sidebar.list_projects.setCurrentItem(first_item) # Visually select it
+                        self.sidebar.list_projects.setCurrentItem(first_item)  # Visually select it
                         self._show_project_in_stack(first_project)
                     else:
-                        self.show_default_message() # No valid projects to show
+                        self.show_default_message()  # No valid projects to show
                 else:
-                    self.show_default_message() # No projects at all
+                    self.show_default_message()  # No projects at all
         elif self.project_store.projects:  # Projects exist, but none selected in sidebar (e.g. after deletion)
             # Select and show the first project
             if self.sidebar.list_projects.count() > 0:
                 first_item = self.sidebar.list_projects.item(0)
-                self.sidebar.list_projects.setCurrentItem(first_item) # Visually select it
+                self.sidebar.list_projects.setCurrentItem(first_item)  # Visually select it
                 first_project = first_item.data(Qt.UserRole)
                 if isinstance(first_project, CompareProject):
                     self._show_project_in_stack(first_project)
-                else: # Should not happen
+                else:  # Should not happen
                     self.show_default_message()
         else:  # No projects and nothing selected
             self.show_default_message()
@@ -185,14 +179,14 @@ class Workspace(QWidget):
     def _disconnect_project_signals(self, project: CompareProject):
         """斷開項目的所有信號連接"""
         project_id = id(project)
-        project_id_str = str(project_id) # Use string for logging if project_id is complex
+        project_id_str = str(project_id)  # Use string for logging if project_id is complex
         if project_id in self._project_connections:
             for signal, slot in self._project_connections[project_id]:
                 try:
                     signal.disconnect(slot)
                 except RuntimeError as e:
                     logger.warning(f"RuntimeError during slot disconnection for project {project_id_str}: {e} (Signal: {signal}, Slot: {slot})")
-                except TypeError as e: # PySide can sometimes throw TypeError on disconnect
+                except TypeError as e:  # PySide can sometimes throw TypeError on disconnect
                     logger.warning(f"TypeError during slot disconnection for project {project_id_str}: {e} (Signal: {signal}, Slot: {slot})")
             del self._project_connections[project_id]
 
@@ -260,26 +254,27 @@ class Workspace(QWidget):
         project.viewer_idx = -1  # Ensure viewer_idx is reset
 
     def show_project_results(self, project: CompareProject):
+        QApplication.processEvents()  # Added to process pending events, e.g., dialog closure
         logger.debug(f"Attempting to show results for project: {project.name if project else 'None'}")
 
         if project is None:
             logger.error("show_project_results called with a None project.")
-            self.show_default_message() # Or some other appropriate error display
+            self.show_default_message()  # Or some other appropriate error display
             return
 
         # Ensure sidebar reflects this project
         # This might be redundant if already handled by calling context, but good for safety
         for i in range(self.sidebar.list_projects.count()):
             item = self.sidebar.list_projects.item(i)
-            if item.data(Qt.UserRole) == project: # Compare project objects
+            if item.data(Qt.UserRole) == project:  # Compare project objects
                 self.sidebar.list_projects.setCurrentItem(item)
                 break
         
         if not project.has_results:
             logger.warning(f"Project '{project.name}' has no results. Switching to editor view.")
-            self._clear_stack() # Clear current view (e.g. if it was an old editor)
+            self._clear_stack()  # Clear current view (e.g. if it was an old editor)
             
-            editor = ProjectEditor(project) # Parent will be set by addWidget
+            editor = ProjectEditor(project)  # Parent will be set by addWidget
             if self.main_window and hasattr(self.main_window, "_run_compare"):
                 editor.compare_requested.connect(self.main_window._run_compare)
             
@@ -294,7 +289,7 @@ class Workspace(QWidget):
             self.stack.addWidget(editor)
             self.stack.setCurrentWidget(editor)
             project.editor_idx = self.stack.indexOf(editor)
-            project.viewer_idx = -1 # Ensure viewer_idx is reset
+            project.viewer_idx = -1  # Ensure viewer_idx is reset
 
             logger.info(f"Switched to editor view for '{project.name}' as no results are available.")
             # Consider adding a QMessageBox.information here if direct user feedback is desired.
@@ -305,7 +300,7 @@ class Workspace(QWidget):
         logger.info(f"Displaying results for project: {project.name}")
         self._clear_stack() 
 
-        viewer = ResultsViewer(project) # Parent will be set by addWidget
+        viewer = ResultsViewer(project)  # Parent will be set by addWidget
         viewer.edit_requested.connect(self._switch_to_editor)
         
         self.stack.addWidget(viewer)
@@ -351,7 +346,7 @@ class Workspace(QWidget):
             # 選擇第一個可用的項目
             if self.sidebar.list_projects.count() > 0:
                 first_item = self.sidebar.list_projects.item(0)
-                self.sidebar.list_projects.setCurrentItem(first_item) # Visually select it
+                self.sidebar.list_projects.setCurrentItem(first_item)  # Visually select it
                 first_project = first_item.data(Qt.UserRole)
                 if isinstance(first_project, CompareProject):
                     self._show_project_in_stack(first_project)

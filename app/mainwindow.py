@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-import asyncio
 import sys
-# from pathlib import Path  # Keep for type hints if CompareProject uses it and is passed around
-# from typing import List, Optional, Dict, Any # Keep if type hints for CompareProject use them
+# from pathlib import Path
+# from typing import List, Optional, Dict, Any, Callable # For type hints
 
-from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt
+from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
-    QDialog,  # For SettingsDialog
+    QDialog,
     QMainWindow,
-    QMessageBox,  # For error reporting
-    QProgressDialog,  # For comparison progress
+    QMessageBox,
+    # QProgressDialog, # No longer used
 )
 
 # Local imports
+from .widgets.progress_panel import ProgressPanel  # Added
 from .logger import logger
 from .settings import Settings
 from .settings_dialog import SettingsDialog
 from .models.project import CompareProject
-from .pipeline import run_pipeline, PipelineSettings # Added
+from .pipeline import run_pipeline, PipelineSettings  # Added
 # from app.widgets.project_editor import ProjectEditor
 # from app.widgets.results_viewer import ResultsViewer
 from .widgets.intro_page import IntroPage
@@ -35,6 +35,7 @@ from .stores.project_store import ProjectStore
 class _Signals(QObject):
     finished = Signal(object)
     error = Signal(Exception)
+    progress_updated = Signal(int, int, str, int)  # Added for thread-safe progress updates
 
 
 class _Worker(QRunnable):
@@ -63,9 +64,11 @@ class MainWindow(QMainWindow):
     def __init__(self, settings: Settings):
         super().__init__()
         self.setWindowTitle("Regulens‑AI")
-        self.settings = settings  # For SettingsDialog
-        self.project_store = ProjectStore()  # Manages all project data
+        self.settings = settings
+        self.project_store = ProjectStore()
         self.threadpool = QThreadPool()
+        self._cancelled = False  # Added
+        self._progress_panel: ProgressPanel | None = None  # Added
 
         self._build_menubar()
 
@@ -120,10 +123,10 @@ class MainWindow(QMainWindow):
 
         if missing_fields:
             msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("組態設定不完整") # Configuration Incomplete
-            msg_box.setText("請先設定 OpenAI API Key 與模型參數，才能執行比較") # Please set OpenAI API Key and model parameters to proceed.
-            open_settings_button = msg_box.addButton("開啟設定", QMessageBox.ActionRole) # Open Settings
-            cancel_button = msg_box.addButton("取消", QMessageBox.RejectRole) # Cancel
+            msg_box.setWindowTitle("組態設定不完整")  # Configuration Incomplete
+            msg_box.setText("請先設定 OpenAI API Key 與模型參數，才能執行比較")  # Please set OpenAI API Key and model parameters to proceed.
+            open_settings_button = msg_box.addButton("開啟設定", QMessageBox.ActionRole)  # Open Settings
+            cancel_button = msg_box.addButton("取消", QMessageBox.RejectRole)  # Cancel
             msg_box.setDefaultButton(open_settings_button)
             
             msg_box.exec()
@@ -135,7 +138,7 @@ class MainWindow(QMainWindow):
                 # Re-check after settings dialog is closed
                 still_missing = [field for field in required_fields if not self.settings.get(field)]
                 if still_missing:
-                    QMessageBox.warning(self, "組態設定不完整", "設定仍未完成，無法繼續執行。") # Settings still incomplete, cannot proceed.
+                    QMessageBox.warning(self, "組態設定不完整", "設定仍未完成，無法繼續執行。")  # Settings still incomplete, cannot proceed.
                     return False
                 return True
         return True
@@ -152,40 +155,86 @@ class MainWindow(QMainWindow):
         if not self._ensure_settings_configured():
             # Message to user is handled within _ensure_settings_configured
             return
-    
-        prog = QProgressDialog("正在處理專案...", "取消", 0, 0, self) # Indeterminate progress
-        prog.setWindowModality(Qt.WindowModal)
-        # prog.setCancelButton(None) # Allow cancellation if pipeline supports it
-        prog.show()
 
-        def task():
+        self._cancelled = False  # Reset cancellation flag for new run
+        self._progress_panel = ProgressPanel(self)  # Using new ProgressPanel
+        self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)
+        self._progress_panel.show()
+
+        def task_wrapper(worker_signals: _Signals):  # Renamed to avoid conflict, pass signals
             try:
                 logger.info(f"Starting pipeline for project: {proj.name}")
                 current_pipeline_settings = PipelineSettings.from_settings(self.settings)
-                run_pipeline(proj, current_pipeline_settings)
-                # run_pipeline is expected to update proj.report_path
+
+                # Define the progress callback for run_pipeline
+                def progress_handler(stage_idx: int, total_stages: int, message: str, percent_complete: int):
+                    # This is called from the worker thread, emit signal for main thread update
+                    worker_signals.progress_updated.emit(stage_idx, total_stages, message, percent_complete)
+
+                run_pipeline(
+                    proj,
+                    current_pipeline_settings,
+                    progress_callback=progress_handler,  # Pass the new handler
+                    cancel_cb=self._is_pipeline_cancelled  # Pass cancellation check
+                )
                 logger.info(f"Pipeline finished for {proj.name}. Report: {proj.report_path}")
             except Exception as e:
                 logger.error(f"Pipeline execution failed for {proj.name}: {e}", exc_info=True)
-                # Re-raise to be caught by _Worker's error handling
-                raise
-            return proj # Return the project, now potentially with report_path updated
+                raise  # Re-raise to be caught by _Worker's error handling
+            return proj
 
-        worker = _Worker(task)
-        worker.signals.error.connect(lambda e: self._compare_error(e, prog))  # type: ignore[attr-defined]
-        worker.signals.finished.connect(lambda p: self._compare_done(p, prog))  # type: ignore[attr-defined]
+        worker = _Worker(lambda: task_wrapper(worker.signals))  # Pass worker's signals to task_wrapper
+        worker.signals.error.connect(self._compare_error)  # Pass self._progress_panel implicitly
+        worker.signals.finished.connect(self._compare_done)  # Pass self._progress_panel implicitly
+        worker.signals.progress_updated.connect(self._update_progress_panel_on_signal)  # Connect new signal
         self.threadpool.start(worker)
 
-    def _compare_error(self, err: Exception, dlg: QProgressDialog):
-        dlg.close()
-        QMessageBox.critical(self, "比較失敗", str(err))
+    def _update_progress_panel_on_signal(self, stage_idx: int, total_stages: int, message: str, percent: int):
+        """Slot to update ProgressPanel from worker thread signal."""
+        if self._progress_panel:
+            self._progress_panel.update_progress(stage_idx, total_stages, message, percent)
 
-    def _compare_done(self, proj: CompareProject, dlg: QProgressDialog):  # type: ignore[no-redef]
-        dlg.close()
+    def _is_pipeline_cancelled(self) -> bool:
+        """Used by run_pipeline to check for cancellation."""
+        return self._cancelled
+
+    def _handle_pipeline_cancellation(self):
+        """Slot for ProgressPanel's cancelled signal."""
+        logger.info("Pipeline cancellation requested by user via ProgressPanel.")
+        self._cancelled = True
+        # ProgressPanel handles its own closure via reject() when cancel button is clicked.
+        # If pipeline aborts due to self._cancelled, _compare_error will be called.
+
+    def _compare_error(self, err: Exception):  # dlg parameter removed
+        if self._progress_panel:
+            try:
+                # Disconnect from panel's cancelled signal to avoid issues during cleanup
+                self._progress_panel.cancelled.disconnect(self._handle_pipeline_cancellation)
+            except RuntimeError:  # Signal might have already been disconnected or was never connected
+                logger.debug("Error disconnecting ProgressPanel.cancelled, possibly already disconnected.")
+            self._progress_panel.accept()  # Close the panel
+            self._progress_panel = None
+        self._cancelled = False  # Reset for the next run
+        
+        # Show error message
+        # Check if error is due to cancellation to show a more specific message
+        if "Cancelled by user" in str(err) or (isinstance(err, RuntimeError) and "cancel" in str(err).lower()):
+            QMessageBox.information(self, "操作已取消", "流程已被使用者取消。")  # Operation Cancelled, The process was cancelled by the user.
+        else:
+            QMessageBox.critical(self, "比較失敗", str(err))  # Comparison Failed
+
+    def _compare_done(self, proj: CompareProject):  # dlg parameter removed
+        if self._progress_panel:
+            try:
+                self._progress_panel.cancelled.disconnect(self._handle_pipeline_cancellation)
+            except RuntimeError:
+                logger.debug("Error disconnecting ProgressPanel.cancelled in _compare_done, possibly already disconnected.")
+            self._progress_panel.accept()  # Close the panel
+            self._progress_panel = None
+        self._cancelled = False  # Reset for the next run
+
         logger.info("comparison finished for %s", proj.name)
-        # Project results are updated in the worker task.
-        # Now, notify the workspace to display the results.
-        proj.changed.emit()  # Emit changed to trigger ProjectStore save and UI updates
+        proj.changed.emit()
         self.comparison_finished.emit(proj)
 
     # ------------------------------------------------------------------

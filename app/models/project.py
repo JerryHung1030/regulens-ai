@@ -8,7 +8,10 @@ from threading import Lock
 from PySide6.QtCore import QObject, Signal
 
 from app.models.assessments import PairAssessment
+from .docs import NormDoc  # Ensure NormDoc is imported
+
 # Not using @dataclass anymore, fields will be initialized in __init__
+
 
 class CompareProject(QObject):
     changed = Signal()
@@ -21,7 +24,7 @@ class CompareProject(QObject):
     controls_dir: Optional[Path]
     procedures_dir: Optional[Path]
     evidences_dir: Optional[Path]
-    report_path: Optional[Path] # Path to the main Markdown report
+    report_path: Optional[Path]  # Path to the main Markdown report
     is_sample: bool
     created_at: datetime
 
@@ -34,7 +37,7 @@ class CompareProject(QObject):
                  evidences_dir: Optional[Path] = None,
                  report_path: Optional[Path] = None,
                  is_sample: bool = False,
-                 created_at: Optional[datetime] = None, # Allow None for default now()
+                 created_at: Optional[datetime] = None,  # Allow None for default now()
                  editor_idx: int = -1,
                  viewer_idx: int = -1,
                  parent: Optional[QObject] = None):
@@ -50,6 +53,26 @@ class CompareProject(QObject):
         self.created_at = created_at if created_at is not None else datetime.now()
         self.editor_idx = editor_idx
         self.viewer_idx = viewer_idx
+        
+        # New attributes for storing normalized document maps
+        self.control_norm_docs_map: Dict[str, NormDoc] = {}
+        self.procedure_norm_docs_map: Dict[str, NormDoc] = {}
+
+    def get_norm_doc_info(self, doc_id: str) -> dict:
+        norm_doc = None
+        # Check procedure_norm_docs_map first as it's more likely for tab titles
+        if hasattr(self, 'procedure_norm_docs_map') and self.procedure_norm_docs_map and doc_id in self.procedure_norm_docs_map:
+            norm_doc = self.procedure_norm_docs_map[doc_id]
+        elif hasattr(self, 'control_norm_docs_map') and self.control_norm_docs_map and doc_id in self.control_norm_docs_map:
+            norm_doc = self.control_norm_docs_map[doc_id]
+        
+        if not norm_doc:
+            return {}
+
+        return {
+            "original_filename": norm_doc.metadata.get("original_filename") if norm_doc.metadata else None,
+            "raw_doc_id": norm_doc.raw_doc_id
+        }
 
     def rename(self, new_name: str):
         self.name = new_name
@@ -69,13 +92,13 @@ class CompareProject(QObject):
                 for item in dir_path.iterdir():
                     if item.is_file() and item.suffix.lower() == ".txt":
                         return True
-                return False # No .txt file found
-            except OSError: # Catch potential errors like permission denied
+                return False  # No .txt file found
+            except OSError:  # Catch potential errors like permission denied
                 return False
 
-        return check_dir(self.controls_dir) and \
-               check_dir(self.procedures_dir) and \
-               check_dir(self.evidences_dir)
+        return (check_dir(self.controls_dir) and 
+                check_dir(self.procedures_dir) and 
+                check_dir(self.evidences_dir))
 
     @property
     def has_results(self) -> bool:
@@ -85,7 +108,7 @@ class CompareProject(QObject):
     def set_results(self, assessments: List[PairAssessment]):
         with self._results_lock:
             self.results = assessments
-        self.updated.emit() # Or a more specific signal if appropriate
+        self.updated.emit()  # Or a more specific signal if appropriate
 
     def get_results(self) -> List[PairAssessment]:
         with self._results_lock:
@@ -134,9 +157,9 @@ class CompareProject(QObject):
         if created_at_str:
             try:
                 created_at_dt = datetime.fromisoformat(created_at_str)
-            except ValueError: # Handle potential malformed ISO strings if any
-                created_at_dt = datetime.now() # Fallback or log error
-        else: # For older projects saved without created_at
+            except ValueError:  # Handle potential malformed ISO strings if any
+                created_at_dt = datetime.now()  # Fallback or log error
+        else:  # For older projects saved without created_at
             created_at_dt = datetime.now()
 
         return cls(
@@ -145,7 +168,7 @@ class CompareProject(QObject):
             procedures_dir=Path(data["procedures_dir"]) if data["procedures_dir"] else None,
             evidences_dir=Path(data["evidences_dir"]) if data["evidences_dir"] else None,
             report_path=Path(data["report_path"]) if data["report_path"] else None,
-            is_sample=data.get("is_sample", False), # Default to False if not present
+            is_sample=data.get("is_sample", False),  # Default to False if not present
             created_at=created_at_dt,
             # editor_idx and viewer_idx could be loaded if saved, or use defaults
         )
