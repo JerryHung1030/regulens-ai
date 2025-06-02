@@ -1,12 +1,43 @@
+import logging
+from typing import Optional
+
 from qtpy.QtWidgets import QDialog, QProgressBar, QTextEdit, QPushButton, QLabel, QVBoxLayout
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QFont, QFontMetrics, QTextOption
+
+logger = logging.getLogger(__name__)
+
+
+def elide_long_id(text: str, max_length: int = 32, font: Optional[QFont] = None, width_in_pixels: int = 360) -> str:
+    """
+    Truncates long strings, especially those containing IDs.
+    Aims to keep the first 8 characters, an ellipsis ..., and the last 8 characters
+    if the string is longer than max_length.
+    If a font is provided, uses QFontMetrics.elidedText for more precise truncation.
+    """
+    if font:
+        fm = QFontMetrics(font)
+        return fm.elidedText(text, Qt.ElideMiddle, width_in_pixels)
+    
+    if len(text) > max_length:
+        if "norm_" in text or len(text) > 20:  # Heuristic for ID-like strings
+            # Attempt to keep start and end for IDs
+            prefix_len = 8
+            suffix_len = 8
+            if len(text) > prefix_len + suffix_len + 3:  # 3 for "..."
+                return f"{text[:prefix_len]}...{text[-suffix_len:]}"
+            else:  # If not much longer than what we want to keep, just truncate
+                return f"{text[:max_length - 3]}..."
+        else:  # Generic truncation for other long strings
+            return f"{text[:max_length - 3]}..."
+    return text
 
 
 class ProgressPanel(QDialog):
     cancelled = Signal()
     completed = Signal()  # To be emitted by MainWindow when the task is truly done
 
-    def __init__(self, parent=None, total_stages=0):  # total_stages might not be strictly needed
+    def __init__(self, parent=None, total_stages=0):
         super().__init__(parent)
 
         self.setWindowTitle("Pipeline Progress")
@@ -14,9 +45,18 @@ class ProgressPanel(QDialog):
 
         # UI Elements
         self.current_stage_label = QLabel("Initializing...")
+        font_label = QFont()
+        font_label.setPointSize(10)
+        self.current_stage_label.setFont(font_label)
+
         self.progress_bar = QProgressBar()
         self.details_text_edit = QTextEdit()
         self.details_text_edit.setReadOnly(True)
+        self.details_text_edit.setWordWrapMode(QTextOption.WordWrap)  # Ensure word wrap
+        font_details = QFont()
+        font_details.setPointSize(9)  # Slightly smaller for details
+        self.details_text_edit.setFont(font_details)
+
         self.cancel_button = QPushButton("Cancel")
 
         # Layout
@@ -30,7 +70,6 @@ class ProgressPanel(QDialog):
         # Connections
         self.cancel_button.clicked.connect(self._handle_cancel)
 
-        # Store total_stages if needed, though update_progress takes it too
         self._total_stages = total_stages
         self._user_cancelled = False
 
@@ -42,11 +81,18 @@ class ProgressPanel(QDialog):
         - stage_msg: description of the current stage
         - percent: progress percentage (0-100). If < 0, set to indeterminate.
         """
-        self._total_stages = total_stages  # Update if it changes
-        
-        # Update QLabel for current stage
-        current_stage_display_text = f"Stage {stage_idx}/{total_stages}: {stage_msg}"
-        self.current_stage_label.setText(current_stage_display_text)
+        logger.debug(f"Original stage_msg: {stage_msg} (Stage {stage_idx}/{total_stages})")
+        self._total_stages = total_stages
+
+        # Elide stage_msg for the label
+        elided_label_msg = elide_long_id(
+            stage_msg, 
+            max_length=40,  # Character limit for label if no font
+            font=self.current_stage_label.font(), 
+            width_in_pixels=self.current_stage_label.width() - 20  # Approx width for label text
+        )
+        current_stage_display_text_for_label = f"Stage {stage_idx}/{total_stages}: {elided_label_msg}"
+        self.current_stage_label.setText(current_stage_display_text_for_label)
 
         # Update QProgressBar
         if percent < 0:
@@ -55,8 +101,21 @@ class ProgressPanel(QDialog):
             self.progress_bar.setRange(0, 100)
             self.progress_bar.setValue(percent)
 
-        # Append stage message to QTextEdit
-        self.details_text_edit.append(current_stage_display_text)
+        # Elide stage_msg for the details view (can be longer)
+        # For details, we might want a different max_length or rely more on font metrics if available
+        elided_details_msg = elide_long_id(
+            stage_msg, 
+            max_length=60,  # Character limit for details if no font
+            font=self.details_text_edit.font(),
+            # Use a fixed width or text edit's viewport width for eliding in details
+            # Using a fixed large value or relying on character length might be simpler here
+            # as details_text_edit width can change.
+            # For now, let's use a generous character length and the font if available.
+            # If using font metrics, consider self.details_text_edit.viewport().width()
+            width_in_pixels=350  # A reference width, adjust as needed
+        )
+        current_stage_display_text_for_details = f"Stage {stage_idx}/{total_stages}: {elided_details_msg}"
+        self.details_text_edit.append(current_stage_display_text_for_details)
 
     def _handle_cancel(self):
         self._user_cancelled = True
@@ -64,28 +123,10 @@ class ProgressPanel(QDialog):
         self.reject()  # Close the dialog
 
     def closeEvent(self, event):
-        """
-        Handle the close event. If the user closes the dialog (e.g., Esc, X button),
-        emit the cancelled signal.
-        """
-        if not self._user_cancelled:  # If not already cancelled by the button
-            # Check if the close was initiated by user action (e.g. window X button)
-            # This is a bit tricky, as reject() also triggers closeEvent.
-            # We use _user_cancelled to distinguish.
-            # A more robust way might involve checking event.spontaneous(),
-            # but for now, this should work with the current logic.
-            # If the task completes, MainWindow will call self.accept() or self.close()
-            # and we don't want to emit cancelled in that case.
-            
-            # For now, let's assume any close not via _handle_cancel is a user action
-            # if the dialog is still visible.
-            # However, the primary way to cancel is the button.
-            # If the window's X is clicked, it's equivalent to a cancel.
+        if not self._user_cancelled:
             self.cancelled.emit()
         super().closeEvent(event)
 
-    # Optional: A method to call when the process is fully completed by the worker
-    # This would typically be called by the MainWindow
     def mark_completed(self):
         self.completed.emit()
-        self.accept()  # Closes the dialog with QDialog.Accepted
+        self.accept()

@@ -1,20 +1,20 @@
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-import json
-from pathlib import Path # Ensure Path is imported
+from unittest.mock import patch, MagicMock, ANY
 
 from app.models.project import CompareProject
-from app.models.docs import IndexMeta, EmbedSet, RawDoc, NormDoc # Added RawDoc, NormDoc
-from app.models.assessments import TripleAssessment # For mock_assess_llm return type
+from app.models.docs import IndexMeta, EmbedSet, RawDoc, NormDoc  # Added RawDoc, NormDoc
+from app.models.assessments import TripleAssessment  # For mock_assess_llm return type
 from app.pipeline import PipelineSettings, run_pipeline
 from app.settings import Settings
+
 
 # Helper to create dummy files (can be shared or redefined)
 def create_dummy_txt_files(base_path: Path, count: int = 1, prefix: str = "file"):
     base_path.mkdir(parents=True, exist_ok=True)
     for i in range(count):
-        (base_path / f"{prefix}{i+1}.txt").write_text(f"dummy content for {prefix}{i+1}")
+        (base_path / f"{prefix}{i + 1}.txt").write_text(f"dummy content for {prefix}{i + 1}")
+
 
 @pytest.fixture
 def temp_project_for_pipeline(tmp_path: Path) -> CompareProject:
@@ -35,8 +35,9 @@ def temp_project_for_pipeline(tmp_path: Path) -> CompareProject:
         procedures_dir=procedures_p,
         evidences_dir=evidences_p
     )
-    assert project.ready # Pre-condition for pipeline test
+    assert project.ready  # Pre-condition for pipeline test
     return project
+
 
 @pytest.fixture
 def mock_app_settings(tmp_path):
@@ -44,7 +45,7 @@ def mock_app_settings(tmp_path):
     # This fixture provides a Settings instance that uses a temporary file.
     settings_file = tmp_path / "test_app_settings.json"
     s = Settings()
-    s._path = settings_file # Override internal path to use temp file
+    s._path = settings_file  # Override internal path to use temp file
 
     # Pre-populate with some pipeline-relevant settings
     s.set("openai_api_key", "test_api_key_from_settings")
@@ -52,6 +53,7 @@ def mock_app_settings(tmp_path):
     s.set("llm_model", "test_llm_model_from_settings")
     # s.set("some_threshold", "0.75") # Example if this setting was used
     return s
+
 
 def test_pipeline_settings_from_settings(mock_app_settings: Settings):
     pipeline_settings = PipelineSettings.from_settings(mock_app_settings)
@@ -61,19 +63,21 @@ def test_pipeline_settings_from_settings(mock_app_settings: Settings):
     assert pipeline_settings.llm_model == "test_llm_model_from_settings"
     # assert pipeline_settings.some_threshold == 0.75
 
+
 def test_pipeline_settings_defaults():
     # Test default values if settings are not present
-    empty_settings = Settings() # Uses default in-memory or non-existent file
+    empty_settings = Settings()  # Uses default in-memory or non-existent file
 
     pipeline_settings = PipelineSettings.from_settings(empty_settings)
 
-    assert pipeline_settings.openai_api_key == "" # Default from dataclass
-    assert pipeline_settings.embedding_model == "default_embedding_model" # Default from dataclass
-    assert pipeline_settings.llm_model == "default_llm_model" # Default from dataclass
+    assert pipeline_settings.openai_api_key == ""  # Default from dataclass
+    assert pipeline_settings.embedding_model == "default_embedding_model"  # Default from dataclass
+    assert pipeline_settings.llm_model == "default_llm_model"  # Default from dataclass
+
 
 # Mock generate_embeddings to prevent actual embedding calls and content validation issues
 @patch('app.pipeline.embed.generate_embeddings')
-@patch('time.sleep', MagicMock()) # Mock time.sleep to speed up test
+@patch('time.sleep', MagicMock())  # Mock time.sleep to speed up test
 def test_run_pipeline_basic_execution(
     mock_generate_embeddings: MagicMock,
     temp_project_for_pipeline: CompareProject,
@@ -89,13 +93,13 @@ def test_run_pipeline_basic_execution(
     # generate_embeddings is called for controls, procedures, and evidences.
 
     dummy_control_embed_set = [
-        MagicMock(spec=EmbedSet, id="ctrl_es_1", norm_doc_id="ctrl_doc_1", chunk_text="Control chunk 1", embedding=[0.1]*10, chunk_index=0, total_chunks=1, doc_type="control")
+        MagicMock(spec=EmbedSet, id="ctrl_es_1", norm_doc_id="ctrl_doc_1", chunk_text="Control chunk 1", embedding=[0.1] * 10, chunk_index=0, total_chunks=1, doc_type="control")
     ]
     dummy_procedure_embed_set = [
-        MagicMock(spec=EmbedSet, id="proc_es_1", norm_doc_id="proc_doc_1", chunk_text="Procedure chunk 1", embedding=[0.2]*10, chunk_index=0, total_chunks=1, doc_type="procedure")
+        MagicMock(spec=EmbedSet, id="proc_es_1", norm_doc_id="proc_doc_1", chunk_text="Procedure chunk 1", embedding=[0.2] * 10, chunk_index=0, total_chunks=1, doc_type="procedure")
     ]
     dummy_evidence_embed_set = [
-        MagicMock(spec=EmbedSet, id="evid_es_1", norm_doc_id="evid_doc_1", chunk_text="Evidence chunk 1", embedding=[0.3]*10, chunk_index=0, total_chunks=1, doc_type="evidence")
+        MagicMock(spec=EmbedSet, id="evid_es_1", norm_doc_id="evid_doc_1", chunk_text="Evidence chunk 1", embedding=[0.3] * 10, chunk_index=0, total_chunks=1, doc_type="evidence")
     ]
 
     # Set up the side_effect to return different values for different calls if needed,
@@ -104,14 +108,13 @@ def test_run_pipeline_basic_execution(
     # and we can make it return the respective list.
     mock_generate_embeddings.side_effect = [
         dummy_control_embed_set,  # First call (controls)
-        dummy_procedure_embed_set, # Second call (procedures)
+        dummy_procedure_embed_set,  # Second call (procedures)
         dummy_evidence_embed_set   # Third call (evidences)
     ]
 
     # and assess_triplet_with_llm to avoid their external dependencies and ensure the pipeline runs further.
     with patch('app.pipeline.ingestion.ingest_documents') as mock_ingest_documents, \
          patch('app.pipeline.normalize.normalize_document') as mock_normalize_document, \
-         patch('app.pipeline.embed.generate_embeddings') as mock_generate_embeddings_already_in_args, \
          patch('app.pipeline.index.create_or_load_index') as mock_create_index, \
          patch('app.pipeline.retrieve.retrieve_similar_chunks') as mock_retrieve_similar_chunks, \
          patch('app.pipeline.judge_llm.assess_triplet_with_llm') as mock_assess_llm, \
@@ -134,9 +137,9 @@ def test_run_pipeline_basic_execution(
 
         # 3. Mock for generate_embeddings (already an arg, use mock_generate_embeddings)
         # Ensure EmbedSet mocks have `embedding` attribute as a list of floats
-        embed_set_mock_c = MagicMock(spec=EmbedSet, id='ctrl_es_1', norm_doc_id='norm_ctrl_1', embedding=[0.1]*10, chunk_text='Normalized control')
-        embed_set_mock_p = MagicMock(spec=EmbedSet, id='proc_es_1', norm_doc_id='norm_proc_1', embedding=[0.2]*10, chunk_text='Normalized procedure')
-        embed_set_mock_e = MagicMock(spec=EmbedSet, id='evid_es_1', norm_doc_id='norm_evid_1', embedding=[0.3]*10, chunk_text='Normalized evidence')
+        embed_set_mock_c = MagicMock(spec=EmbedSet, id='ctrl_es_1', norm_doc_id='norm_ctrl_1', embedding=[0.1] * 10, chunk_text='Normalized control')
+        embed_set_mock_p = MagicMock(spec=EmbedSet, id='proc_es_1', norm_doc_id='norm_proc_1', embedding=[0.2] * 10, chunk_text='Normalized procedure')
+        embed_set_mock_e = MagicMock(spec=EmbedSet, id='evid_es_1', norm_doc_id='norm_evid_1', embedding=[0.3] * 10, chunk_text='Normalized evidence')
         mock_generate_embeddings.side_effect = [
             [embed_set_mock_c], [embed_set_mock_p], [embed_set_mock_e]
         ]
@@ -156,13 +159,13 @@ def test_run_pipeline_basic_execution(
         mock_retrieve_similar_chunks.return_value = [match_set_mock]
 
         # 6. Mock for assess_triplet_with_llm
-        assessment_mock = MagicMock(spec=TripleAssessment) # Use actual class for spec if possible
+        assessment_mock = MagicMock(spec=TripleAssessment)  # Use actual class for spec if possible
         assessment_mock.score = 0.9
         assessment_mock.judgment = "Compliant"
         assessment_mock.reasoning = "Mocked assessment"
         # Populate other fields if `aggregate_assessments_for_pair` needs them
-        assessment_mock.control_doc_id="norm_ctrl_1"
-        assessment_mock.procedure_doc_id="norm_proc_1"
+        assessment_mock.control_doc_id = "norm_ctrl_1"
+        assessment_mock.procedure_doc_id = "norm_proc_1"
 
         mock_assess_llm.return_value = assessment_mock
 
@@ -184,26 +187,27 @@ def test_run_pipeline_basic_execution(
     mock_ingest_documents.assert_any_call(project.procedures_dir, "procedure")
     # mock_ingest_documents.assert_any_call(project.evidences_dir, "evidence") # if evidences_dir is set
 
-    mock_normalize_document.assert_any_call(raw_doc_mock_ctrl) # Example check
-    mock_generate_embeddings.assert_any_call(norm_doc_mock_ctrl, ANY, ANY, ANY) # ANY for cache_service, api_key, model
+    mock_normalize_document.assert_any_call(raw_doc_mock_ctrl)  # Example check
+    mock_generate_embeddings.assert_any_call(norm_doc_mock_ctrl, ANY, ANY, ANY)  # ANY for cache_service, api_key, model
 
     mock_create_index.assert_any_call([embed_set_mock_c], ANY, "control", ANY)
 
     # assess_triplet_with_llm is called inside loops, checking call_count or specific args could be complex here
     # For simplicity, check if it was called at least once if matches were found
-    if mock_retrieve_similar_chunks.return_value: # If retrieve found matches
+    if mock_retrieve_similar_chunks.return_value:  # If retrieve found matches
         mock_assess_llm.assert_called()
 
     mock_generate_report.assert_called_once()
     # We can also assert some arguments passed to generate_report if needed
 
+
 def test_run_pipeline_project_not_ready(tmp_path: Path, mock_app_settings: Settings):
     # Create a project that is NOT ready
     not_ready_project = CompareProject(
         name="NotReadyProject",
-        controls_dir=tmp_path / "not_ready_controls" # Dir might not exist or have no .txt
+        controls_dir=tmp_path / "not_ready_controls"  # Dir might not exist or have no .txt
     )
-    assert not not_ready_project.ready # Pre-condition
+    assert not not_ready_project.ready  # Pre-condition
 
     pipeline_settings = PipelineSettings.from_settings(mock_app_settings)
 
@@ -232,6 +236,53 @@ def test_run_pipeline_project_not_ready(tmp_path: Path, mock_app_settings: Setti
 
     # A more direct check could be to mock project.report_path assignment or file creation
     # to ensure it's not called, but current placeholder is simple enough.
+
+
+# --- Tests for _get_doc_name from app.pipeline.aggregate ---
+# Note: _get_doc_name is in aggregate.py, but testing here as it's pipeline related util.
+# If test_aggregate.py existed, it would go there.
+from app.pipeline.aggregate import _get_doc_name
+
+
+def test_get_doc_name_found_with_filename():
+    norm_doc = NormDoc(id="doc1", raw_doc_id="raw1", text_content="Test", metadata={"original_filename": "MyFile.txt"}, doc_type="control")
+    norm_docs_map = {"doc1": norm_doc}
+    result = _get_doc_name("doc1", norm_docs_map, "Control")
+    assert result == "MyFile.txt"
+
+
+def test_get_doc_name_found_no_filename():
+    norm_doc = NormDoc(id="doc2", raw_doc_id="raw2", text_content="Test", metadata={}, doc_type="control")  # No original_filename
+    norm_docs_map = {"doc2": norm_doc}
+    result = _get_doc_name("doc2", norm_docs_map, "Control")
+    assert result == "Control doc2"  # Fallback to "Prefix doc_id"
+
+
+def test_get_doc_name_found_empty_metadata():
+    norm_doc = NormDoc(id="doc3", raw_doc_id="raw3", text_content="Test", metadata=None, doc_type="control")  # Metadata is None
+    norm_docs_map = {"doc3": norm_doc}
+    result = _get_doc_name("doc3", norm_docs_map, "Procedure")
+    assert result == "Procedure doc3"
+
+
+def test_get_doc_name_not_found():
+    norm_docs_map = {}  # Empty map
+    result = _get_doc_name("doc4_not_in_map", norm_docs_map, "Evidence")
+    assert result == "Evidence doc4_not_in_map"
+
+
+def test_get_doc_name_doc_is_none_in_map():
+    # Though map values should ideally be NormDoc, test robustness
+    norm_docs_map = {"doc5": None}
+    result = _get_doc_name("doc5", norm_docs_map, "Control")
+    assert result == "Control doc5"
+
+
+def test_get_doc_name_empty_map_and_id_not_found():
+    norm_docs_map = {}
+    result = _get_doc_name("doc6", norm_docs_map, "DefaultPrefix")
+    assert result == "DefaultPrefix doc6"
+
 
 # Further tests could include:
 # - Mocking specific steps of a more detailed pipeline (_step1_load_data, etc.)
