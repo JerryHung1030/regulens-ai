@@ -10,18 +10,48 @@ import faiss # type: ignore
 
 # Project-specific Imports
 # Models
+from app.settings import Settings # For PipelineSettings.from_settings
+from pydantic import BaseModel, Field # For PipelineSettings definition
+
 try:
     from app.models.project import CompareProject
-    from app.models.settings import PipelineSettings
+    # from app.models.settings import PipelineSettings # Removed this import
     from app.models.docs import RawDoc, NormDoc, EmbedSet, IndexMeta
     from app.models.assessments import TripleAssessment, PairAssessment, MatchSet
 except ImportError: # Fallback for potential execution context issues
     import sys
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
     from app.models.project import CompareProject # type: ignore
-    from app.models.settings import PipelineSettings # type: ignore
+    # from app.models.settings import PipelineSettings # type: ignore # Removed this import
     from app.models.docs import RawDoc, NormDoc, EmbedSet, IndexMeta # type: ignore
     from app.models.assessments import TripleAssessment, PairAssessment, MatchSet # type: ignore
+
+# Define PipelineSettings directly here or import from a dedicated app.pipeline.settings file
+class PipelineSettings(BaseModel):
+    openai_api_key: str = Field(default="")
+    embedding_model: str = Field(default="default_embedding_model") # Matches test default
+    llm_model: str = Field(default="default_llm_model") # Matches test default
+    # Fields from the original app.models.settings.ArchivedPipelineSettings that might be relevant:
+    local_model_path: Optional[Path] = Field(default=None)
+    top_k_procedure: int = Field(default=5)
+    top_m_evidence: int = Field(default=5)
+    score_threshold: float = Field(default=0.7)
+    report_theme: str = Field(default="default.css") # Or simply "default"
+    language: str = Field(default="en")
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "PipelineSettings":
+        return cls(
+            openai_api_key=settings.get("openai_api_key", ""),
+            embedding_model=settings.get("embedding_model") or "default_embedding_model",
+            llm_model=settings.get("llm_model") or "default_llm_model",
+            local_model_path=Path(settings.get("local_model_path")) if settings.get("local_model_path") else None,
+            top_k_procedure=int(settings.get("top_k_procedure", 5)),
+            top_m_evidence=int(settings.get("top_m_evidence", 5)),
+            score_threshold=float(settings.get("score_threshold", 0.7)),
+            report_theme=settings.get("report_theme", "default.css"),
+            language=settings.get("language", "en")
+        )
 
 # Pipeline Modules
 from .ingestion import ingest_documents

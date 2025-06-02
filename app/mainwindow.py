@@ -16,13 +16,13 @@ from PySide6.QtWidgets import (
 )
 
 # Local imports
-from .compare_manager import CompareManager
 from .logger import logger
 from .settings import Settings
 from .settings_dialog import SettingsDialog
-from .models.project import CompareProject  # For type hinting and _run_compare
-# from app.widgets.project_editor import ProjectEditor # No longer directly used by MainWindow
-# from app.widgets.results_viewer import ResultsViewer  # Used in _compare_done (needs review)
+from .models.project import CompareProject
+from .pipeline import run_pipeline, PipelineSettings # Added
+# from app.widgets.project_editor import ProjectEditor
+# from app.widgets.results_viewer import ResultsViewer
 from .widgets.intro_page import IntroPage
 from .views.workspace import Workspace
 from .stores.project_store import ProjectStore
@@ -60,11 +60,10 @@ class _Worker(QRunnable):
 class MainWindow(QMainWindow):
     comparison_finished = Signal(CompareProject)  # Signal to notify Workspace
 
-    def __init__(self, manager: CompareManager, settings: Settings):
+    def __init__(self, settings: Settings):
         super().__init__()
         self.setWindowTitle("Regulens‑AI")
-        self.manager = manager
-        self.settings = settings  # For SettingsDialog and API client
+        self.settings = settings  # For SettingsDialog
         self.project_store = ProjectStore()  # Manages all project data
         self.threadpool = QThreadPool()
 
@@ -98,26 +97,33 @@ class MainWindow(QMainWindow):
     def _open_settings(self):
         d = SettingsDialog(self.settings, self)
         if d.exec() == QDialog.accepted:
-            self._reload_api_client()
+            self._reload_pipeline_settings()
+            logger.info("Settings dialog accepted and pipeline settings reloaded.")
 
-    def _reload_api_client(self):
-        base = self.settings.get("base_url", "")
-        key = self.settings.get("api_key", "")
-        timeout = int(self.settings.get("timeout", 30))
-        self.manager.api_client.base_url = base
-        self.manager.api_client.api_key = key
-        self.manager.api_client.timeout = timeout
+    def _reload_pipeline_settings(self):
+        # This method will be updated when the new pipeline integration is clear.
+        # For now, it can log the relevant settings or re-initialize a conceptual PipelineSettings object.
+        logger.info("Reloading pipeline settings...")
+        # Example:
+        # pipeline_settings = {
+        #     "openai_api_key": self.settings.get("openai_api_key"),
+        #     "embedding_model": self.settings.get("embedding_model"),
+        #     "llm_model": self.settings.get("llm_model"),
+        # }
+        # logger.info(f"Pipeline settings: {pipeline_settings}")
+        # If there was a global or instance variable for pipeline config, update it here.
+        pass
 
     def _ensure_settings_configured(self) -> bool:
-        base_url = self.settings.get("base_url", "")
-        api_key = self.settings.get("api_key", "")
+        required_fields = ["openai_api_key", "embedding_model", "llm_model"]
+        missing_fields = [field for field in required_fields if not self.settings.get(field)]
 
-        if not base_url or not api_key:
+        if missing_fields:
             msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("Configuration Required")
-            msg_box.setText("Essential settings like API Base URL and API Key are missing. Please configure them now to proceed.")
-            open_settings_button = msg_box.addButton("Open Settings", QMessageBox.ActionRole)
-            cancel_button = msg_box.addButton("Cancel", QMessageBox.RejectRole)
+            msg_box.setWindowTitle("組態設定不完整") # Configuration Incomplete
+            msg_box.setText("請先設定 OpenAI API Key 與模型參數，才能執行比較") # Please set OpenAI API Key and model parameters to proceed.
+            open_settings_button = msg_box.addButton("開啟設定", QMessageBox.ActionRole) # Open Settings
+            cancel_button = msg_box.addButton("取消", QMessageBox.RejectRole) # Cancel
             msg_box.setDefaultButton(open_settings_button)
             
             msg_box.exec()
@@ -125,49 +131,45 @@ class MainWindow(QMainWindow):
             if msg_box.clickedButton() == cancel_button:
                 return False
             elif msg_box.clickedButton() == open_settings_button:
-                self._open_settings()  # Open the settings dialog
+                self._open_settings()
                 # Re-check after settings dialog is closed
-                base_url = self.settings.get("base_url", "")
-                api_key = self.settings.get("api_key", "")
-                if not base_url or not api_key:
-                    QMessageBox.warning(self, "Configuration Incomplete", "Settings are still missing. Comparison cannot proceed.")
+                still_missing = [field for field in required_fields if not self.settings.get(field)]
+                if still_missing:
+                    QMessageBox.warning(self, "組態設定不完整", "設定仍未完成，無法繼續執行。") # Settings still incomplete, cannot proceed.
                     return False
-                return True  # Settings are now configured
-        return True  # Settings were already configured
+                return True
+        return True
 
     # ------------------------------------------------------------------
     # Comparison flow
     # ------------------------------------------------------------------
-    def _run_compare(self, proj: CompareProject):  # type: ignore[no-redef]
+    def _run_compare(self, proj: CompareProject):
+        # The `proj.ready` check is now more comprehensive.
         if not proj.ready:
+            QMessageBox.warning(self, "專案未就緒", "請確認所有必要的資料夾都已設定且包含有效的 .txt 檔案。")
             return
         
         if not self._ensure_settings_configured():
-            return  # Stop if settings are not configured
+            # Message to user is handled within _ensure_settings_configured
+            return
     
-        prog = QProgressDialog("Comparing…", None, 0, len(proj.ref_paths), self)
+        prog = QProgressDialog("正在處理專案...", "取消", 0, 0, self) # Indeterminate progress
         prog.setWindowModality(Qt.WindowModal)
-        prog.setCancelButton(None)
+        # prog.setCancelButton(None) # Allow cancellation if pipeline supports it
         prog.show()
 
         def task():
-            # Retrieve RAG settings
-            scenario_params = {
-                "role_desc": self.settings.get("rag_role_desc", ""),
-                "reference_desc": self.settings.get("rag_reference_desc", ""),
-                "input_desc": self.settings.get("rag_input_desc", ""),
-                "direction": self.settings.get("rag_direction", "both"),
-                "rag_k": self.settings.get("rag_rag_k", 5),
-                "cof_threshold": self.settings.get("rag_cof_threshold", 0.5),
-                "llm_name": self.settings.get("rag_llm_name", "openai")
-                # project_id will be handled in ApiClient or CompareManager as it's not part of 'scenario'
-            }
-            for i, ref in enumerate(proj.ref_paths, start=1):
-                # Use proj.name as project_id for now
-                resp = asyncio.run(self.manager.acompare(proj.name, proj.input_path, ref, **scenario_params))  # type: ignore[arg-type]
-                proj.results[str(ref)] = resp.result
-                prog.setValue(i)
-            return proj
+            try:
+                logger.info(f"Starting pipeline for project: {proj.name}")
+                current_pipeline_settings = PipelineSettings.from_settings(self.settings)
+                run_pipeline(proj, current_pipeline_settings)
+                # run_pipeline is expected to update proj.report_path
+                logger.info(f"Pipeline finished for {proj.name}. Report: {proj.report_path}")
+            except Exception as e:
+                logger.error(f"Pipeline execution failed for {proj.name}: {e}", exc_info=True)
+                # Re-raise to be caught by _Worker's error handling
+                raise
+            return proj # Return the project, now potentially with report_path updated
 
         worker = _Worker(task)
         worker.signals.error.connect(lambda e: self._compare_error(e, prog))  # type: ignore[attr-defined]
@@ -199,14 +201,11 @@ class MainWindow(QMainWindow):
 # Manual launch
 # ----------------------------------------------------------------------------
 if __name__ == "__main__":  # pragma: no cover
-    from .api_client import ApiClient
-
     qapp = QApplication(sys.argv)
     sett = Settings()
-    client = ApiClient(sett.get("base_url", "https://api.example.com"), sett.get("api_key", ""))
-    mgr = CompareManager(client)
-
-    win = MainWindow(mgr, sett)
+    # ApiClient and CompareManager are removed.
+    # The MainWindow initialization is simplified.
+    win = MainWindow(sett)
     win.resize(1100, 720)
     win.show()
     sys.exit(qapp.exec())

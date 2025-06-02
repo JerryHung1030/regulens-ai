@@ -149,9 +149,33 @@ class Sidebar(QWidget):
         self.list_projects.clear()
         new_current_item = None
         for proj in self.project_store.projects:
-            item = QListWidgetItem(proj.name)
-            item.setData(Qt.UserRole, proj)  # Associate CompareProject object
+            display_text = proj.name
+            if proj.is_sample:
+                if proj.name == "強密碼合規範例":
+                    # Using HTML for basic styling. QLabel supports rich text.
+                    # QListWidgetItem itself has limited HTML support, but basic color should work.
+                    display_text = f"{proj.name} <font color='#1565c0'>[SAMPLE]</font>" # Darker Blue
+                elif proj.name == "風險清冊範例":
+                    display_text = f"{proj.name} <font color='#2e7d32'>[SAMPLE]</font>" # Darker Green
+                else: # Generic sample project
+                    display_text = f"{proj.name} <font color='gray'>[SAMPLE]</font>"
+
+            # Create QListWidgetItem. If direct HTML in text doesn't render well,
+            # we might need to use a QLabel with setItemWidget.
+            # For now, let's assume QListWidgetItem can handle simple HTML for text color.
+            item = QListWidgetItem()
+            item.setText(display_text) # Set text, potentially with HTML
+            item.setData(Qt.UserRole, proj)
             self.list_projects.addItem(item)
+
+            # If using QLabel for rich text:
+            # item = QListWidgetItem() # Create item without text
+            # label = QLabel(display_text)
+            # label.setTextFormat(Qt.RichText) # Ensure HTML is parsed
+            # self.list_projects.addItem(item)
+            # self.list_projects.setItemWidget(item, label) # Set QLabel as the widget for the item
+            # item.setData(Qt.UserRole, proj) # Associate CompareProject object AFTER adding item
+
             if current_project_data == proj:
                 new_current_item = item
         

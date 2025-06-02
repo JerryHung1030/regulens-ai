@@ -10,11 +10,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QTabWidget,
     QTextBrowser,
-    QFileDialog,
-    QMessageBox,
     QStyle,
 )
-from PySide6.QtCore import Signal  # Added Signal import
+from PySide6.QtCore import Signal
 
 from app.models.project import CompareProject
 
@@ -57,24 +55,6 @@ class ResultsViewer(QWidget):
         """)
         btn_back.clicked.connect(self._go_back)
         title_row.addWidget(btn_back)
-
-        # 匯出按鈕
-        btn_export = QPushButton("匯出結果")
-        btn_export.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
-        btn_export.setStyleSheet("""
-            QPushButton {
-                padding: 8px 16px;
-                border-radius: 4px;
-                background-color: #2196f3;
-                color: white;
-                border: none;
-            }
-            QPushButton:hover {
-                background-color: #1976d2;
-            }
-        """)
-        btn_export.clicked.connect(self._export_results)
-        title_row.addWidget(btn_export)
 
         title_row.addStretch()
         lay.addLayout(title_row)
@@ -122,27 +102,6 @@ class ResultsViewer(QWidget):
 
     def _go_back(self):
         self.edit_requested.emit(self.project)
-
-    def _export_results(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "匯出結果",
-            "",
-            "Markdown Files (*.md);;PDF Files (*.pdf)"
-        )
-        if path:
-            path = Path(path)
-            if path.suffix == ".pdf":
-                # TODO: 實現 PDF 匯出
-                QMessageBox.warning(self, "尚未實現", "PDF 匯出功能尚未實現")
-            else:
-                # 匯出 Markdown
-                content = "\n\n---\n\n".join(
-                    f"# {ref.stem}\n\n{md}"
-                    for ref, md in self.project.results.items()
-                )
-                path.write_text(content, encoding="utf-8")
-                QMessageBox.information(self, "成功", "結果已匯出")
 
     def _refresh(self):
         """更新 UI 顯示"""

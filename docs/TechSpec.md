@@ -4,13 +4,13 @@ This document outlines the design for the **Regulens-AI** desktop application. I
 
 ## Overview
 
-Regulens-AI is a Windows desktop tool built with PySide6 that compares two regulation JSON files using the `RAGCore-X Compare API`. The application focuses on a single-window, minimalist design. Users select two JSON files, adjust optional parameters, trigger the comparison, and export the results as plain text or PDF.
+Regulens-AI is a Windows desktop tool built with PySide6 that processes regulation JSON files. The application focuses on a single-window, minimalist design. Users will select input files, adjust optional parameters, and trigger the processing.
 
 ## Key Points
 
 - **Python 3.11+** with PySide6 UI components.
-- Asynchronous HTTP requests via `httpx` and pydantic models for validation.
-- Markdown results rendered to HTML and optionally to PDF with WeasyPrint.
+- Asynchronous operations and pydantic models for validation.
+- Results rendered to HTML.
 - Logging with rotation via `loguru`.
 - Settings stored locally with `QSettings`.
 

@@ -57,13 +57,11 @@ class SettingsDialog(QDialog):
     def _build_general_tab(self) -> QWidget:
         w = QFormLayout()
 
-        self.key_edit = QLineEdit()
-        self.key_edit.setEchoMode(QLineEdit.Password)
-        w.addRow("OpenAI API Key", self.key_edit)
-
-        self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(1, 300) # Increased range for potentially longer OpenAI calls
-        w.addRow("OpenAI Client Timeout (s)", self.timeout_spin)
+        # General tab is now potentially empty or for other settings.
+        # For now, let's leave it, it can be removed if it remains empty.
+        # Example:
+        # self.some_other_general_setting_edit = QLineEdit()
+        # w.addRow("Some Other General Setting:", self.some_other_general_setting_edit)
 
         container = QWidget()
         container.setLayout(w)
@@ -71,6 +69,14 @@ class SettingsDialog(QDialog):
 
     def _build_models_tab(self) -> QWidget:
         w = QFormLayout()
+
+        self.key_edit = QLineEdit() # Moved from General
+        self.key_edit.setEchoMode(QLineEdit.Password)
+        w.addRow("OpenAI API Key", self.key_edit)
+
+        self.timeout_spin = QSpinBox() # Moved from General
+        self.timeout_spin.setRange(1, 300)
+        w.addRow("OpenAI Client Timeout (s)", self.timeout_spin)
 
         self.embedding_model_combo = QComboBox()
         self.embedding_model_combo.addItems([

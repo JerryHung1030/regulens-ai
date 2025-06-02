@@ -279,7 +279,7 @@ if __name__ == '__main__':
         if test_cache_dir.exists():
             # print(f"\nCleaning up temporary cache directory: {test_cache_dir}")
             shutil.rmtree(test_cache_dir)
-    except Exception e_clean:
+    except Exception as e_clean:
         print(f"Error cleaning up test directory {test_cache_dir}: {e_clean}")
 
     print("\nFAISS index module test finished.")
