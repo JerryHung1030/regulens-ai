@@ -3,8 +3,11 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any
+from threading import Lock
 
 from PySide6.QtCore import QObject, Signal
+
+from app.models.assessments import PairAssessment
 # Not using @dataclass anymore, fields will be initialized in __init__
 
 class CompareProject(QObject):
@@ -14,6 +17,7 @@ class CompareProject(QObject):
 
     # Fields definition with type hints
     name: str
+    results: List[PairAssessment]
     controls_dir: Optional[Path]
     procedures_dir: Optional[Path]
     evidences_dir: Optional[Path]
@@ -36,6 +40,8 @@ class CompareProject(QObject):
                  parent: Optional[QObject] = None):
         super().__init__(parent)
         self.name = name
+        self.results: List[PairAssessment] = []
+        self._results_lock = Lock()
         self.controls_dir = controls_dir
         self.procedures_dir = procedures_dir
         self.evidences_dir = evidences_dir
@@ -73,22 +79,38 @@ class CompareProject(QObject):
 
     @property
     def has_results(self) -> bool:
-        # This might need to be updated based on how results are handled with report_path
-        return self.report_path is not None and self.report_path.exists()
+        with self._results_lock:
+            return bool(self.results)
+
+    def set_results(self, assessments: List[PairAssessment]):
+        with self._results_lock:
+            self.results = assessments
+        self.updated.emit() # Or a more specific signal if appropriate
+
+    def get_results(self) -> List[PairAssessment]:
+        with self._results_lock:
+            # Return a copy to allow safe iteration outside the lock
+            return list(self.results)
 
     def set_controls_dir(self, path: Path | None):
         self.controls_dir = path
-        self.report_path = None # Clear old results when inputs change
+        with self._results_lock:
+            self.results = []
+        # self.report_path = None # Keep this if report_path is still used distinctly
         self.changed.emit()
 
     def set_procedures_dir(self, path: Path | None):
         self.procedures_dir = path
-        self.report_path = None # Clear old results
+        with self._results_lock:
+            self.results = []
+        # self.report_path = None # Keep this if report_path is still used distinctly
         self.changed.emit()
 
     def set_evidences_dir(self, path: Path | None):
         self.evidences_dir = path
-        self.report_path = None # Clear old results
+        with self._results_lock:
+            self.results = []
+        # self.report_path = None # Keep this if report_path is still used distinctly
         self.changed.emit()
 
     def to_dict(self) -> Dict[str, Any]:

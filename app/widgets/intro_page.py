@@ -29,8 +29,15 @@ class IntroPage(QWidget):
         button_layout = QHBoxLayout()
 
         btn_start = QPushButton("Get Started")
-        btn_start.setFixedHeight(38)
-        btn_start.setStyleSheet("border-radius:19px; padding:0 24px;")
+        # btn_start.setFixedHeight(38) # Removed
+        btn_start.setStyleSheet(r'''
+            QPushButton {
+                background-color: #007bff;
+                color: white;
+                border-radius: 5px;
+                padding: 10px;
+            }
+        ''')
         btn_start.clicked.connect(self.start_requested.emit)
         button_layout.addWidget(btn_start)
 

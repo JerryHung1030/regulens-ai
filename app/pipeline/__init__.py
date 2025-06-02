@@ -318,6 +318,10 @@ def run_pipeline(
         pair_assessment = aggregate_assessments_for_pair(c_doc_id, p_doc_id, group_of_triples)
         if pair_assessment: # aggregate_assessments_for_pair always returns a PairAssessment
             all_pair_assessments.append(pair_assessment)
+
+    project.set_results(all_pair_assessments)
+    if not all_pair_assessments:
+        _update_progress(current_stage_num, total_pipeline_stages, f"Info: Pipeline for project '{project.name}' completed with no detailed assessment results to report.")
     
     # --- Stage H: Report Generation ---
     current_stage_num += 1

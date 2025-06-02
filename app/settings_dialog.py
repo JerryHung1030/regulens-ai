@@ -40,7 +40,7 @@ class SettingsDialog(QDialog):
     # ---------------------------------------------------------------------
     def _init_ui(self) -> None:
         tabs = QTabWidget(self)
-        tabs.addTab(self._build_general_tab(), "General")
+        # tabs.addTab(self._build_general_tab(), "General") # Removed General tab
         tabs.addTab(self._build_models_tab(), "Models")
         tabs.addTab(self._build_retrieval_tab(), "Retrieval")
         tabs.addTab(self._build_output_tab(), "Output")

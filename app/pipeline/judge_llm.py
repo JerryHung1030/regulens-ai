@@ -1,6 +1,9 @@
 import json
 import os
+import re
 from typing import Optional, Dict, Any
+
+from app.logger import logger
 
 import openai # type: ignore
 from pydantic import BaseModel, ValidationError
@@ -107,8 +110,19 @@ Based on your analysis, provide a JSON response with the following fields:
         )
 
         llm_response_content_str = response.choices[0].message.content
+
+        if llm_response_content_str:
+            # Remove potential markdown fences and leading/trailing whitespace
+            if llm_response_content_str.startswith("```json"):
+                llm_response_content_str = llm_response_content_str[7:]
+            if llm_response_content_str.startswith("```"): # If just ``` not ```json
+                llm_response_content_str = llm_response_content_str[3:]
+            if llm_response_content_str.endswith("```"):
+                llm_response_content_str = llm_response_content_str[:-3]
+            llm_response_content_str = llm_response_content_str.strip()
+
         if not llm_response_content_str:
-            print(f"Error: LLM returned empty content for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}.")
+            logger.error(f"LLM returned empty content after stripping for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}.")
             return None
 
         llm_json_output: Dict[str, Any] = json.loads(llm_response_content_str)
@@ -135,19 +149,19 @@ Based on your analysis, provide a JSON response with the following fields:
         return assessment
 
     except openai.APIConnectionError as e:
-        print(f"OpenAI API Connection Error: {e}")
+        logger.error(f"OpenAI API Connection Error during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}")
     except openai.RateLimitError as e:
-        print(f"OpenAI API Rate Limit Exceeded: {e}")
+        logger.error(f"OpenAI API Rate Limit Exceeded during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}")
     except openai.AuthenticationError as e:
-        print(f"OpenAI API Authentication Error: {e}. Check your API key.")
+        logger.error(f"OpenAI API Authentication Error for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}. Check your API key.")
     except openai.APIError as e: # Catch other OpenAI API errors
-        print(f"OpenAI API error during LLM assessment: {e}")
+        logger.error(f"OpenAI API error during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}")
     except json.JSONDecodeError as e:
-        print(f"Error decoding JSON from LLM response: {e}. Response was: {llm_response_content_str}")
+        logger.error(f"Error decoding JSON from LLM response for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}. Response: '{llm_response_content_str}'")
     except ValidationError as e: # Pydantic validation error
-         print(f"Error: LLM response JSON does not match expected schema: {e}. Response: {llm_response_content_str}")
+        logger.error(f"LLM response JSON schema validation error for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}. Response: '{llm_response_content_str}'")
     except Exception as e:
-        print(f"An unexpected error occurred during LLM assessment: {e}")
+        logger.error(f"Unexpected error during LLM assessment for C:{control_chunk_id}, P:{procedure_chunk_id}, E:{evidence_chunk_id}: {e}", exc_info=True)
     
     return None
 

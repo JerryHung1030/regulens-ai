@@ -149,23 +149,19 @@ class Sidebar(QWidget):
         self.list_projects.clear()
         new_current_item = None
         for proj in self.project_store.projects:
-            display_text = proj.name
-            if proj.is_sample:
-                if proj.name == "強密碼合規範例":
-                    # Using HTML for basic styling. QLabel supports rich text.
-                    # QListWidgetItem itself has limited HTML support, but basic color should work.
-                    display_text = f"{proj.name} <font color='#1565c0'>[SAMPLE]</font>" # Darker Blue
-                elif proj.name == "風險清冊範例":
-                    display_text = f"{proj.name} <font color='#2e7d32'>[SAMPLE]</font>" # Darker Green
-                else: # Generic sample project
-                    display_text = f"{proj.name} <font color='gray'>[SAMPLE]</font>"
-
-            # Create QListWidgetItem. If direct HTML in text doesn't render well,
-            # we might need to use a QLabel with setItemWidget.
-            # For now, let's assume QListWidgetItem can handle simple HTML for text color.
             item = QListWidgetItem()
-            item.setText(display_text) # Set text, potentially with HTML
             item.setData(Qt.UserRole, proj)
+            text_to_set = proj.name
+            if proj.is_sample:
+                prefix_tag = ""
+                if proj.name == "強密碼合規範例":
+                    prefix_tag = "<font color='#1565c0'>SAMPLE</font>&nbsp;"  # Blue tag
+                elif proj.name == "風險清冊範例":
+                    prefix_tag = "<font color='#2e7d32'>SAMPLE</font>&nbsp;"  # Green tag
+                else:
+                    prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;" # Generic
+                text_to_set = prefix_tag + proj.name
+            item.setText(text_to_set) # QListWidgetItem should render basic HTML for text
             self.list_projects.addItem(item)
 
             # If using QLabel for rich text:
