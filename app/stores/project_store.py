@@ -32,11 +32,11 @@ class ProjectStore(QObject):
             else:
                 with open(self._PATH, "r", encoding="utf-8") as f:
                     projects_data = json.load(f)
-                if not isinstance(projects_data, list): # Ensure projects_data is a list
+                if not isinstance(projects_data, list):  # Ensure projects_data is a list
                     projects = []
                 else:
                     projects = [CompareProject.from_dict(d) for d in projects_data if isinstance(d, dict)]
-        except (json.JSONDecodeError, TypeError) as e: # Catch errors during parsing
+        except (json.JSONDecodeError, TypeError) as e:  # Catch errors during parsing
             print(f"Error loading projects.json: {e}. Starting with an empty project list.")
             projects = []
 
@@ -50,34 +50,7 @@ class ProjectStore(QObject):
             # Re-assign projects to self.projects after sample creation.
             projects = self.projects
 
-
         return projects
-
-    def _ensure_sample_data_files_exist(self):
-        sample_base_dir = Path.home() / "regulens-ai" / "sample_data"
-        sample_files_info = {
-            "sample1": {
-                "controls": "control1.txt",
-                "procedures": "procedure1.txt",
-                "evidences": "evidence1.txt",
-            },
-            "sample2": {
-                "controls": "controlA.txt",
-                "procedures": "procedureA.txt",
-                "evidences": "evidenceA.txt",
-            }
-        }
-        placeholder_text = "This is a sample file.\n這是範例檔案內容。"
-
-        for sample_key, folders in sample_files_info.items():
-            for folder_key, filename in folders.items():
-                file_path = sample_base_dir / sample_key / folder_key / filename
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                if not file_path.exists():
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(f"{placeholder_text}\nFile: {sample_key}/{folder_key}/{filename}")
-                        print(f"Created sample file: {file_path}")
-
 
     def _create_sample_projects_and_data(self):
         sample_base_dir = Path.home() / "regulens-ai" / "sample_data"
@@ -98,12 +71,8 @@ class ProjectStore(QObject):
         )
 
         # Ensure self.projects is an empty list before adding samples
-        # This method is called when self.projects is determined to be empty.
         self.projects = [project1, project2]
-
-        self._ensure_sample_data_files_exist() # Create the actual files
-        self._save() # Save projects.json
-        # self.changed.emit() # _save will emit this
+        self._save()  # Save projects.json
 
     def _save(self):
         self._PATH.parent.mkdir(parents=True, exist_ok=True)

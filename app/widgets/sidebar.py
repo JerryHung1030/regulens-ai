@@ -162,6 +162,7 @@ class Sidebar(QWidget):
                     prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;" # Generic
                 text_to_set = prefix_tag + proj.name
             item.setText(text_to_set) # QListWidgetItem should render basic HTML for text
+            item.setData(Qt.DisplayRole, proj.name)   # plain text for look-ups
             self.list_projects.addItem(item)
 
             # If using QLabel for rich text:

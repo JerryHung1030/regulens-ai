@@ -347,7 +347,8 @@ def run_pipeline(
         evidences_map=all_embed_sets_map, # Pass the map of all EmbedSets
         report_output_dir=output_dir,
         report_filename_base=report_filename_base,
-        report_theme_css_path=css_path_to_use
+        report_theme_css_path=css_path_to_use,
+        make_pdf=False  # 預設不生成 PDF
     )
 
     if markdown_report_path:

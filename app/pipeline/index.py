@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import List, Optional
 
-import faiss # type: ignore
+import faiss  # type: ignore
 import numpy as np
 
 # Adjust import based on project structure and PYTHONPATH
@@ -12,15 +12,16 @@ try:
 except ImportError:
     import sys
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-    from app.models.docs import EmbedSet, IndexMeta # type: ignore
+    from app.models.docs import EmbedSet, IndexMeta  # type: ignore
 
 
 def _sanitize_filename(name: str) -> str:
     """Sanitizes a string to be filesystem-friendly."""
     name = name.lower()
-    name = re.sub(r'[^\w\s-]', '', name) # Remove non-alphanumeric, non-whitespace, non-hyphen
-    name = re.sub(r'[\s-]+', '_', name).strip('_') # Replace whitespace/hyphens with underscore
+    name = re.sub(r'[^\w\s-]', '', name)  # Remove non-alphanumeric, non-whitespace, non-hyphen
+    name = re.sub(r'[\s-]+', '_', name).strip('_')  # Replace whitespace/hyphens with underscore
     return name
+
 
 def _create_index_files(
     all_embed_sets: List[EmbedSet], 
@@ -33,7 +34,7 @@ def _create_index_files(
     
     print(f"Creating new FAISS index for doc_type '{doc_type}' (model: {embedding_model_name}) at {index_file_path}...")
 
-    if not all_embed_sets: # Should be caught earlier, but as a safeguard in helper
+    if not all_embed_sets:  # Should be caught earlier, but as a safeguard in helper
         print(f"Error: _create_index_files called with empty all_embed_sets for '{doc_type}'.")
         return None
 
@@ -58,7 +59,7 @@ def _create_index_files(
 
         faiss.write_index(index, str(index_file_path))
         with open(id_mapping_file_path, 'w', encoding='utf-8') as f:
-            json.dump(faiss_id_to_embedset_id_map, f, indent=2) # Store as JSON list
+            json.dump(faiss_id_to_embedset_id_map, f, indent=2)  # Store as JSON list
 
         print(f"Successfully created and saved index for '{doc_type}'. Vectors: {index.ntotal}, Dimension: {index.d}")
         return IndexMeta(
@@ -84,6 +85,7 @@ def _create_index_files(
                 print(f"Warning: Could not delete partial map file {id_mapping_file_path}")
         return None
 
+
 def create_or_load_index(
     all_embed_sets: List[EmbedSet], 
     index_dir: Path, 
@@ -105,14 +107,13 @@ def create_or_load_index(
 
     # Determine vector dimension from the first EmbedSet
     # Assuming all embeddings in the list have the same dimension, which should be guaranteed by earlier steps.
-    if not all_embed_sets[0].embedding: # Check if the first embedding list is empty
+    if not all_embed_sets[0].embedding:  # Check if the first embedding list is empty
         print(f"Error: First EmbedSet for '{doc_type}' has an empty embedding list. Cannot determine vector dimension.")
         return None
     vector_dimension = len(all_embed_sets[0].embedding)
-    if vector_dimension == 0: # Check if dimension is zero
+    if vector_dimension == 0:  # Check if dimension is zero
         print(f"Error: Vector dimension for '{doc_type}' is 0. Cannot build index.")
         return None
-
 
     if not force_recreate and index_file_path.exists() and id_mapping_file_path.exists():
         print(f"Attempting to load existing index for '{doc_type}' (model: {embedding_model_name}) from {index_file_path}")
@@ -137,12 +138,13 @@ def create_or_load_index(
             # Basic check: Ensure all EmbedSet IDs from input are in the loaded map if counts match.
             # This isn't a perfect check for content match but adds some safety.
             # More robust would be to check if the set of IDs is identical.
-            if index.ntotal == len(all_embed_sets):
-                current_embed_set_ids = {es.id for es in all_embed_sets}
-                if not all(embed_id in current_embed_set_ids for embed_id in loaded_id_map):
-                    print(f"Warning: Mismatch between current EmbedSet IDs and loaded ID map. Recreating index.")
-                    return _create_index_files(all_embed_sets, index_file_path, id_mapping_file_path, doc_type, embedding_model_name, vector_dimension)
-
+            current_ids = {es.id for es in all_embed_sets}
+            if set(loaded_id_map) != current_ids:
+                print("Warning: Current EmbedSet IDs differ from loaded ID map. Recreating index.")
+                return _create_index_files(
+                    all_embed_sets, index_file_path, id_mapping_file_path,
+                    doc_type, embedding_model_name, vector_dimension
+                )
 
             print(f"Successfully loaded index for '{doc_type}'. Vectors: {index.ntotal}, Dimension: {index.d}")
             return IndexMeta(
@@ -169,18 +171,18 @@ if __name__ == '__main__':
     
     # Dummy EmbedSet objects
     dummy_embed_sets_list: List[EmbedSet] = []
-    test_dimension = 8 # Small dimension for testing
+    test_dimension = 8  # Small dimension for testing
     num_dummy_vectors = 20
     doc_type_test = "control_test"
-    model_name_test = "test-embedding-model/v1" # With slash for sanitizer testing
+    model_name_test = "test-embedding-model/v1"  # With slash for sanitizer testing
 
     for i in range(num_dummy_vectors):
         dummy_embed_sets_list.append(EmbedSet(
             id=f"embed_set_control_{i}",
-            norm_doc_id=f"norm_doc_control_{i//3}",
-            chunk_text=f"This is chunk text for control document {i//3}, chunk index {i%3}.",
+            norm_doc_id=f"norm_doc_control_{i // 3}",
+            chunk_text=f"This is chunk text for control document {i // 3}, chunk index {i % 3}.",
             embedding=list(np.random.rand(test_dimension).astype('float32')),
-            chunk_index=i%3,
+            chunk_index=i % 3,
             total_chunks=3,
             doc_type=doc_type_test
         ))
@@ -212,11 +214,11 @@ if __name__ == '__main__':
         print("Initial creation test passed.")
     else:
         print("Initial index creation FAILED.")
-        exit(1) # Stop test if initial creation fails
+        exit(1)  # Stop test if initial creation fails
 
     print("\n--- Test 2: Load Existing Index ---")
     index_meta_loaded = create_or_load_index(
-        dummy_embed_sets_list, # Provide same data for validation checks
+        dummy_embed_sets_list,  # Provide same data for validation checks
         test_index_dir, 
         doc_type_test, 
         model_name_test, 
@@ -243,10 +245,9 @@ if __name__ == '__main__':
     )
     assert index_meta_recreated is not None, "Force recreate FAILED."
     if index_meta_recreated:
-         print(f"IndexMeta recreated: {index_meta_recreated.model_dump_json(indent=2)}")
-         assert index_meta_recreated.num_vectors == num_dummy_vectors # Should be same if data is same
-         print("Force recreate test passed.")
-
+        print(f"IndexMeta recreated: {index_meta_recreated.model_dump_json(indent=2)}")
+        assert index_meta_recreated.num_vectors == num_dummy_vectors  # Should be same if data is same
+        print("Force recreate test passed.")
 
     print("\n--- Test 4: Empty EmbedSet List ---")
     empty_result_meta = create_or_load_index([], test_index_dir, "empty_doc_type", model_name_test)
@@ -256,22 +257,21 @@ if __name__ == '__main__':
     print("\n--- Test 5: Dimension Mismatch on Load (Simulated) ---")
     # Create a new list with different dimension
     dummy_embed_sets_dim_mismatch = [
-        EmbedSet(id="dim_mismatch_1", norm_doc_id="nd1", chunk_text="c1", embedding=[1.0,2.0], chunk_index=0, total_chunks=1, doc_type=doc_type_test)
+        EmbedSet(id="dim_mismatch_1", norm_doc_id="nd1", chunk_text="c1", embedding=[1.0, 2.0], chunk_index=0, total_chunks=1, doc_type=doc_type_test)
     ]
     # This should trigger recreation because current data (dim_mismatch) has different dim than saved index
     index_meta_dim_mismatch = create_or_load_index(
         dummy_embed_sets_dim_mismatch,
         test_index_dir,
-        doc_type_test, # Same doc_type, so it finds the old index
+        doc_type_test,  # Same doc_type, so it finds the old index
         model_name_test,
         force_recreate=False 
     )
     assert index_meta_dim_mismatch is not None, "Dimension mismatch test FAILED to recreate."
     if index_meta_dim_mismatch:
-        assert index_meta_dim_mismatch.vector_dimension == 2 # New dimension
+        assert index_meta_dim_mismatch.vector_dimension == 2  # New dimension
         assert index_meta_dim_mismatch.num_vectors == 1
         print("Dimension mismatch load test passed (recreated index with new dimension).")
-
 
     # Clean up temporary directory
     try:

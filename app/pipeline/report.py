@@ -101,7 +101,8 @@ def generate_report(
     evidences_map: Dict[str, EmbedSet], 
     report_output_dir: Path,
     report_filename_base: str = "compliance_audit_report", # Default filename base
-    report_theme_css_path: Optional[Path] = None
+    report_theme_css_path: Optional[Path] = None,
+    make_pdf: bool = False  # 新增參數，預設為 False
 ) -> Optional[Path]:
 
     try:
@@ -131,10 +132,13 @@ def generate_report(
         print(f"Error writing Markdown file {md_file}: {e}")
         return None # Cannot proceed if Markdown file fails
 
-    # Attempt PDF conversion
-    pdf_success = _convert_markdown_to_pdf(md_file, pdf_file, report_theme_css_path)
-    if not pdf_success:
-        print(f"Warning: PDF generation failed or was skipped. The Markdown report is available at {md_file}.")
+    # 只在 make_pdf 為 True 時才嘗試生成 PDF
+    if make_pdf:
+        pdf_success = _convert_markdown_to_pdf(md_file, pdf_file, report_theme_css_path)
+        if not pdf_success:
+            print(f"Warning: PDF generation failed or was skipped. The Markdown report is available at {md_file}.")
+    else:
+        print(f"PDF generation skipped as make_pdf=False. The Markdown report is available at {md_file}")
             
     return md_file # Return path to MD file as primary output
 
