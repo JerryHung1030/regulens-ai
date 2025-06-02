@@ -18,11 +18,17 @@ class CompareResponse:
 
 
 class ApiClient:
-    """HTTP client for the RAGCore-X API.
-
-    By default a minimal urllib implementation is used so the library works
-    without optional dependencies. If ``httpx`` is available, the
-    :py:meth:`acompare` method can be used for asynchronous requests.
+    """
+    HTTP client for the /api/v1/rag endpoint.
+    Now the compare/acompare accept:
+    compare(project_id, input_doc_content, ref_doc_content, **scenario_params).
+    They will build the payload as RAGRequest schema demands:
+    {
+      "project_id": ...,
+      "input_data": {...},
+      "reference_data": {...},
+      "scenario": { ...scenario_params... }
+    }
     """
 
     def __init__(self, base_url: str, api_key: str, timeout: int = 30) -> None:
@@ -38,13 +44,65 @@ class ApiClient:
             )
 
     def compare(
-        self, input_doc: Dict[str, Any], ref_doc: Dict[str, Any], **params: Any
+        self,
+        project_id: str,
+        input_doc_content: Dict[str, Any],
+        ref_doc_content: Dict[str, Any],
+        **scenario_params: Any
     ) -> CompareResponse:
-        """Perform a synchronous comparison request using ``urllib``."""
-        payload = {"input": input_doc, "reference": ref_doc, **params}
+        """
+        Synchronous comparison with urllib.
+        Build a RAGRequest-like payload. Example:
+        {
+          "project_id": project_id,
+          "input_data": {
+              "level1": [
+                   {
+                     "sid": f"input_{project_id}",
+                     "text": input_doc_content,
+                     "metadata": { "project": project_id }
+                   }
+              ]
+          },
+          "reference_data": {
+              "level1": [
+                   {
+                     "sid": f"ref_{project_id}",
+                     "text": ref_doc_content,
+                     "metadata": { "project": project_id }
+                   }
+              ]
+          },
+          "scenario": { ...scenario_params... }
+        }
+        POST /api/v1/rag
+        """
+        payload = {
+            "project_id": project_id,
+            "input_data": {
+                "level1": [
+                    {
+                        "sid": f"input_{project_id}",
+                        "text": input_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "reference_data": {
+                "level1": [
+                    {
+                        "sid": f"ref_{project_id}",
+                        "text": ref_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "scenario": scenario_params,
+        }
         data = json.dumps(payload).encode("utf-8")
+        req_url = f"{self.base_url}/api/v1/rag"
         req = request.Request(
-            f"{self.base_url}/v1/compare",
+            req_url,
             data=data,
             headers={
                 "Authorization": f"Bearer {self.api_key}",
@@ -57,13 +115,38 @@ class ApiClient:
         return CompareResponse(result=obj.get("result", ""))
 
     async def acompare(
-        self, input_doc: Dict[str, Any], ref_doc: Dict[str, Any], **params: Any
+        self,
+        project_id: str,
+        input_doc_content: Dict[str, Any],
+        ref_doc_content: Dict[str, Any],
+        **scenario_params: Any
     ) -> CompareResponse:
         """Asynchronous version using ``httpx`` if available."""
         if self._async_client is None:
             raise RuntimeError("httpx is not installed")
-        payload = {"input": input_doc, "reference": ref_doc, **params}
-        resp = await self._async_client.post("/v1/compare", json=payload)
+        payload = {
+            "project_id": project_id,
+            "input_data": {
+                "level1": [
+                    {
+                        "sid": f"input_{project_id}",
+                        "text": input_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "reference_data": {
+                "level1": [
+                    {
+                        "sid": f"ref_{project_id}",
+                        "text": ref_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "scenario": scenario_params,
+        }
+        resp = await self._async_client.post("/api/v1/rag", json=payload)
         resp.raise_for_status()
         obj = resp.json()
         return CompareResponse(result=obj.get("result", ""))

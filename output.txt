@@ -1,0 +1,2571 @@
+
+===== ./Untitled-1.sh =====
+find . -type f ! -path "*/.pytest_cache/*" ! -path "*/.github/*" ! -path "*/.__pycache__/*" ! -path "*/__pycache__/*" ! -path "*/.logs/*" ! -path "*/venv/*" ! -path "*/.git/*" -exec bash -c 'echo -e "\n===== {} ====="; cat "{}"' \; > output.txt
+===== ./sample_data/input_sample.json =====
+{
+  "title": "Input Doc",
+  "sections": []
+}
+
+===== ./sample_data/reference_sample.json =====
+{
+  "title": "Reference Doc",
+  "sections": []
+}
+
+===== ./sample_data/mock_responses/good_basic.json =====
+{
+    "job_id": "job_mock_123",
+    "status": "completed",
+    "progress": 100,
+    "result": "### 法規比對分析結果\n\n#### 1. 主要差異\n\n- **新增條文**：第 5 條第 2 項\n- **修改條文**：第 8 條第 1 項\n- **刪除條文**：第 12 條第 3 項\n\n#### 2. 詳細分析\n\n##### 新增條文\n\n- 第 5 條第 2 項：新增了關於資料保護的具體要求\n  - 要求企業必須建立資料保護機制\n  - 明確定義了敏感資料的範圍\n  - 規定了資料保存期限\n\n##### 修改條文\n\n- 第 8 條第 1 項：調整了罰則規定\n  - 原條文：罰鍰新臺幣 10 萬元以上 50 萬元以下\n  - 新條文：罰鍰新臺幣 20 萬元以上 100 萬元以下\n\n##### 刪除條文\n\n- 第 12 條第 3 項：移除了過時的程序性規定\n\n#### 3. 影響評估\n\n1. **對企業的影響**\n   - 需要更新資料保護政策\n   - 可能需要調整內部作業程序\n   - 罰則提高，需要更謹慎遵守\n\n2. **對消費者的影響**\n   - 個人資料保護更完善\n   - 權利救濟管道更明確\n\n#### 4. 建議事項\n\n1. 立即檢視並更新資料保護政策\n2. 進行內部人員教育訓練\n3. 建立定期法規更新追蹤機制\n\n#### 5. 參考依據\n\n- 個人資料保護法\n- 消費者保護法\n- 相關行政規則"
+}
+  
+===== ./.gitignore =====
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+
+# Virtual env
+.venv/
+venv/
+
+# PyInstaller build
+build/
+dist/
+*.spec
+
+# Logs
+logs/
+
+# Test outputs
+htmlcov/
+.coverage
+
+# OS files
+.DS_Store
+
+===== ./tests/test_export.py =====
+from pathlib import Path
+
+import pytest
+
+pytest.importorskip('weasyprint')
+from PyPDF2 import PdfReader
+
+from app.export import to_pdf, to_txt
+
+
+def test_to_txt(tmp_path):
+    path = tmp_path / 'out.txt'
+    to_txt('hello', path)
+    assert path.read_text() == 'hello'
+
+
+def test_to_pdf(tmp_path):
+    pdf_path = tmp_path / 'out.pdf'
+    to_pdf('# Title', pdf_path)
+    reader = PdfReader(str(pdf_path))
+    assert len(reader.pages) == 1
+
+===== ./tests/test_api_client.py =====
+import json
+from urllib import request
+
+from app.api_client import ApiClient, CompareResponse
+
+
+def test_compare_payload(monkeypatch):
+    captured = {}
+
+    class FakeResp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self):
+            return b'{"result":"ok"}'
+
+    def fake_urlopen(req, timeout=30):
+        captured['url'] = req.full_url
+        captured['data'] = req.data
+        return FakeResp()
+
+    monkeypatch.setattr(request, 'urlopen', fake_urlopen)
+
+    client = ApiClient('http://example.com', 'token')
+    # Adjust the call to match the new signature: project_id, input_doc_content, ref_doc_content, **scenario_params
+    resp = client.compare(
+        project_id="test_project",
+        input_doc_content={'a': 1},
+        ref_doc_content={'b': 2},
+        param_in_scenario=3  # This will go into scenario_params
+    )
+
+    assert isinstance(resp, CompareResponse)
+    payload = json.loads(captured['data'].decode())
+
+    # Verify the new payload structure
+    assert payload['project_id'] == "test_project"
+    assert payload['input_data']['level1'][0]['text'] == {'a': 1}
+    assert payload['input_data']['level1'][0]['sid'] == "input_test_project"
+    assert payload['input_data']['level1'][0]['metadata']['project'] == "test_project"
+
+    assert payload['reference_data']['level1'][0]['text'] == {'b': 2}
+    assert payload['reference_data']['level1'][0]['sid'] == "ref_test_project"
+    assert payload['reference_data']['level1'][0]['metadata']['project'] == "test_project"
+
+    assert payload['scenario'] == {'param_in_scenario': 3}  # Check scenario_params
+    assert captured['url'].endswith('/api/v1/rag')  # Check new endpoint
+
+===== ./tests/test_gui.py =====
+import pytest
+
+pytest.importorskip('PySide6')
+pytest.importorskip('pytestqt')
+
+from PySide6.QtCore import Qt
+
+from app.ui_main import MainWindow
+from app.compare_manager import CompareManager, CompareResponse
+from app.api_client import ApiClient
+
+
+class DummySignal:
+    def __init__(self):
+        self._cbs = []
+
+    def connect(self, cb):
+        self._cbs.append(cb)
+
+    def emit(self):
+        for cb in list(self._cbs):
+            cb()
+
+
+class DummyFuture:
+    def __init__(self, result):
+        self._result = result
+
+    def result(self):
+        return self._result
+
+
+class DummyWatcher:
+    def __init__(self):
+        self.finished = DummySignal()
+        self._future = None
+
+    def setFuture(self, fut):
+        self._future = fut
+        self.finished.emit()
+
+    def result(self):
+        return self._future.result()
+
+
+class DummyProgress:
+    def __init__(self, *a, **kw):
+        pass
+
+    def setWindowTitle(self, *a):
+        pass
+
+    def setWindowModality(self, *a):
+        pass
+
+    def setCancelButton(self, *a):
+        pass
+
+    def show(self):
+        pass
+
+    def close(self):
+        pass
+
+
+def fake_qt_run(fn, *a, **kw):
+    return DummyFuture(fn(*a, **kw))
+
+
+async def fake_acompare(*args, **kwargs):
+    return CompareResponse(result='ok')
+
+
+def test_gui_compare(monkeypatch, qtbot, tmp_path):
+    manager = CompareManager(ApiClient('http://x', 'k'))
+    monkeypatch.setattr(manager, 'load_json', lambda p: {})
+    monkeypatch.setattr(manager, 'acompare', fake_acompare)
+
+    import app.ui_main as ui
+    monkeypatch.setattr(ui, 'QFutureWatcher', DummyWatcher)
+    monkeypatch.setattr(ui, 'qt_run', fake_qt_run)
+    monkeypatch.setattr(ui, 'QProgressDialog', DummyProgress)
+
+    win = ui.MainWindow(manager)
+    qtbot.addWidget(win)
+
+    inp = tmp_path / 'i.json'
+    ref = tmp_path / 'r.json'
+    inp.write_text('{}')
+    ref.write_text('{}')
+
+    win.input_edit.setText(str(inp))
+    win.ref_edit.setText(str(ref))
+
+    qtbot.mouseClick(win.compare_btn, Qt.LeftButton)
+
+    assert win.viewer.toPlainText() == 'ok'
+
+===== ./tests/__init__.py =====
+
+===== ./tests/test_settings.py =====
+from app.settings import Settings
+
+
+def test_settings_roundtrip(tmp_path):
+    path = tmp_path / 'set.json'
+    s = Settings()
+    s._path = path  # Override default path for testing
+    assert s.get('a') is None
+    s.set('a', 1)
+    assert s.get('a') == 1
+
+    s2 = Settings()
+    s2._path = path # Override default path for testing
+    s2._load() # Load data from the specified path
+    assert s2.get('a') == 1
+
+
+def test_settings_invalid_json(tmp_path):
+    path = tmp_path / 'bad.json'
+    path.write_text('{oops}', encoding='utf-8')
+    s = Settings()
+    s._path = path # Override default path for testing
+    # Ensure _load is called after setting _path, if it wasn't called in __init__ with the new path
+    s._load() 
+    assert s.get('x') is None
+
+===== ./tests/test_compare_manager.py =====
+import sys
+from types import SimpleNamespace
+
+sys.modules.setdefault('loguru', SimpleNamespace(logger=SimpleNamespace(add=lambda *a, **k: None)))
+
+import pytest
+
+from app.compare_manager import CompareManager, CompareError
+from app.api_client import ApiClient
+
+
+def test_load_json_invalid(tmp_path):
+    bad = tmp_path / 'bad.json'
+    bad.write_text('{broken}', encoding='utf-8')
+    manager = CompareManager(ApiClient('http://x', 'k'))
+    with pytest.raises(CompareError):
+        manager.load_json(bad)
+
+
+def test_load_json_missing(tmp_path):
+    missing = tmp_path / 'missing.json'
+    manager = CompareManager(ApiClient('http://x', 'k'))
+    with pytest.raises(CompareError):
+        manager.load_json(missing)
+
+===== ./LICENSE =====
+MIT License
+
+Copyright (c) 2025 Regulens-AI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+===== ./README.md =====
+# Regulens-AI
+
+Regulens-AI is a Windows desktop application for comparing regulation documents via the RAGCore-X service. The project is in its early stages and follows the design outlined in [docs/TechSpec.md](docs/TechSpec.md).
+
+## Development Setup
+
+1. Create a virtual environment and install dependencies:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Run the application:
+   ```bash
+   python -m app
+   ```
+
+The repository also contains example JSON files under `sample_data/` that you
+can use with the CLI or GUI without creating your own documents.
+
+## Running Tests
+
+The project uses `pytest`. To execute the test suite locally:
+
+```bash
+pytest
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. This project is released under the [MIT License](LICENSE).
+
+## Project Structure
+
+- `app/` contains the application modules such as `ApiClient`, `CompareManager`, and export helpers.
+- `assets/` stores icons and style sheets (currently empty).
+- `config_default.yaml` provides example API configuration.
+- `sample_data/` contains placeholder input and reference JSON documents.
+
+The design document in `docs/TechSpec.md` describes the planned GUI and full feature set.
+
+===== ./pyproject.toml =====
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "regulens-ai"
+version = "0.0.1"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+development = [
+    "pytest>=7.0",
+]
+
+===== ./assets/__init__.py =====
+
+
+===== ./assets/pdf.css =====
+body { font-family: Segoe UI, sans-serif; }
+h1,h2,h3 { color: #333333; }
+
+===== ./docs/TechSpec.md =====
+# Regulens-AI Technical Design
+
+This document outlines the design for the **Regulens-AI** desktop application. It was provided as part of the project specification and serves as a reference for future development.
+
+## Overview
+
+Regulens-AI is a Windows desktop tool built with PySide6 that compares two regulation JSON files using the `RAGCore-X Compare API`. The application focuses on a single-window, minimalist design. Users select two JSON files, adjust optional parameters, trigger the comparison, and export the results as plain text or PDF.
+
+## Key Points
+
+- **Python 3.11+** with PySide6 UI components.
+- Asynchronous HTTP requests via `httpx` and pydantic models for validation.
+- Markdown results rendered to HTML and optionally to PDF with WeasyPrint.
+- Logging with rotation via `loguru`.
+- Settings stored locally with `QSettings`.
+
+The full specification includes detailed class breakdowns, UI layout, error handling strategy, logging policy, and a suggested milestone schedule.
+
+
+===== ./config_default.yaml =====
+# Default parameters for RAGCore-X Compare API
+base_url: "https://api.example.com"
+api_key: "YOUR_API_KEY"
+timeout: 30
+use_mock_api: true
+===== ./app/compare_manager.py =====
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any, Dict
+
+from .api_client import ApiClient, CompareResponse
+from .logger import logger
+
+
+class CompareError(Exception):
+    pass
+
+
+class CompareManager:
+    """Handle document loading and comparison.
+
+    Exposes both synchronous :meth:`compare` and asynchronous
+    :meth:`acompare` helpers.
+    """
+
+    def __init__(self, api_client: ApiClient) -> None:
+        self.api_client = api_client
+
+    def load_json(self, path: Path) -> Dict[str, Any]:
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:  # pragma: no cover - simple error wrap
+            raise CompareError(str(exc)) from exc
+
+    def compare(self, project_id: str, input_path: Path, ref_path: Path, **scenario_params: Any) -> CompareResponse:
+        logger.info("Comparing {} to {} for project {}", input_path, ref_path, project_id)
+        input_doc_content = self.load_json(input_path)
+        ref_doc_content = self.load_json(ref_path)
+        try:
+            resp = self.api_client.compare(project_id, input_doc_content, ref_doc_content, **scenario_params)
+        except Exception as exc:
+            logger.error("Comparison failed: %s", exc)
+            raise CompareError(str(exc)) from exc
+        logger.info("Comparison succeeded")
+        return resp
+
+    async def acompare(self, project_id: str, input_path: Path, ref_path: Path, **scenario_params: Any) -> CompareResponse:
+        """Asynchronous wrapper around :meth:`ApiClient.acompare`."""
+        input_doc_content = self.load_json(input_path)
+        ref_doc_content = self.load_json(ref_path)
+        logger.info("Comparing %s to %s for project %s (async)", input_path, ref_path, project_id)
+        try:
+            resp = await self.api_client.acompare(project_id, input_doc_content, ref_doc_content, **scenario_params)
+        except Exception as exc:
+            logger.error("Async comparison failed: %s", exc)
+            raise CompareError(str(exc)) from exc
+        logger.info("Async comparison succeeded")
+        return resp
+
+===== ./app/widgets/project_editor.py =====
+from __future__ import annotations
+
+from pathlib import Path
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QToolButton,
+    QPushButton,
+    QFileDialog,
+    QInputDialog,
+    QMessageBox,
+    QStyle,
+)
+
+from app.models.project import CompareProject
+
+
+class ProjectEditor(QWidget):
+    """用於選擇檔案與啟動比較的介面"""
+
+    compare_requested = Signal(CompareProject)
+
+    def __init__(self, project: CompareProject, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.project = project
+        self._build_ui()
+        self.project.changed.connect(self._refresh)
+        self._refresh()
+
+    def _build_ui(self):
+        lay = QVBoxLayout(self)
+        lay.setAlignment(Qt.AlignTop)
+        lay.setSpacing(20)
+        lay.setContentsMargins(20, 20, 20, 20)
+
+        # 專案標題和操作按鈕
+        title_row = QHBoxLayout()
+        title = QLabel(f"<h2>{self.project.name}</h2>")
+        title.setStyleSheet("margin: 0;")
+        title_row.addWidget(title)
+
+        # 重命名按鈕
+        btn_rename = QToolButton()
+        btn_rename.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+        btn_rename.setToolTip("重命名專案")
+        btn_rename.setStyleSheet("""
+            QToolButton {
+                border: none;
+                padding: 4px;
+                border-radius: 4px;
+            }
+            QToolButton:hover {
+                background-color: #e0e0e0;
+            }
+        """)
+        btn_rename.clicked.connect(self._rename_project)
+        title_row.addWidget(btn_rename)
+
+        # 刪除按鈕
+        btn_delete = QToolButton()
+        btn_delete.setIcon(self.style().standardIcon(QStyle.SP_DialogDiscardButton))
+        btn_delete.setToolTip("刪除專案")
+        btn_delete.setStyleSheet("""
+            QToolButton {
+                border: none;
+                padding: 4px;
+                border-radius: 4px;
+            }
+            QToolButton:hover {
+                background-color: #ffebee;
+            }
+        """)
+        btn_delete.clicked.connect(self._delete_project)
+        title_row.addWidget(btn_delete)
+
+        title_row.addStretch()
+        lay.addLayout(title_row)
+
+        # 檔案上傳區域
+        upload_frame = QWidget()
+        upload_frame.setStyleSheet("""
+            QWidget {
+                background-color: #f5f5f5;
+                border-radius: 8px;
+                padding: 16px;
+            }
+        """)
+        upload_lay = QVBoxLayout(upload_frame)
+        upload_lay.setSpacing(16)
+
+        # 內規上傳
+        input_group = QWidget()
+        input_lay = QVBoxLayout(input_group)
+        input_lay.setSpacing(8)
+        
+        input_label = QLabel("內規檔案")
+        input_label.setStyleSheet("font-weight: bold;")
+        input_lay.addWidget(input_label)
+        
+        input_btn = QPushButton("選擇內規 JSON")
+        input_btn.setIcon(self.style().standardIcon(QStyle.SP_FileIcon))
+        input_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                background-color: white;
+                border: 1px solid #e0e0e0;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        input_btn.clicked.connect(self._choose_input)
+        input_lay.addWidget(input_btn)
+        
+        self.lbl_input = QLabel("<i>未選擇</i>")
+        self.lbl_input.setStyleSheet("color: #666;")
+        input_lay.addWidget(self.lbl_input)
+        
+        upload_lay.addWidget(input_group)
+
+        # 外規上傳
+        ref_group = QWidget()
+        ref_lay = QVBoxLayout(ref_group)
+        ref_lay.setSpacing(8)
+        
+        ref_label = QLabel("外規檔案")
+        ref_label.setStyleSheet("font-weight: bold;")
+        ref_lay.addWidget(ref_label)
+        
+        ref_btn = QPushButton("選擇外規 JSON")
+        ref_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogNewFolder))
+        ref_btn.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                background-color: white;
+                border: 1px solid #e0e0e0;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        ref_btn.clicked.connect(self._add_refs)
+        ref_lay.addWidget(ref_btn)
+        
+        self.lbl_refs = QLabel("<i>未選擇</i>")
+        self.lbl_refs.setStyleSheet("color: #666;")
+        ref_lay.addWidget(self.lbl_refs)
+        
+        upload_lay.addWidget(ref_group)
+        lay.addWidget(upload_frame)
+
+        # 比較按鈕
+        self.btn_compare = QPushButton("開始比較")
+        self.btn_compare.setStyleSheet("""
+            QPushButton {
+                padding: 12px 24px;
+                border-radius: 6px;
+                background-color: #2196f3;
+                color: white;
+                font-weight: bold;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+            QPushButton:disabled {
+                background-color: #bdbdbd;
+            }
+        """)
+        self.btn_compare.clicked.connect(lambda: self.compare_requested.emit(self.project))
+        lay.addWidget(self.btn_compare, alignment=Qt.AlignCenter)
+        lay.addStretch()
+
+    def _rename_project(self):
+        name, ok = QInputDialog.getText(
+            self,
+            "重命名專案",
+            "請輸入新的專案名稱：",
+            text=self.project.name
+        )
+        if ok and name:
+            self.project.rename(name)  # Emits project.updated
+
+    def _delete_project(self):
+        reply = QMessageBox.question(
+            self,
+            "確認刪除",
+            f"確定要刪除專案「{self.project.name}」嗎？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            self.project.deleted.emit()
+
+    # ------ File pickers ----------------------------------------------
+    def _choose_input(self):
+        path, _ = QFileDialog.getOpenFileName(self, "選擇內規 JSON", "", "JSON Files (*.json)")
+        self.project.set_input(Path(path) if path else None)
+
+    def _add_refs(self):
+        paths, _ = QFileDialog.getOpenFileNames(self, "選擇外規 JSON", "", "JSON Files (*.json)")
+        if paths:
+            self.project.set_refs([Path(p) for p in paths])
+
+    # ------------------------------------------------------------------
+    def _refresh(self):
+        """更新 UI 顯示"""
+        # 更新標題
+        title = self.findChild(QLabel)
+        if title:
+            title.setText(f"<h2>{self.project.name}</h2>")
+        
+        # 更新檔案路徑顯示
+        self.lbl_input.setText(str(self.project.input_path) if self.project.input_path else "<i>未選擇</i>")
+        if self.project.ref_paths:
+            self.lbl_refs.setText("\n".join(str(p) for p in self.project.ref_paths))
+        else:
+            self.lbl_refs.setText("<i>未選擇</i>")
+        self.btn_compare.setEnabled(self.project.ready)
+
+===== ./app/widgets/intro_page.py =====
+from __future__ import annotations
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+)
+
+
+class IntroPage(QWidget):
+    start_requested = Signal()
+    settings_requested = Signal()
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self._build_ui()
+
+    def _build_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignCenter)
+
+        title = QLabel("<h1>Regulens-AI</h1><p>快速、可靠地比較內外規</p>")
+        title.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(title)
+
+        button_layout = QHBoxLayout()
+
+        btn_start = QPushButton("Get Started")
+        btn_start.setFixedHeight(38)
+        btn_start.setStyleSheet("border-radius:19px; padding:0 24px;")
+        btn_start.clicked.connect(self.start_requested.emit)
+        button_layout.addWidget(btn_start)
+
+        # btn_settings is removed
+        # btn_settings.setFixedHeight(38)
+        # btn_settings.setStyleSheet("border-radius:19px; padding:0 24px;")
+        # btn_settings.clicked.connect(self.settings_requested.emit)
+        # button_layout.addWidget(btn_settings)
+
+        main_layout.addLayout(button_layout)
+
+===== ./app/widgets/sidebar.py =====
+from __future__ import annotations
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QListWidget,
+    QToolButton,
+    QListWidgetItem,
+    QSplitter,
+    QStyle,
+)
+from PySide6.QtCore import Signal, Qt
+
+from app.stores.project_store import ProjectStore
+from app.models.project import CompareProject
+
+
+class Sidebar(QWidget):
+    project_selected = Signal(CompareProject)
+    add_project_requested = Signal()
+    toggled = Signal()
+
+    def __init__(self, project_store: ProjectStore, splitter: QSplitter, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.project_store = project_store
+        self._splitter = splitter
+        self.COLLAPSED_WIDTH = 60  # Define this as a class or local constant
+
+        # Ensure list_projects is defined as early as possible
+        self.list_projects = QListWidget()
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(4, 4, 4, 4)
+        main_layout.setSpacing(2)  # Consistent spacing
+
+        # Top row for buttons
+        top_row_layout = QHBoxLayout()
+        top_row_layout.setSpacing(2)
+
+        # Toggle Button
+        self._btn_toggle = QToolButton()  # Create the button before using it
+        self._btn_toggle.setStyleSheet("""
+            QToolButton {
+                border: none;
+                padding: 4px;
+                border-radius: 4px;
+            }
+            QToolButton:hover {
+                background-color: #e0e0e0;
+            }
+        """)
+        self._btn_toggle.clicked.connect(self._toggle)
+        top_row_layout.addWidget(self._btn_toggle)
+        
+        # Set initial icon and tooltip based on splitter state (defaulting to expanded)
+        self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
+        self._btn_toggle.setToolTip("Collapse sidebar")
+        # The actual state will be set by setup_initial_toggle_state() called from Workspace
+
+        # Add project button
+        self.btn_add_project = QToolButton()
+        self.btn_add_project.setText("＋")  # More compact for a top bar
+        self.btn_add_project.setToolTip("Create a new project")
+        self.btn_add_project.setStyleSheet("""
+            QToolButton {
+                border: none;
+                padding: 4px;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QToolButton:hover {
+                background-color: #e0e0e0;
+            }
+        """)
+        self.btn_add_project.clicked.connect(self.add_project_requested.emit)
+        top_row_layout.addWidget(self.btn_add_project)
+        top_row_layout.addStretch(1)  # Push buttons to the left
+
+        main_layout.addLayout(top_row_layout)
+        main_layout.addWidget(self.list_projects)
+
+        self.list_projects.itemClicked.connect(self._on_project_clicked)
+        self.project_store.changed.connect(self.refresh_project_list)
+        self.refresh_project_list()
+
+    def setup_initial_toggle_state(self):
+        """
+        Sets the initial visibility of list_projects and the toggle button's icon/tooltip
+        based on the splitter's current sizes. Called by Workspace after splitter setup.
+        """
+        if not self._splitter or not self._splitter.sizes():  # Guard against premature calls
+            return
+
+        initial_width = self._splitter.sizes()[0]
+        if initial_width <= self.COLLAPSED_WIDTH:
+            self.list_projects.hide()
+            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+            self._btn_toggle.setToolTip("Expand sidebar")
+            # If Workspace set a very small size, force it to COLLAPSED_WIDTH
+            # and ensure the other pane's size is preserved.
+            # This part of the logic might be redundant if Workspace always sets valid initial sizes.
+            current_sizes = self._splitter.sizes()
+            if len(current_sizes) > 1 and current_sizes[0] != self.COLLAPSED_WIDTH:
+                self._splitter.setSizes([self.COLLAPSED_WIDTH, current_sizes[1]])
+        else:
+            self.list_projects.show()
+            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
+            self._btn_toggle.setToolTip("Collapse sidebar")
+
+    def _toggle(self):
+        current_width = self._splitter.sizes()[0]
+        current_sizes = self._splitter.sizes()  # Get all current sizes
+
+        if not self.list_projects.isVisible() or current_width == self.COLLAPSED_WIDTH:
+            # EXPAND
+            expanded_width = self._splitter.property("last_expanded_width") or 220
+            self.list_projects.show()
+            if len(current_sizes) > 1:
+                current_sizes[0] = expanded_width
+            else:  # Should not happen with a 2-pane splitter
+                current_sizes = [expanded_width, 0] 
+            self._splitter.setSizes(current_sizes)
+            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))   # Collapse icon
+            self._btn_toggle.setToolTip("Collapse sidebar")
+        else:
+            # COLLAPSE
+            self._splitter.setProperty("last_expanded_width", current_width)
+            self.list_projects.hide()
+            if len(current_sizes) > 1:
+                current_sizes[0] = self.COLLAPSED_WIDTH
+            else:  # Should not happen
+                current_sizes = [self.COLLAPSED_WIDTH, 0]
+            self._splitter.setSizes(current_sizes)
+            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))  # Expand icon
+            self._btn_toggle.setToolTip("Expand sidebar")
+        self.toggled.emit()
+
+    def _on_project_clicked(self, item: QListWidgetItem):
+        project = item.data(Qt.UserRole) 
+        if isinstance(project, CompareProject):  # Ensure it's the correct type
+            self.project_selected.emit(project)
+
+    def refresh_project_list(self):
+        """Clears and repopulates the project list from the project store."""
+        current_project_data = None
+        if self.list_projects.currentItem():
+            current_project_data = self.list_projects.currentItem().data(Qt.UserRole)
+
+        self.list_projects.clear()
+        new_current_item = None
+        for proj in self.project_store.projects:
+            item = QListWidgetItem(proj.name)
+            item.setData(Qt.UserRole, proj)  # Associate CompareProject object
+            self.list_projects.addItem(item)
+            if current_project_data == proj:
+                new_current_item = item
+        
+        if new_current_item:
+            self.list_projects.setCurrentItem(new_current_item)
+        elif self.list_projects.count() > 0:
+            self.list_projects.setCurrentRow(0)  # Select first item if previous selection is gone
+            # Emit project_selected for the newly selected first item
+            first_item_project = self.list_projects.item(0).data(Qt.UserRole)
+            if isinstance(first_item_project, CompareProject):
+                self.project_selected.emit(first_item_project)
+        else:
+            # If list is empty, emit a signal with None or handle as needed
+            # For now, this implies no project is selected. Workspace handles this.
+            pass
+
+===== ./app/widgets/results_viewer.py =====
+from __future__ import annotations
+
+from pathlib import Path
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTabWidget,
+    QTextBrowser,
+    QFileDialog,
+    QMessageBox,
+    QStyle,
+)
+from PySide6.QtCore import Signal  # Added Signal import
+
+from app.models.project import CompareProject
+
+
+class ResultsViewer(QWidget):
+    """顯示結果 (Markdown) – Tab 每個外規一頁"""
+    edit_requested = Signal(CompareProject)  # New signal
+
+    def __init__(self, project: CompareProject, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.project = project
+        self._build_ui()
+        self._refresh()
+        self.project.changed.connect(self._refresh)  # Connect to project's changed signal
+
+    def _build_ui(self):
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(20, 20, 20, 20)
+        lay.setSpacing(16)
+
+        # 標題和操作按鈕
+        title_row = QHBoxLayout()
+        title = QLabel(f"<h2>{self.project.name} - 比較結果</h2>")
+        title.setStyleSheet("margin: 0;")
+        title_row.addWidget(title)
+
+        # 返回按鈕
+        btn_back = QPushButton("返回編輯")
+        btn_back.setIcon(self.style().standardIcon(QStyle.SP_ArrowBack))
+        btn_back.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                background-color: white;
+                border: 1px solid #e0e0e0;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        btn_back.clicked.connect(self._go_back)
+        title_row.addWidget(btn_back)
+
+        # 匯出按鈕
+        btn_export = QPushButton("匯出結果")
+        btn_export.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
+        btn_export.setStyleSheet("""
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 4px;
+                background-color: #2196f3;
+                color: white;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+        """)
+        btn_export.clicked.connect(self._export_results)
+        title_row.addWidget(btn_export)
+
+        title_row.addStretch()
+        lay.addLayout(title_row)
+
+        # 結果標籤頁
+        tabs = QTabWidget()
+        tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                background-color: white;
+            }
+            QTabBar::tab {
+                padding: 8px 16px;
+                margin-right: 2px;
+                background-color: #f5f5f5;
+                border: 1px solid #e0e0e0;
+                border-bottom: none;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+            QTabBar::tab:selected {
+                background-color: white;
+                border-bottom: 1px solid white;
+            }
+            QTabBar::tab:hover {
+                background-color: #e0e0e0;
+            }
+        """)
+
+        for ref in self.project.ref_paths:
+            md = self.project.results.get(str(ref), "(無結果)")
+            view = QTextBrowser()
+            view.setStyleSheet("""
+                QTextBrowser {
+                    border: none;
+                    background-color: white;
+                    padding: 16px;
+                }
+            """)
+            view.setMarkdown(md)
+            tabs.addTab(view, ref.stem)
+
+        lay.addWidget(tabs)
+
+    def _go_back(self):
+        self.edit_requested.emit(self.project)
+
+    def _export_results(self):
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "匯出結果",
+            "",
+            "Markdown Files (*.md);;PDF Files (*.pdf)"
+        )
+        if path:
+            path = Path(path)
+            if path.suffix == ".pdf":
+                # TODO: 實現 PDF 匯出
+                QMessageBox.warning(self, "尚未實現", "PDF 匯出功能尚未實現")
+            else:
+                # 匯出 Markdown
+                content = "\n\n---\n\n".join(
+                    f"# {ref.stem}\n\n{md}"
+                    for ref, md in self.project.results.items()
+                )
+                path.write_text(content, encoding="utf-8")
+                QMessageBox.information(self, "成功", "結果已匯出")
+
+    def _refresh(self):
+        """更新 UI 顯示"""
+        # 更新標題
+        title = self.findChild(QLabel)
+        if title:  # Check if title exists to prevent errors during initial build or if UI changes
+            title.setText(f"<h2>{self.project.name} - 比較結果</h2>")
+        
+        # 更新標籤頁內容
+        tabs = self.findChild(QTabWidget)
+        if tabs:  # Check if tabs exists
+            for i in range(tabs.count()):
+                # Ensure index is within bounds of ref_paths
+                if i < len(self.project.ref_paths):
+                    ref = self.project.ref_paths[i]
+                    md = self.project.results.get(str(ref), "(無結果)")
+                    view = tabs.widget(i)
+                    if isinstance(view, QTextBrowser):
+                        view.setMarkdown(md)
+                else:  # Handle case where tab count might mismatch ref_paths (e.g. during dynamic updates)
+                    # Optionally log a warning or handle error
+                    pass
+
+===== ./app/export.py =====
+from __future__ import annotations
+
+from pathlib import Path
+from importlib import resources
+
+from markdown_it import MarkdownIt
+
+from .logger import logger
+
+try:  # optional dependency
+    import weasyprint
+except Exception:  # pragma: no cover - environment lacking package
+    weasyprint = None
+
+
+def to_txt(markdown_str: str, path: Path) -> None:
+    path.write_text(markdown_str, encoding="utf-8")
+    logger.info("Exported text to %s", path)
+
+
+def to_pdf(markdown_str: str, path: Path) -> None:
+    if weasyprint is None:
+        logger.error("weasyprint is not available")
+        raise RuntimeError("weasyprint is not available")
+    html = MarkdownIt("commonmark", {"html": True}).render(markdown_str)
+    css = _read_css()
+    html_full = f"<style>{css}</style>{html}"
+    weasyprint.HTML(string=html_full).write_pdf(str(path))
+    logger.info("Exported PDF to %s", path)
+
+
+def _read_css() -> str:
+    """Return built-in PDF stylesheet."""
+    try:
+        with resources.files("assets").joinpath("pdf.css").open("r", encoding="utf-8") as fh:
+            return fh.read()
+    except Exception:
+        return ""
+
+===== ./app/views/workspace.py =====
+from __future__ import annotations
+
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSplitter, QStackedWidget, QLabel
+from PySide6.QtCore import Qt, QSettings
+
+from app.stores.project_store import ProjectStore
+from app.widgets.sidebar import Sidebar
+from app.models.project import CompareProject
+from app.widgets.project_editor import ProjectEditor
+from app.widgets.results_viewer import ResultsViewer
+from app.logger import logger
+
+
+class Workspace(QWidget):
+    def __init__(self, project_store: ProjectStore, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.project_store = project_store
+        self.main_window = parent  # To access MainWindow's _run_compare, etc.
+        self._project_connections = {}  # 用於跟踪項目的信號連接
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)  # Use full space
+
+        self.splitter = QSplitter(Qt.Horizontal)
+        
+        self.sidebar = Sidebar(self.project_store, self.splitter)  # Pass splitter
+        self.splitter.addWidget(self.sidebar)
+
+        self.stack = QStackedWidget()
+        self.splitter.addWidget(self.stack)
+
+        self.splitter.setStretchFactor(1, 1)  # Main content area (stack) should expand
+        
+        # Restore splitter state (similar to original MainWindow)
+        sett = QSettings("Regulens", "Regulens‑AI")
+        if sett.contains("workspace_splitter"):
+            self.splitter.restoreState(sett.value("workspace_splitter", type=bytes))
+        else:
+            self.splitter.setSizes([220, 680])  # Default sizes
+
+        layout.addWidget(self.splitter)
+        self.setLayout(layout)
+
+        self.project_store.changed.connect(self._refresh_project_views)
+        self.sidebar.project_selected.connect(self._show_project_in_stack)
+        self.sidebar.add_project_requested.connect(self._add_new_project)
+
+        self.sidebar.setup_initial_toggle_state()  # Call after splitter is fully set up
+        
+        self._refresh_project_views()  # Initial population and view setup
+        
+        if not self.project_store.projects:
+            self.show_default_message()
+        elif self.sidebar.list_projects.count() > 0:
+            # Select the first project by default if any exist
+            self.sidebar.list_projects.setCurrentRow(0)
+            first_project_name = self.sidebar.list_projects.item(0).text()
+            first_project = self.project_store.get_project_by_name(first_project_name)
+            if first_project:
+                self._show_project_in_stack(first_project)
+
+    def show_default_message(self):
+        default_label = QLabel("Select a project from the sidebar or create a new one.")
+        default_label.setAlignment(Qt.AlignCenter)
+        # Ensure no old widgets linger if we are resetting the stack
+        while self.stack.count() > 0:
+            widget = self.stack.widget(0)
+            self.stack.removeWidget(widget)
+            widget.deleteLater()
+        self.stack.addWidget(default_label)
+        self.stack.setCurrentWidget(default_label)
+
+    def _add_new_project(self):
+        new_project_name = f"Project {len(self.project_store.projects) + 1}"
+        proj = CompareProject(name=new_project_name)
+        self.project_store.add(proj)
+        # The project_store.changed signal will trigger _refresh_project_views
+        # which will update the sidebar and select the new project.
+        # Find and select the new project in the list
+        for i in range(self.sidebar.list_projects.count()):
+            if self.sidebar.list_projects.item(i).text() == new_project_name:
+                self.sidebar.list_projects.setCurrentRow(i)
+                self._show_project_in_stack(proj)
+                break
+
+    def _clear_stack(self):
+        """Removes all widgets from the stack and deletes them."""
+        while self.stack.count() > 0:
+            widget = self.stack.widget(0)
+            self.stack.removeWidget(widget)
+            if widget:  # Check if widget is not None
+                widget.deleteLater()
+
+    def _refresh_project_views(self):
+        """
+        Refreshes the sidebar's project list and ensures the stack
+        is either showing the current project or a default message.
+        """
+        self.sidebar.refresh_project_list()  # This will update the QListWidget in Sidebar
+
+        current_project_name_in_sidebar = None
+        if self.sidebar.list_projects.currentItem():
+            current_project_name_in_sidebar = self.sidebar.list_projects.currentItem().text()
+
+        if not self.project_store.projects:
+            self.show_default_message()
+            return
+
+        if current_project_name_in_sidebar:
+            project_to_display = self.project_store.get_project_by_name(current_project_name_in_sidebar)
+            if project_to_display:
+                self._show_project_in_stack(project_to_display)
+            else:
+                # The currently selected project in sidebar might have been deleted
+                self.sidebar.list_projects.setCurrentRow(0)  # Select first if available
+                if self.sidebar.list_projects.count() > 0:
+                    first_project_name = self.sidebar.list_projects.item(0).text()
+                    first_project = self.project_store.get_project_by_name(first_project_name)
+                    if first_project:
+                        self._show_project_in_stack(first_project)
+                else:  # Should not happen if project_store.projects is not empty
+                    self.show_default_message()
+        elif self.project_store.projects:  # Projects exist, but none selected in sidebar
+            self.sidebar.list_projects.setCurrentRow(0)  # Select first project
+            first_project_name = self.sidebar.list_projects.item(0).text()
+            project = self.project_store.get_project_by_name(first_project_name)
+            if project:
+                self._show_project_in_stack(project)
+        else:  # No projects and nothing selected
+            self.show_default_message()
+
+    def _connect_project_signals(self, project: CompareProject):
+        """連接項目的所有信號"""
+        project_id = id(project)  # 使用項目的內存地址作為唯一標識符
+        if project_id not in self._project_connections:
+            self._project_connections[project_id] = []
+            
+        # 保存所有連接的引用
+        connections = []
+        
+        # 連接 updated 信號
+        project.updated.connect(self.project_store._save)
+        connections.append((project.updated, self.project_store._save))
+        
+        project.updated.connect(self.sidebar.refresh_project_list)
+        connections.append((project.updated, self.sidebar.refresh_project_list))
+        
+        # -------- deleted 信號：使用命名函數 --------
+        def delete_slot(p=project):
+            return self._handle_project_deleted(p)
+            
+        project.deleted.connect(delete_slot)
+        connections.append((project.deleted, delete_slot))
+        
+        self._project_connections[project_id] = connections
+
+    def _disconnect_project_signals(self, project: CompareProject):
+        """斷開項目的所有信號連接"""
+        project_id = id(project)
+        if project_id in self._project_connections:
+            for signal, slot in self._project_connections[project_id]:
+                try:
+                    signal.disconnect(slot)
+                except (RuntimeError, TypeError):
+                    pass
+            del self._project_connections[project_id]
+
+    def _show_project_in_stack(self, project: CompareProject | None):
+        if project is None:
+            self.show_default_message()
+            return
+
+        self._clear_stack()
+
+        if project.has_results:
+            viewer = ResultsViewer(project)
+            viewer.edit_requested.connect(self._switch_to_editor)
+            self.stack.addWidget(viewer)
+            self.stack.setCurrentWidget(viewer)
+            project.viewer_idx = self.stack.indexOf(viewer)
+            project.editor_idx = -1  # 清除編輯器索引，因為我們現在在結果視圖中
+        else:
+            editor = ProjectEditor(project)
+            if self.main_window and hasattr(self.main_window, "_run_compare"):
+                editor.compare_requested.connect(self.main_window._run_compare)
+            
+            # 連接項目的信號
+            self._connect_project_signals(project)
+
+            self.stack.addWidget(editor)
+            self.stack.setCurrentWidget(editor)
+            project.editor_idx = self.stack.indexOf(editor)
+
+    def _show_project_editor(self, project: CompareProject):
+        # This is a helper if navigating back from ResultsViewer to ProjectEditor
+        self._clear_stack()
+        editor = ProjectEditor(project)
+        if self.main_window and hasattr(self.main_window, "_run_compare"):
+            editor.compare_requested.connect(self.main_window._run_compare)
+        project.updated.connect(self.project_store._save)  # Save when project details change
+        # Ensure project.deleted is connected to ProjectStore.remove
+        # This might be better done once when the project is first added to the store or when editor is first created
+        # To avoid multiple connections if _show_project_editor is called multiple times for the same project.
+        # However, QObject's signal/slot mechanism should handle duplicate connections gracefully (only connects once).
+        self._disconnect_project_signals(project)
+        self._connect_project_signals(project)
+
+        self.stack.addWidget(editor)
+        self.stack.setCurrentWidget(editor)
+        project.editor_idx = self.stack.indexOf(editor)
+        project.viewer_idx = -1  # Clear viewer index as we are back to editor
+
+    def _switch_to_editor(self, project: CompareProject):
+        """Switches the view to the ProjectEditor for the given project."""
+        # This method is connected to ResultsViewer.edit_requested
+        self._clear_stack()  # Clear current widget (ResultsViewer)
+        
+        # Create and show the editor for this project
+        editor = ProjectEditor(project)
+        if self.main_window and hasattr(self.main_window, "_run_compare"):
+            editor.compare_requested.connect(self.main_window._run_compare)
+        
+        # Re-establish connections for project signals as they might have been specific to editor context
+        # or if project instance is re-used/re-fetched.
+        # These connections are crucial for reacting to model changes.
+        try:
+            project.updated.disconnect(self.project_store._save)
+        except RuntimeError:
+            pass
+        project.updated.connect(self.project_store._save)
+        
+        try:
+            # project.deleted.disconnect(self.project_store.remove)  # Old direct connection
+            project.deleted.disconnect(self._handle_project_deleted)  # Disconnect previous if any
+        except RuntimeError:
+            pass
+        project.deleted.connect(self._handle_project_deleted)  # New connection
+
+        self.stack.addWidget(editor)
+        self.stack.setCurrentWidget(editor)
+        project.editor_idx = self.stack.indexOf(editor)
+        project.viewer_idx = -1  # Ensure viewer_idx is reset
+
+    def show_project_results(self, project: CompareProject):
+        """
+        Called when a comparison for a project is finished.
+        Switches the view to the ResultsViewer for the given project.
+        """
+        if project is None:
+            logger.warning("show_project_results called with None project")
+            return
+            
+        if not project.has_results:
+            logger.warning("show_project_results called for project: %s with no results", project.name)
+            return
+
+        # 清除當前堆疊中的小部件
+        self._clear_stack()
+        
+        # 創建並顯示結果視圖
+        viewer = ResultsViewer(project)
+        viewer.edit_requested.connect(self._switch_to_editor)
+        self.stack.addWidget(viewer)
+        self.stack.setCurrentWidget(viewer)
+        project.viewer_idx = self.stack.indexOf(viewer)
+        project.editor_idx = -1  # 清除編輯器索引，因為我們現在在結果視圖中
+
+        # Ensure the sidebar selection reflects the currently viewed project
+        for i in range(self.sidebar.list_projects.count()):
+            item = self.sidebar.list_projects.item(i)
+            if item.data(Qt.UserRole) == project:
+                self.sidebar.list_projects.setCurrentItem(item)
+                break
+        
+        # 儲存專案狀態
+        self.project_store._save()
+        logger.info("Successfully switched to results view for project: %s", project.name)
+
+    def _handle_project_deleted(self, project_to_delete: CompareProject):
+        logger.info(f"Handling deletion of project: {project_to_delete.name}")
+
+        # 1. 先從 store 中移除項目
+        logger.debug(f"Requesting removal of project {project_to_delete.name} from store.")
+        self.project_store.remove(project_to_delete)
+
+        # 2. 清理相關的 widget
+        widgets_to_remove = []
+        for i in range(self.stack.count()):
+            widget = self.stack.widget(i)
+            if hasattr(widget, 'project') and widget.project == project_to_delete:
+                widgets_to_remove.append(widget)
+        
+        for widget in widgets_to_remove:
+            logger.debug(f"Removing widget {widget} for project {project_to_delete.name} from stack.")
+            self.stack.removeWidget(widget)
+            widget.deleteLater()
+
+        # 3. 更新側邊欄
+        self.sidebar.refresh_project_list()
+
+        # 4. 更新顯示
+        if not self.project_store.projects:
+            self.show_default_message()
+        else:
+            # 選擇第一個可用的項目
+            if self.sidebar.list_projects.count() > 0:
+                self.sidebar.list_projects.setCurrentRow(0)
+                first_project_name = self.sidebar.list_projects.item(0).text()
+                first_project = self.project_store.get_project_by_name(first_project_name)
+                if first_project:
+                    self._show_project_in_stack(first_project)
+
+        # 5. 斷開項目的所有信號連接
+        self._disconnect_project_signals(project_to_delete)
+
+    def closeEvent(self, event):
+        """Save splitter state when the workspace (or main window) is closed."""
+        sett = QSettings("Regulens", "Regulens‑AI")
+        sett.setValue("workspace_splitter", self.splitter.saveState())
+        super().closeEvent(event)
+
+===== ./app/main.py =====
+"""Entry point for the Regulens-AI application.
+
+This provides a minimal command-line interface that mirrors a subset of the
+planned GUI workflow. It loads API settings from ``config_default.yaml`` and
+outputs the raw Markdown diff to ``stdout`` or a file.
+"""
+
+from pathlib import Path
+import argparse
+import sys
+try:  # optional dependency
+    import yaml  # type: ignore
+except Exception:  # pragma: no cover - fallback for minimal environments
+    yaml = None
+
+from .api_client import ApiClient
+from .compare_manager import CompareManager, CompareError
+from .export import to_pdf, to_txt
+from .logger import logger
+
+
+def _load_config(path: Path) -> dict:
+    """Load configuration from YAML without requiring PyYAML."""
+    text = path.read_text()
+    if yaml is not None:
+        return yaml.safe_load(text)
+    data: dict[str, str] = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" in line:
+            k, v = line.split(":", 1)
+            data[k.strip()] = v.strip().strip('"')
+    return data
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Regulens-AI CLI")
+    parser.add_argument("input", type=Path, help="input JSON file")
+    parser.add_argument("reference", type=Path, help="reference JSON file")
+    parser.add_argument("--txt", type=Path, help="export markdown result")
+    parser.add_argument("--pdf", type=Path, help="export PDF result")
+    args = parser.parse_args(argv)
+
+    cfg = _load_config(Path("config_default.yaml"))
+    client = ApiClient(cfg["base_url"], cfg["api_key"], timeout=cfg.get("timeout", 30))
+    manager = CompareManager(client)
+
+    logger.info("CLI compare %s vs %s", args.input, args.reference)
+    try:
+        resp = manager.compare(args.input, args.reference)
+    except CompareError as exc:
+        logger.error("CLI comparison failed: %s", exc)
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    else:
+        logger.info("CLI comparison succeeded")
+
+    print(resp.result)
+    if args.txt:
+        logger.info("Exporting text to %s", args.txt)
+        to_txt(resp.result, args.txt)
+    if args.pdf:
+        logger.info("Exporting PDF to %s", args.pdf)
+        to_pdf(resp.result, args.pdf)
+
+
+if __name__ == "__main__":
+    main()
+
+===== ./app/mock_api_client.py =====
+# app/mock_api_client.py
+from __future__ import annotations
+import json
+import asyncio
+from pathlib import Path
+from typing import Any, Dict, List
+from dataclasses import dataclass
+from random import choice   # 也可以改成 round-robin 或自訂
+from .api_client import CompareResponse
+
+
+@dataclass
+class _MockResp:
+    """把 Good / Bad case JSON 讀進來後，拿 result 欄位就好"""
+    result: str
+
+
+class MockApiClient:
+    """
+    模擬 /api/v1/rag 系列端點。呼叫 compare / acompare
+    會回傳預先載入的假資料，而不用真的打 API。
+    """
+    def __init__(self,
+                 mock_dir: str | Path = "sample_data/mock_responses",
+                 latency: float = 0.05) -> None:
+        self.latency = latency              # 模擬網路延遲
+        self.payloads: List[Dict[str, Any]] = []
+        mock_dir = Path(mock_dir)
+        for p in sorted(mock_dir.glob("*.json")):
+            self.payloads.append(json.loads(p.read_text(encoding="utf-8")))
+        if not self.payloads:
+            # 保底：沒有檔案時也能運行
+            self.payloads.append({"result": "(empty mock)"})
+
+    # ---------- 與 ApiClient 介面一致即可 ---------- #
+    # 為了對應 CompareManager 及測試，需要跟 ApiClient 同一個方法簽名：
+    def compare(
+        self,
+        project_id: str,
+        input_doc_content: Dict[str, Any],
+        ref_doc_content: Dict[str, Any],
+        **scenario_params: Any
+    ) -> CompareResponse:
+        """
+        模擬 compare：
+        從 self.payloads 隨機拿一筆 mock data，讀取 result / status / progress。
+        現階段 GUI 用不到 status/progress，但預留。
+        """
+        data = choice(self.payloads)
+        # 假定 mock JSON 可能有 "status", "progress", "result"
+        # CompareResponse 目前只有 "result" 欄位；GUI 只顯示 result
+        mock_result = data.get("result", "(mock no result)")
+        return CompareResponse(result=mock_result)
+
+    async def acompare(
+        self,
+        project_id: str,
+        input_doc_content: Dict[str, Any],
+        ref_doc_content: Dict[str, Any],
+        **scenario_params: Any
+    ) -> CompareResponse:
+        await asyncio.sleep(self.latency)   # 模擬 async request
+        return self.compare(project_id, input_doc_content, ref_doc_content, **scenario_params)
+
+    async def aclose(self):
+        """讓 MainWindow 關閉時呼叫也安全；此處可不做任何事"""
+        pass
+
+===== ./app/logger.py =====
+from __future__ import annotations
+
+from pathlib import Path
+
+from loguru import logger
+
+
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+logger.add(
+    LOG_DIR / "{time:YYYY-MM-DD}.log",
+    rotation="12:00",
+    retention="7 days",
+    enqueue=True,
+    level="DEBUG",
+)
+
+===== ./app/stores/project_store.py =====
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import List
+
+from PySide6.QtCore import QObject, Signal
+
+from app.models.project import CompareProject
+
+
+class ProjectStore(QObject):
+    changed = Signal()
+    _PATH = Path.home() / ".config" / "regulens-ai" / "projects.json"
+
+    def __init__(self, parent: QObject | None = None):
+        super().__init__(parent)
+        self.projects: List[CompareProject] = self._load()
+
+    def _load(self) -> List[CompareProject]:
+        try:
+            if not self._PATH.exists():
+                return []
+            with open(self._PATH, "r", encoding="utf-8") as f:
+                projects_data = json.load(f)
+            # Ensure projects_data is a list
+            if not isinstance(projects_data, list):
+                return []
+            return [CompareProject.from_dict(d) for d in projects_data if isinstance(d, dict)]
+        except (FileNotFoundError, json.JSONDecodeError, TypeError):
+            return []
+
+    def _save(self):
+        self._PATH.parent.mkdir(parents=True, exist_ok=True)
+        projects_data = [p.to_dict() for p in self.projects]
+        with open(self._PATH, "w", encoding="utf-8") as f:
+            json.dump(projects_data, f, indent=2)
+
+    def add(self, proj: CompareProject):
+        self.projects.append(proj)
+        self._save()
+        self.changed.emit()
+
+    def remove(self, proj: CompareProject):
+        try:
+            self.projects.remove(proj)
+            # Also disconnect signals from the removed project
+            # to prevent memory leaks or unwanted behavior.
+            # This assumes 'deleted' signal is intended to be connected
+            # by the store or other components that manage project lifetime.
+            # If CompareProject instances manage their own connections that should
+            # be cleaned up on deletion, that logic would be elsewhere.
+            try:
+                proj.deleted.disconnect()
+            except (AttributeError, RuntimeError):  # Disconnect may fail if not connected or already deleted
+                pass
+            try:
+                proj.updated.disconnect()
+            except (AttributeError, RuntimeError):
+                pass
+            try:
+                proj.changed.disconnect()  # Disconnect from the project's changed signal
+            except (AttributeError, RuntimeError):
+                pass
+            # proj.updated.disconnect(self._save) # Disconnect from updated if it was connected to _save
+            # proj.deleted.disconnect(self.remove) # Disconnect from deleted if it was connected to remove
+
+            self._save()  # This will now also emit self.changed
+            # self.changed.emit() # No longer needed here as _save now emits it
+
+        except ValueError:  # Project not in list
+            pass
+
+    def get_project_by_name(self, name: str) -> CompareProject | None:
+        for proj in self.projects:
+            if proj.name == name:
+                return proj
+        return None
+
+    def get_project_by_id(self, project_id: str) -> CompareProject | None:
+        # Assuming project_id is unique, e.g. could be string representation of an internal ID
+        # For now, let's assume name is the unique identifier for simplicity as per current structure
+        # If CompareProject gets a unique ID field later, this method can be updated.
+        for proj in self.projects:
+            if str(id(proj)) == project_id:  # Example, not robust if id can change or is not what's used
+                return proj
+        return self.get_project_by_name(project_id)  # Fallback to name if id is not used this way.
+        # This part needs clarification based on how projects are identified.
+        # For now, using name as a proxy for ID.
+
+    def update_project(self, project_to_update: CompareProject, new_data: dict):
+        """
+        Updates a project in the store.
+        new_data should be a dictionary compatible with CompareProject.from_dict or specific update logic.
+        """
+        # This is a conceptual update method. The actual update mechanism might be different,
+        # e.g., modifying the project instance directly and then calling _save().
+        # For renaming, it might be: project.name = new_name; project.updated.emit(); self._save()
+        # This method is a placeholder for more complex updates if needed.
+        # For now, direct modification of project instance properties followed by _save() is typical.
+
+        # Find the project and update its attributes
+        for i, proj in enumerate(self.projects):
+            if proj == project_to_update:  # Or match by a unique ID
+                # Example of updating:
+                # proj.name = new_data.get("name", proj.name)
+                # proj.input_path = Path(new_data["input_path"]) if new_data.get("input_path") else proj.input_path
+                # proj.ref_paths = [Path(p) for p in new_data["ref_paths"]] if new_data.get("ref_paths") else proj.ref_paths
+                # This is overly simplistic. Real updates would likely be handled by modifying the
+                # CompareProject instance directly, then calling _save and emitting signals.
+                # The 'updated' signal on CompareProject should be emitted after such changes.
+                self._save()  # This will now also emit self.changed
+                # self.changed.emit() # No longer needed here as _save now emits it
+                break
+        # If CompareProject emits 'updated' signal, ProjectStore can connect to it
+        # for each project to automatically call _save().
+        # Example connection in add(): proj.updated.connect(self._save)
+        # And disconnect in remove(): proj.updated.disconnect(self._save)
+        pass  # Placeholder for update logic. Actual updates are more likely to be handled by modifying
+        # the project instance and then calling _save.
+        # The presence of this method is more for conceptual completeness.
+
+===== ./app/mainwindow.py =====
+from __future__ import annotations
+
+import sys
+# from pathlib import Path  # Keep for type hints if CompareProject uses it and is passed around
+# from typing import List, Optional, Dict, Any # Keep if type hints for CompareProject use them
+
+from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt, QMetaObject, Q_ARG, QTimer
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,  # For SettingsDialog
+    QMainWindow,
+    QMessageBox,  # For error reporting
+    QProgressDialog,  # For comparison progress
+)
+
+# Local imports
+from .compare_manager import CompareManager
+from .logger import logger
+from .settings import Settings
+from .settings_dialog import SettingsDialog
+from .models.project import CompareProject  # For type hinting and _run_compare
+# from app.widgets.project_editor import ProjectEditor # No longer directly used by MainWindow
+# from app.widgets.results_viewer import ResultsViewer  # Used in _compare_done (needs review)
+from .widgets.intro_page import IntroPage
+from .views.workspace import Workspace
+from .stores.project_store import ProjectStore
+
+# ----------------------------------------------------------------------------
+# Worker (unchanged in spirit) - This can stay as it's a generic worker
+# ----------------------------------------------------------------------------
+
+
+class _Signals(QObject):
+    finished = Signal(object)
+    error = Signal(Exception)
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)   # 確保 QObject 初始化
+
+
+class _Worker(QRunnable):
+    def __init__(self, fn, *args, **kwargs):
+        super().__init__()
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = _Signals()
+
+    def run(self):
+        try:
+            res = self.fn(*self.args, **self.kwargs)
+            self.signals.finished.emit(res)
+        except Exception as e:  # pragma: no cover
+            self.signals.error.emit(e)
+
+    def _async_task(self):
+        """非同步執行任務"""
+        try:
+            res = self.fn(*self.args, **self.kwargs)
+            self.signals.finished.emit(res)
+        except Exception as e:
+            self.signals.error.emit(e)
+
+
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# Main Window
+# ----------------------------------------------------------------------------
+class MainWindow(QMainWindow):
+    comparison_finished = Signal(CompareProject)  # Signal to notify Workspace
+
+    def __init__(self, manager: CompareManager, settings: Settings):
+        super().__init__()
+        self.setWindowTitle("Regulens‑AI")
+        self.manager = manager
+        self.settings = settings  # For SettingsDialog and API client
+        
+        # 確保預設使用 mock mode
+        if self.settings.get("use_mock_api") is None:
+            self.settings.set("use_mock_api", True)
+            self.settings.set("mock_path", "sample_data/mock_responses")
+            
+        self.project_store = ProjectStore()  # Manages all project data
+        self.threadpool = QThreadPool()
+
+        self._build_menubar()
+        self._reload_api_client()
+
+        self.intro_page = IntroPage()
+        self.intro_page.start_requested.connect(self._enter_workspace)
+        self.setCentralWidget(self.intro_page)
+        
+        self.workspace = None  # Will be initialized in _enter_workspace
+
+    def _enter_workspace(self):
+        if not self.workspace:  # Create workspace only if it doesn't exist
+            self.workspace = Workspace(self.project_store, self)
+            self.comparison_finished.connect(self.workspace.show_project_results)
+        self.setCentralWidget(self.workspace)
+
+    # ------------------------------------------------------------------
+    # Menubar + settings
+    # ------------------------------------------------------------------
+    def _build_menubar(self):
+        mb = self.menuBar()
+        m_file = mb.addMenu("&File")
+        act_set = QAction("Settings…", self)
+        act_set.setShortcut("Ctrl+,")
+        act_set.triggered.connect(self._open_settings)
+        m_file.addAction(act_set)
+        m_file.addSeparator()
+        m_file.addAction("E&xit", QApplication.instance().quit, shortcut="Ctrl+Q")
+
+    def _open_settings(self):
+        d = SettingsDialog(self.settings, self)
+        if d.exec() == QDialog.accepted:
+            self._reload_api_client()
+
+    def _reload_api_client(self):
+        if self.settings.get("use_mock_api", False):
+            from app.mock_api_client import MockApiClient
+            mock_dir = self.settings.get("mock_path", "sample_data/mock_responses")
+            client = MockApiClient(mock_dir)
+        else:
+            from app.api_client import ApiClient
+            client = ApiClient(
+                self.settings.get("base_url", ""),
+                self.settings.get("api_key", ""),
+                timeout=int(self.settings.get("timeout", 30)),
+            )
+        self.manager.api_client = client
+
+    def _ensure_settings_configured(self) -> bool:
+        base_url = self.settings.get("base_url", "")
+        api_key = self.settings.get("api_key", "")
+
+        if self.settings.get("use_mock_api", False):
+            # 如果使用 mock，就不用檢查 base_url/api_key
+            return True
+
+        if not base_url or not api_key:
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("Configuration Required")
+            msg_box.setText("Essential settings like API Base URL and API Key are missing. Please configure them now to proceed.")
+            open_settings_button = msg_box.addButton("Open Settings", QMessageBox.ActionRole)
+            cancel_button = msg_box.addButton("Cancel", QMessageBox.RejectRole)
+            msg_box.setDefaultButton(open_settings_button)
+            
+            msg_box.exec()
+
+            if msg_box.clickedButton() == cancel_button:
+                return False
+            elif msg_box.clickedButton() == open_settings_button:
+                self._open_settings()  # Open the settings dialog
+                # Re-check after settings dialog is closed
+                base_url = self.settings.get("base_url", "")
+                api_key = self.settings.get("api_key", "")
+                if not base_url or not api_key:
+                    QMessageBox.warning(self, "Configuration Incomplete", "Settings are still missing. Comparison cannot proceed.")
+                    return False
+                return True  # Settings are now configured
+        return True  # Settings were already configured
+
+    # ------------------------------------------------------------------
+    # Comparison flow
+    # ------------------------------------------------------------------
+    def _run_compare(self, proj: CompareProject):  # type: ignore[no-redef]
+        if not proj.ready:
+            return
+        
+        if not self._ensure_settings_configured():
+            return  # Stop if settings are not configured
+    
+        # 讓 progressDialog 成為物件屬性，避免被 lambda capture
+        self._prog = QProgressDialog("Comparing…", None, 0, len(proj.ref_paths), self)
+        self._prog.setWindowModality(Qt.WindowModal)
+        self._prog.setCancelButton(None)
+        self._prog.show()
+
+        def task():
+            # Retrieve RAG settings
+            scenario_params = {
+                "role_desc": self.settings.get("rag_role_desc", ""),
+                "reference_desc": self.settings.get("rag_reference_desc", ""),
+                "input_desc": self.settings.get("rag_input_desc", ""),
+                "direction": self.settings.get("rag_direction", "both"),
+                "rag_k": self.settings.get("rag_rag_k", 5),
+                "cof_threshold": self.settings.get("rag_cof_threshold", 0.5),
+                "llm_name": self.settings.get("rag_llm_name", "openai")
+            }
+            
+            # 使用 QTimer 來模擬非同步延遲
+            timer = QTimer()
+            timer.setSingleShot(True)
+            
+            def process_comparison():
+                for i, ref in enumerate(proj.ref_paths, start=1):
+                    # 使用同步的 compare 方法而不是非同步的 acompare
+                    resp = self.manager.compare(proj.name, proj.input_path, ref, **scenario_params)  # type: ignore[arg-type]
+                    proj.results[str(ref)] = resp.result
+                    QMetaObject.invokeMethod(
+                        self._prog, "setValue", Qt.QueuedConnection, Q_ARG(int, i)
+                    )
+                    # 每個比對之間加入一秒延遲
+                    QTimer.singleShot(1000, lambda: None)
+                
+                return proj
+            
+            # 設定一秒後執行比對
+            timer.timeout.connect(process_comparison)
+            timer.start(1000)
+            
+            return proj
+
+        worker = _Worker(task)
+        worker.signals.error.connect(self._compare_error)      # 直接接函式
+        worker.signals.finished.connect(self._compare_done)
+        self.threadpool.start(worker)
+
+    def _compare_error(self, err: Exception):
+        if hasattr(self, "_prog"):
+            self._prog.close()
+        QMessageBox.critical(self, "比較失敗", str(err))
+
+    def _compare_done(self, proj: CompareProject):
+        if hasattr(self, "_prog"):
+            self._prog.close()
+        logger.info("comparison finished for project: %s", proj.name)
+        
+        # 確保專案有結果
+        if not proj.has_results:
+            logger.warning("No results found for project: %s", proj.name)
+            return
+            
+        # 有結果 → 通知 UI 更新
+        proj.changed.emit()
+
+        # 使用既有的 signal-flow，讓 Workspace 掌管跳畫面
+        self.comparison_finished.emit(proj)
+
+    # ------------------------------------------------------------------
+    # closeEvent is removed as Workspace handles its own splitter state.
+    # QMainWindow's default closeEvent is sufficient.
+
+    def resizeEvent(self, event):
+        """處理視窗大小改變事件"""
+        super().resizeEvent(event)
+
+
+# ----------------------------------------------------------------------------
+# Manual launch
+# ----------------------------------------------------------------------------
+if __name__ == "__main__":
+    qapp = QApplication(sys.argv)
+    sett = Settings()
+
+    # 先給一個佔位的 CompareManager，真正的 client 會在 MainWindow 內 _reload_api_client() 決定
+    from app.api_client import ApiClient
+    mgr = CompareManager(ApiClient("", ""))
+
+    win = MainWindow(mgr, sett)
+    win.resize(1100, 720)
+    win.show()
+    sys.exit(qapp.exec())
+
+===== ./app/models/project.py =====
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Optional, Dict, Any
+
+from PySide6.QtCore import QObject, Signal
+
+
+@dataclass
+class CompareProject(QObject):
+    changed = Signal()
+    updated = Signal()
+    deleted = Signal()
+    name: str
+    input_path: Optional[Path] = None  # internal regulation (one)
+    ref_paths: List[Path] = field(default_factory=list)  # external regulations
+    results: dict[str, str] = field(default_factory=dict)  # ref_path -> markdown
+
+    editor_idx: int = -1  # QStackedWidget index for ProjectEditor
+    viewer_idx: int = -1  # index for ResultsViewer
+
+    def __post_init__(self):
+        super().__init__()
+
+    def rename(self, new_name: str):
+        self.name = new_name
+        self.updated.emit()
+        self.changed.emit()  # Ensure ProjectEditor and ResultsViewer refresh
+
+    @property
+    def ready(self) -> bool:
+        return self.input_path is not None and bool(self.ref_paths)
+
+    @property
+    def has_results(self) -> bool:
+        return bool(self.results)
+
+    def set_input(self, path: Path | None):
+        self.input_path = path
+        self.results.clear()
+        self.changed.emit()
+
+    def set_refs(self, paths: list[Path]):
+        self.ref_paths = paths
+        self.results.clear()
+        self.changed.emit()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert project to dictionary for storage."""
+        return {
+            "name": self.name,
+            "input_path": str(self.input_path) if self.input_path else None,
+            "ref_paths": [str(p) for p in self.ref_paths],
+            "results": self.results,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "CompareProject":
+        """Create project from dictionary."""
+        return cls(
+            name=data["name"],
+            input_path=Path(data["input_path"]) if data["input_path"] else None,
+            ref_paths=[Path(p) for p in data["ref_paths"]],
+            results=data["results"],
+        )
+
+===== ./app/settings.py =====
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+
+class Settings:
+    """Simple settings manager that persists to JSON.
+
+    The settings are stored in the user's home directory as
+    ``~/.regulens-ai.json``.  The file is created automatically
+    when the first setting is saved.
+    """
+
+    def __init__(self) -> None:
+        self._path = Path.home() / ".regulens-ai.json"
+        self._data: dict[str, Any] = {}
+        self._load()
+
+    def _load(self) -> None:
+        """Load settings from disk."""
+        if self._path.exists():
+            try:
+                self._data = json.loads(self._path.read_text())
+            except Exception:
+                self._data = {}
+        else:
+            # 若 ~/.regulens-ai.json 不存在，先讀 config_default.yaml 當預設
+            try:
+                import yaml
+                from pathlib import Path
+                yaml_cfg = Path(__file__).parent.parent / "config_default.yaml"
+                if yaml_cfg.exists():
+                    self._data = yaml.safe_load(yaml_cfg.read_text())
+                    # 立即寫成 JSON，之後都走 JSON
+                    self._save()
+            except Exception:
+                self._data = {}
+
+    def _save(self) -> None:
+        """Save settings to disk."""
+        self._path.write_text(json.dumps(self._data, indent=2))
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get a setting value."""
+        return self._data.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        """Set a setting value and save to disk."""
+        self._data[key] = value
+        self._save()
+
+
+===== ./app/settings_dialog.py =====
+from __future__ import annotations
+
+from PySide6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QLineEdit,
+    QSpinBox,
+    QTabWidget,
+    QVBoxLayout,
+    QCheckBox
+)
+
+from .settings import Settings
+
+
+class SettingsDialog(QDialog):
+    """Modern, tab‑based settings editor used by MainWindow.
+
+    The dialog directly manipulates a :class:`~app.settings.Settings` instance
+    so that other application components receive the updated values
+    immediately *after* the user presses **Save** (we emit the built‑in
+    ``accepted`` signal).
+    """
+
+    def __init__(self, settings: Settings, parent=None) -> None:  # noqa: D401  – Qt style
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.settings = settings
+        self._init_ui()
+        self._load()
+
+    # ---------------------------------------------------------------------
+    # UI helpers
+    # ---------------------------------------------------------------------
+    def _init_ui(self) -> None:
+        tabs = QTabWidget(self)
+        tabs.addTab(self._build_general_tab(), "General")
+        tabs.addTab(self._build_rag_tab(), "RAG")
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
+        buttons.accepted.connect(self._save)
+        buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(tabs)
+        layout.addWidget(buttons)
+
+    # ----- per‑tab builders ------------------------------------------------
+    def _build_general_tab(self):
+        w = QFormLayout()
+
+        self.base_edit = QLineEdit()
+        w.addRow("Base URL", self.base_edit)
+
+        self.key_edit = QLineEdit()
+        self.key_edit.setEchoMode(QLineEdit.Password)
+        w.addRow("OpenAI API Key", self.key_edit)
+
+        self.timeout_spin = QSpinBox()
+        self.timeout_spin.setRange(1, 120)
+        w.addRow("Timeout (s)", self.timeout_spin)
+
+        # 新增一個勾選框：Use mock API
+        self.mock_chk = QCheckBox("Use mock API responses")
+        w.addRow(self.mock_chk)
+
+        # wrap the form into QWidget for QTabWidget
+        container = QDialog()  # lightweight widget
+        container.setLayout(w)
+        return container
+
+    def _build_rag_tab(self):
+        w = QFormLayout()
+
+        self.dir_combo = QComboBox()
+        self.dir_combo.addItems(["forward", "reverse", "both"])
+        w.addRow("Direction", self.dir_combo)
+
+        self.k_spin = QSpinBox()
+        self.k_spin.setRange(1, 20)
+        w.addRow("rag_k", self.k_spin)
+
+        self.th_spin = QDoubleSpinBox()
+        self.th_spin.setDecimals(2)
+        self.th_spin.setRange(0.0, 1.0)
+        self.th_spin.setSingleStep(0.05)
+        w.addRow("Threshold", self.th_spin)
+
+        self.role_desc_edit = QLineEdit()
+        w.addRow("Role Description", self.role_desc_edit)
+
+        self.ref_desc_edit = QLineEdit()
+        w.addRow("Reference Description", self.ref_desc_edit)
+
+        self.input_desc_edit = QLineEdit()
+        w.addRow("Input Description", self.input_desc_edit)
+
+        self.llm_name_edit = QLineEdit()
+        w.addRow("LLM Name", self.llm_name_edit)
+
+        container = QDialog()
+        container.setLayout(w)
+        return container
+
+    # ---------------------------------------------------------------------
+    # load / save helpers
+    # ---------------------------------------------------------------------
+    def _load(self):
+        s = self.settings
+        self.base_edit.setText(s.get("base_url", ""))
+        self.key_edit.setText(s.get("api_key", ""))
+        self.timeout_spin.setValue(int(s.get("timeout", 30)))
+        self.mock_chk.setChecked(s.get("use_mock_api", False))
+
+        self.dir_combo.setCurrentText(s.get("rag.direction", "both"))
+        self.k_spin.setValue(int(s.get("rag.rag_k", 5)))
+        self.th_spin.setValue(float(s.get("rag.cof_threshold", 0.5)))
+
+        self.role_desc_edit.setText(s.get("rag_role_desc", ""))
+        self.ref_desc_edit.setText(s.get("rag_reference_desc", ""))
+        self.input_desc_edit.setText(s.get("rag_input_desc", ""))
+        self.llm_name_edit.setText(s.get("rag_llm_name", "openai"))
+
+    def _save(self):
+        s = self.settings
+        s.set("base_url", self.base_edit.text().strip())
+        s.set("api_key", self.key_edit.text().strip())
+        s.set("timeout", self.timeout_spin.value())
+        s.set("use_mock_api", self.mock_chk.isChecked())
+
+        s.set("rag_direction", self.dir_combo.currentText())
+        s.set("rag.rag_k", self.k_spin.value())
+        s.set("rag.cof_threshold", round(self.th_spin.value(), 2))
+
+        s.set("rag_role_desc", self.role_desc_edit.text().strip())
+        s.set("rag_reference_desc", self.ref_desc_edit.text().strip())
+        s.set("rag_input_desc", self.input_desc_edit.text().strip())
+        s.set("rag_llm_name", self.llm_name_edit.text().strip())
+        self.accept()
+
+===== ./app/__init__.py =====
+"""Regulens-AI application package."""
+
+
+===== ./app/api_client.py =====
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+from urllib import request
+
+try:  # optional dependency for async HTTP
+    import httpx  # type: ignore
+except Exception:  # pragma: no cover - optional
+    httpx = None
+
+
+@dataclass
+class CompareResponse:
+    """Simple response model for API results."""
+    result: str
+
+
+class ApiClient:
+    """
+    HTTP client for the /api/v1/rag endpoint.
+    Now the compare/acompare accept:
+    compare(project_id, input_doc_content, ref_doc_content, **scenario_params).
+    They will build the payload as RAGRequest schema demands:
+    {
+      "project_id": ...,
+      "input_data": {...},
+      "reference_data": {...},
+      "scenario": { ...scenario_params... }
+    }
+    """
+
+    def __init__(self, base_url: str, api_key: str, timeout: int = 30) -> None:
+        self.base_url = base_url.rstrip('/')
+        self.api_key = api_key
+        self.timeout = timeout
+        self._async_client: Optional["httpx.AsyncClient"] = None
+        if httpx is not None:
+            self._async_client = httpx.AsyncClient(
+                base_url=self.base_url,
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=timeout,
+            )
+
+    def compare(
+        self,
+        project_id: str,
+        input_doc_content: Dict[str, Any],
+        ref_doc_content: Dict[str, Any],
+        **scenario_params: Any
+    ) -> CompareResponse:
+        """
+        Synchronous comparison with urllib.
+        Build a RAGRequest-like payload. Example:
+        {
+          "project_id": project_id,
+          "input_data": {
+              "level1": [
+                   {
+                     "sid": f"input_{project_id}",
+                     "text": input_doc_content,
+                     "metadata": { "project": project_id }
+                   }
+              ]
+          },
+          "reference_data": {
+              "level1": [
+                   {
+                     "sid": f"ref_{project_id}",
+                     "text": ref_doc_content,
+                     "metadata": { "project": project_id }
+                   }
+              ]
+          },
+          "scenario": { ...scenario_params... }
+        }
+        POST /api/v1/rag
+        """
+        payload = {
+            "project_id": project_id,
+            "input_data": {
+                "level1": [
+                    {
+                        "sid": f"input_{project_id}",
+                        "text": input_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "reference_data": {
+                "level1": [
+                    {
+                        "sid": f"ref_{project_id}",
+                        "text": ref_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "scenario": scenario_params,
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req_url = f"{self.base_url}/api/v1/rag"
+        req = request.Request(
+            req_url,
+            data=data,
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        with request.urlopen(req, timeout=self.timeout) as resp:
+            resp_data = resp.read()
+        obj = json.loads(resp_data.decode("utf-8"))
+        return CompareResponse(result=obj.get("result", ""))
+
+    async def acompare(
+        self,
+        project_id: str,
+        input_doc_content: Dict[str, Any],
+        ref_doc_content: Dict[str, Any],
+        **scenario_params: Any
+    ) -> CompareResponse:
+        """Asynchronous version using ``httpx`` if available."""
+        if self._async_client is None:
+            raise RuntimeError("httpx is not installed")
+        payload = {
+            "project_id": project_id,
+            "input_data": {
+                "level1": [
+                    {
+                        "sid": f"input_{project_id}",
+                        "text": input_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "reference_data": {
+                "level1": [
+                    {
+                        "sid": f"ref_{project_id}",
+                        "text": ref_doc_content,
+                        "metadata": {"project": project_id}
+                    }
+                ]
+            },
+            "scenario": scenario_params,
+        }
+        resp = await self._async_client.post("/api/v1/rag", json=payload)
+        resp.raise_for_status()
+        obj = resp.json()
+        return CompareResponse(result=obj.get("result", ""))
+
+    async def aclose(self) -> None:
+        """Close the underlying async client if used."""
+        if self._async_client is not None:
+            await self._async_client.aclose()
+
+===== ./output.txt =====
+
+===== ./requirements.txt =====
+annotated-types==0.7.0
+anyio==4.9.0
+Brotli==1.1.0
+certifi==2025.4.26
+cffi==1.17.1
+cssselect2==0.8.0
+fonttools==4.58.0
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.10
+iniconfig==2.1.0
+loguru==0.7.3
+markdown-it-py==3.0.0
+mdurl==0.1.2
+packaging==25.0
+pillow==11.2.1
+pluggy==1.6.0
+pycparser==2.22
+pydantic==2.11.5
+pydantic_core==2.33.2
+pydyf==0.11.0
+pyphen==0.17.2
+PySide6==6.9.0
+PySide6_Addons==6.9.0
+PySide6_Essentials==6.9.0
+pytest==8.3.5
+shiboken6==6.9.0
+sniffio==1.3.1
+tinycss2==1.4.0
+tinyhtml5==2.0.0
+typing-inspection==0.4.1
+typing_extensions==4.13.2
+weasyprint==65.1
+webencodings==0.5.1
+zopfli==0.2.3.post1
+langchain==0.1.12
+chromadb==0.4.24
+sentence-transformers==2.5.1
+openai==1.14.0
+python-dotenv==1.0.1
+
+===== ./CONTRIBUTING.md =====
+# Contributing to Regulens-AI
+
+Thanks for your interest in contributing! Please follow these guidelines:
+
+1. Fork the repository and create your feature branch.
+2. Write clear commit messages and open a pull request against `main`.
+3. Ensure `pytest` runs successfully before submitting.
+4. For major changes, open an issue first to discuss what you would like to change.
+
+By contributing you agree that your code will be released under the MIT License.
+
+===== ./logs/2025-05-29.log =====
+2025-05-29 15:56:22.081 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s (async)
+2025-05-29 15:56:22.086 | ERROR    | app.compare_manager:acompare:51 - Async comparison failed: %s
+2025-05-29 17:04:37.471 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 543
+2025-05-29 17:05:55.405 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 8
+2025-05-29 17:06:01.432 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 3
+2025-05-29 17:07:15.352 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 4
+2025-05-29 17:08:44.911 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 6cc
+2025-05-29 17:09:12.500 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 5
+2025-05-29 17:09:43.989 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 6
+2025-05-29 17:11:48.150 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: dfghdfgh
+2025-05-29 17:11:54.016 | INFO     | app.views.workspace:_handle_project_deleted:261 - Handling deletion of project: Project 10
+2025-05-29 17:14:57.401 | INFO     | app.views.workspace:_handle_project_deleted:279 - Handling deletion of project: dfgh
+2025-05-29 17:19:19.981 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 2
+2025-05-29 17:19:32.124 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 8
+2025-05-29 17:19:37.769 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 4
+2025-05-29 17:19:39.989 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 6
+2025-05-29 17:22:34.267 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 8
+2025-05-29 17:24:05.235 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 7
+2025-05-29 17:24:05.236 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 7 from store.
+2025-05-29 17:24:05.237 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x2d552f40) at 0x708bb8047500> for project Project 7 from stack.
+2025-05-29 17:28:33.119 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 7
+2025-05-29 17:28:33.123 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 7 from store.
+2025-05-29 17:28:33.125 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x2f524ff0) at 0x71b9840aa640> for project Project 7 from stack.
+2025-05-29 17:38:08.221 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 8
+2025-05-29 17:38:08.222 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 8 from store.
+2025-05-29 17:38:08.224 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x2923b740) at 0x753a302c0840> for project Project 8 from stack.
+2025-05-29 17:38:11.978 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 8
+2025-05-29 17:38:11.979 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 8 from store.
+2025-05-29 17:38:11.980 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x292f50f0) at 0x753a302b6a80> for project Project 8 from stack.
+2025-05-29 17:39:35.066 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-05-29 17:39:35.066 | ERROR    | app.compare_manager:acompare:51 - Async comparison failed: %s
+2025-05-29 17:39:40.041 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-05-29 17:39:40.042 | ERROR    | app.compare_manager:acompare:51 - Async comparison failed: %s
+2025-05-29 17:39:43.847 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-05-29 17:39:43.848 | ERROR    | app.compare_manager:acompare:51 - Async comparison failed: %s
+2025-05-29 17:40:49.990 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: fghdfgh
+2025-05-29 17:40:49.991 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project fghdfgh from store.
+2025-05-29 17:40:49.993 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x102a3660) at 0x7894be9a3040> for project fghdfgh from stack.
+2025-05-29 18:02:28.390 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 2
+2025-05-29 18:02:28.394 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 2 from store.
+2025-05-29 18:02:28.396 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x403d6b80) at 0x7adb010c1c00> for project Project 2 from stack.
+2025-05-29 18:02:30.433 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 3
+2025-05-29 18:02:30.433 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 3 from store.
+2025-05-29 18:02:30.434 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x40361a60) at 0x7adb010ca480> for project Project 3 from stack.
+2025-05-29 18:05:25.934 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 8
+2025-05-29 18:05:25.935 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 8 from store.
+2025-05-29 18:05:25.940 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x37a051e0) at 0x724af7696480> for project Project 8 from stack.
+2025-05-29 18:09:51.673 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 9
+2025-05-29 18:09:51.675 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 9 from store.
+2025-05-29 18:09:51.678 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x32d73bf0) at 0x706b4aeb8d00> for project Project 9 from stack.
+2025-05-29 20:58:39.145 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 3
+2025-05-29 20:58:39.150 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 3 from store.
+2025-05-29 20:58:39.151 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x2b782830) at 0x71fb963d8940> for project Project 3 from stack.
+2025-05-29 23:53:28.050 | INFO     | app.views.workspace:_handle_project_deleted:278 - Handling deletion of project: Project 4
+2025-05-29 23:53:28.052 | DEBUG    | app.views.workspace:_handle_project_deleted:281 - Requesting removal of project Project 4 from store.
+2025-05-29 23:53:28.055 | DEBUG    | app.views.workspace:_handle_project_deleted:292 - Removing widget <app.widgets.project_editor.ProjectEditor(0x3eb75140) at 0x7b48a3eb4c00> for project Project 4 from stack.
+
+===== ./logs/2025-06-02.log =====
+2025-06-02 09:38:16.836 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-06-02 09:38:16.840 | ERROR    | app.compare_manager:acompare:51 - Async comparison failed: %s
+2025-06-02 09:38:18.369 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-06-02 09:38:18.370 | ERROR    | app.compare_manager:acompare:51 - Async comparison failed: %s
+2025-06-02 09:47:28.090 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-06-02 09:47:28.142 | INFO     | app.compare_manager:acompare:53 - Async comparison succeeded
+2025-06-02 09:47:43.546 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-06-02 09:47:43.597 | INFO     | app.compare_manager:acompare:53 - Async comparison succeeded
+2025-06-02 09:48:28.004 | INFO     | app.compare_manager:acompare:47 - Comparing %s to %s for project %s (async)
+2025-06-02 09:48:28.057 | INFO     | app.compare_manager:acompare:53 - Async comparison succeeded
+2025-06-02 09:49:22.471 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:49:22.473 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:49:58.756 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:49:58.757 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:51:22.952 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:51:22.956 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:51:30.227 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:51:30.228 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:52:21.894 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:52:21.919 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:52:29.746 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:52:29.747 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:53:22.238 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:53:22.239 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:54:16.192 | INFO     | app.compare_manager:compare:32 - Comparing %s to %s for project %s
+2025-06-02 09:54:16.194 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:57:46.515 | INFO     | app.compare_manager:compare:32 - Comparing /home/jerryhung/regulens-ai/sample_data/reference_sample.json to /home/jerryhung/regulens-ai/sample_data/input_sample.json for project Project 5
+2025-06-02 09:57:46.519 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 09:57:53.954 | INFO     | app.compare_manager:compare:32 - Comparing /home/jerryhung/regulens-ai/sample_data/reference_sample.json to /home/jerryhung/regulens-ai/sample_data/input_sample.json for project Project 5
+2025-06-02 09:57:53.956 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 10:03:06.263 | INFO     | app.views.workspace:_handle_project_deleted:279 - Handling deletion of project: Project 2
+2025-06-02 10:03:06.267 | DEBUG    | app.views.workspace:_handle_project_deleted:282 - Requesting removal of project Project 2 from store.
+2025-06-02 10:03:06.270 | DEBUG    | app.views.workspace:_handle_project_deleted:293 - Removing widget <app.widgets.project_editor.ProjectEditor(0xb9c9f40) at 0x7cac86c8d080> for project Project 2 from stack.
+2025-06-02 10:03:09.763 | INFO     | app.views.workspace:_handle_project_deleted:279 - Handling deletion of project: Project 7
+2025-06-02 10:03:09.763 | DEBUG    | app.views.workspace:_handle_project_deleted:282 - Requesting removal of project Project 7 from store.
+2025-06-02 10:03:09.765 | DEBUG    | app.views.workspace:_handle_project_deleted:293 - Removing widget <app.widgets.project_editor.ProjectEditor(0xba33100) at 0x7cac86c5b900> for project Project 7 from stack.
+2025-06-02 10:03:13.874 | INFO     | app.compare_manager:compare:32 - Comparing /home/jerryhung/regulens-ai/sample_data/input_sample.json to /home/jerryhung/regulens-ai/sample_data/input_sample.json for project Project 5
+2025-06-02 10:03:13.876 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 10:13:40.518 | INFO     | app.compare_manager:compare:32 - Comparing /home/jerryhung/regulens-ai/sample_data/input_sample.json to /home/jerryhung/regulens-ai/sample_data/input_sample.json for project Project 5
+2025-06-02 10:13:40.520 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 10:13:40.524 | INFO     | __main__:_compare_done:207 - comparison finished for %s
+2025-06-02 10:13:52.731 | INFO     | app.compare_manager:compare:32 - Comparing /home/jerryhung/regulens-ai/sample_data/input_sample.json to /home/jerryhung/regulens-ai/sample_data/input_sample.json for project Project 5
+2025-06-02 10:13:52.733 | INFO     | app.compare_manager:compare:40 - Comparison succeeded
+2025-06-02 10:13:52.736 | INFO     | __main__:_compare_done:207 - comparison finished for %s
+2025-06-02 10:17:17.205 | INFO     | __main__:_compare_done:229 - comparison finished for %s
+2025-06-02 10:17:17.210 | WARNING  | app.views.workspace:show_project_results:250 - show_project_results called with no project or no results.
+2025-06-02 10:18:00.623 | INFO     | __main__:_compare_done:229 - comparison finished for %s
+2025-06-02 10:18:00.625 | WARNING  | __main__:_compare_done:233 - No results found for project %s
+2025-06-02 10:18:50.115 | INFO     | __main__:_compare_done:229 - comparison finished for project: %s
+2025-06-02 10:18:50.120 | WARNING  | __main__:_compare_done:233 - No results found for project: %s
+2025-06-02 10:18:55.094 | INFO     | __main__:_compare_done:229 - comparison finished for project: %s
+2025-06-02 10:18:55.095 | WARNING  | __main__:_compare_done:233 - No results found for project: %s
+2025-06-02 10:19:52.962 | INFO     | __main__:_compare_done:229 - comparison finished for project: %s
+2025-06-02 10:19:52.963 | WARNING  | __main__:_compare_done:233 - No results found for project: %s

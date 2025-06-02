@@ -29,7 +29,7 @@ class CompareManager:
             raise CompareError(str(exc)) from exc
 
     def compare(self, project_id: str, input_path: Path, ref_path: Path, **scenario_params: Any) -> CompareResponse:
-        logger.info("Comparing %s to %s for project %s", input_path, ref_path, project_id)
+        logger.info("Comparing {} to {} for project {}", input_path, ref_path, project_id)
         input_doc_content = self.load_json(input_path)
         ref_doc_content = self.load_json(ref_path)
         try:

@@ -25,6 +25,18 @@ class Settings:
                 self._data = json.loads(self._path.read_text())
             except Exception:
                 self._data = {}
+        else:
+            # 若 ~/.regulens-ai.json 不存在，先讀 config_default.yaml 當預設
+            try:
+                import yaml
+                from pathlib import Path
+                yaml_cfg = Path(__file__).parent.parent / "config_default.yaml"
+                if yaml_cfg.exists():
+                    self._data = yaml.safe_load(yaml_cfg.read_text())
+                    # 立即寫成 JSON，之後都走 JSON
+                    self._save()
+            except Exception:
+                self._data = {}
 
     def _save(self) -> None:
         """Save settings to disk."""

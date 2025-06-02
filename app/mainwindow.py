@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 import sys
 # from pathlib import Path  # Keep for type hints if CompareProject uses it and is passed around
 # from typing import List, Optional, Dict, Any # Keep if type hints for CompareProject use them
 
-from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt
+from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt, QMetaObject, Q_ARG
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
@@ -36,6 +35,9 @@ class _Signals(QObject):
     finished = Signal(object)
     error = Signal(Exception)
 
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)   # 確保 QObject 初始化
+
 
 class _Worker(QRunnable):
     def __init__(self, fn, *args, **kwargs):
@@ -65,10 +67,17 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Regulens‑AI")
         self.manager = manager
         self.settings = settings  # For SettingsDialog and API client
+        
+        # 確保預設使用 mock mode
+        if self.settings.get("use_mock_api") is None:
+            self.settings.set("use_mock_api", True)
+            self.settings.set("mock_path", "sample_data/mock_responses")
+            
         self.project_store = ProjectStore()  # Manages all project data
         self.threadpool = QThreadPool()
 
         self._build_menubar()
+        self._reload_api_client()
 
         self.intro_page = IntroPage()
         self.intro_page.start_requested.connect(self._enter_workspace)
@@ -101,16 +110,26 @@ class MainWindow(QMainWindow):
             self._reload_api_client()
 
     def _reload_api_client(self):
-        base = self.settings.get("base_url", "")
-        key = self.settings.get("api_key", "")
-        timeout = int(self.settings.get("timeout", 30))
-        self.manager.api_client.base_url = base
-        self.manager.api_client.api_key = key
-        self.manager.api_client.timeout = timeout
+        if self.settings.get("use_mock_api", False):
+            from app.mock_api_client import MockApiClient
+            mock_dir = self.settings.get("mock_path", "sample_data/mock_responses")
+            client = MockApiClient(mock_dir)
+        else:
+            from app.api_client import ApiClient
+            client = ApiClient(
+                self.settings.get("base_url", ""),
+                self.settings.get("api_key", ""),
+                timeout=int(self.settings.get("timeout", 30)),
+            )
+        self.manager.api_client = client
 
     def _ensure_settings_configured(self) -> bool:
         base_url = self.settings.get("base_url", "")
         api_key = self.settings.get("api_key", "")
+
+        if self.settings.get("use_mock_api", False):
+            # 如果使用 mock，就不用檢查 base_url/api_key
+            return True
 
         if not base_url or not api_key:
             msg_box = QMessageBox(self)
@@ -145,10 +164,11 @@ class MainWindow(QMainWindow):
         if not self._ensure_settings_configured():
             return  # Stop if settings are not configured
     
-        prog = QProgressDialog("Comparing…", None, 0, len(proj.ref_paths), self)
-        prog.setWindowModality(Qt.WindowModal)
-        prog.setCancelButton(None)
-        prog.show()
+        # 讓 progressDialog 成為物件屬性，避免被 lambda capture
+        self._prog = QProgressDialog("Comparing…", None, 0, len(proj.ref_paths), self)
+        self._prog.setWindowModality(Qt.WindowModal)
+        self._prog.setCancelButton(None)
+        self._prog.show()
 
         def task():
             # Retrieve RAG settings
@@ -160,30 +180,36 @@ class MainWindow(QMainWindow):
                 "rag_k": self.settings.get("rag_rag_k", 5),
                 "cof_threshold": self.settings.get("rag_cof_threshold", 0.5),
                 "llm_name": self.settings.get("rag_llm_name", "openai")
-                # project_id will be handled in ApiClient or CompareManager as it's not part of 'scenario'
             }
             for i, ref in enumerate(proj.ref_paths, start=1):
-                # Use proj.name as project_id for now
-                resp = asyncio.run(self.manager.acompare(proj.name, proj.input_path, ref, **scenario_params))  # type: ignore[arg-type]
+                # 使用同步的 compare 方法而不是非同步的 acompare
+                resp = self.manager.compare(proj.name, proj.input_path, ref, **scenario_params)  # type: ignore[arg-type]
                 proj.results[str(ref)] = resp.result
-                prog.setValue(i)
+                QMetaObject.invokeMethod(
+                    self._prog, "setValue", Qt.QueuedConnection, Q_ARG(int, i)
+                )
+
             return proj
 
         worker = _Worker(task)
-        worker.signals.error.connect(lambda e: self._compare_error(e, prog))  # type: ignore[attr-defined]
-        worker.signals.finished.connect(lambda p: self._compare_done(p, prog))  # type: ignore[attr-defined]
+        worker.signals.error.connect(self._compare_error)      # 直接接函式
+        worker.signals.finished.connect(self._compare_done)
         self.threadpool.start(worker)
 
-    def _compare_error(self, err: Exception, dlg: QProgressDialog):
-        dlg.close()
+    def _compare_error(self, err: Exception):
+        if hasattr(self, "_prog"):
+            self._prog.close()
         QMessageBox.critical(self, "比較失敗", str(err))
 
-    def _compare_done(self, proj: CompareProject, dlg: QProgressDialog):  # type: ignore[no-redef]
-        dlg.close()
+    def _compare_done(self, proj: CompareProject):
+        if hasattr(self, "_prog"):
+            self._prog.close()
         logger.info("comparison finished for %s", proj.name)
-        # Project results are updated in the worker task.
-        # Now, notify the workspace to display the results.
-        proj.changed.emit()  # Emit changed to trigger ProjectStore save and UI updates
+        
+        # 有結果 → 通知 UI 更新
+        proj.changed.emit()
+
+        # 使用既有的 signal-flow，讓 Workspace 掌管跳畫面
         self.comparison_finished.emit(proj)
 
     # ------------------------------------------------------------------
@@ -198,13 +224,13 @@ class MainWindow(QMainWindow):
 # ----------------------------------------------------------------------------
 # Manual launch
 # ----------------------------------------------------------------------------
-if __name__ == "__main__":  # pragma: no cover
-    from .api_client import ApiClient
-
+if __name__ == "__main__":
     qapp = QApplication(sys.argv)
     sett = Settings()
-    client = ApiClient(sett.get("base_url", "https://api.example.com"), sett.get("api_key", ""))
-    mgr = CompareManager(client)
+
+    # 先給一個佔位的 CompareManager，真正的 client 會在 MainWindow 內 _reload_api_client() 決定
+    from app.api_client import ApiClient
+    mgr = CompareManager(ApiClient("", ""))
 
     win = MainWindow(mgr, sett)
     win.resize(1100, 720)

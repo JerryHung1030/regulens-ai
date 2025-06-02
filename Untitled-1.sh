@@ -1,0 +1,1 @@
+find . -type f ! -path "*/.pytest_cache/*" ! -path "*/.github/*" ! -path "*/.__pycache__/*" ! -path "*/__pycache__/*" ! -path "*/.logs/*" ! -path "*/venv/*" ! -path "*/.git/*" -exec bash -c 'echo -e "\n===== {} ====="; cat "{}"' \; > output.txt

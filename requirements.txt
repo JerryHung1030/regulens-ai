@@ -34,3 +34,8 @@ typing_extensions==4.13.2
 weasyprint==65.1
 webencodings==0.5.1
 zopfli==0.2.3.post1
+langchain==0.1.12
+chromadb==0.4.24
+sentence-transformers==2.5.1
+openai==1.14.0
+python-dotenv==1.0.1

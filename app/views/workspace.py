@@ -178,6 +178,7 @@ class Workspace(QWidget):
             self.stack.addWidget(viewer)
             self.stack.setCurrentWidget(viewer)
             project.viewer_idx = self.stack.indexOf(viewer)
+            project.editor_idx = -1  # 清除編輯器索引，因為我們現在在結果視圖中
         else:
             editor = ProjectEditor(project)
             if self.main_window and hasattr(self.main_window, "_run_compare"):
@@ -249,16 +250,16 @@ class Workspace(QWidget):
             logger.warning("show_project_results called with no project or no results.")
             return
 
-        logger.info(f"Displaying results for project: {project.name}")
-        self._clear_stack()  # Clear current widget (likely ProjectEditor)
-
+        # 清除當前堆疊中的小部件
+        self._clear_stack()
+        
+        # 創建並顯示結果視圖
         viewer = ResultsViewer(project)
         viewer.edit_requested.connect(self._switch_to_editor)
-        
         self.stack.addWidget(viewer)
         self.stack.setCurrentWidget(viewer)
         project.viewer_idx = self.stack.indexOf(viewer)
-        # project.editor_idx = -1 # Keep editor_idx, it's where 'back' goes
+        project.editor_idx = -1  # 清除編輯器索引，因為我們現在在結果視圖中
 
         # Ensure the sidebar selection reflects the currently viewed project
         # This might already be handled if the project was selected before comparison.

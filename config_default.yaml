@@ -2,3 +2,4 @@
 base_url: "https://api.example.com"
 api_key: "YOUR_API_KEY"
 timeout: 30
+use_mock_api: true

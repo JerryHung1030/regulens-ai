@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
+    QCheckBox
 )
 
 from .settings import Settings
@@ -62,6 +63,10 @@ class SettingsDialog(QDialog):
         self.timeout_spin.setRange(1, 120)
         w.addRow("Timeout (s)", self.timeout_spin)
 
+        # 新增一個勾選框：Use mock API
+        self.mock_chk = QCheckBox("Use mock API responses")
+        w.addRow(self.mock_chk)
+
         # wrap the form into QWidget for QTabWidget
         container = QDialog()  # lightweight widget
         container.setLayout(w)
@@ -108,6 +113,7 @@ class SettingsDialog(QDialog):
         self.base_edit.setText(s.get("base_url", ""))
         self.key_edit.setText(s.get("api_key", ""))
         self.timeout_spin.setValue(int(s.get("timeout", 30)))
+        self.mock_chk.setChecked(s.get("use_mock_api", False))
 
         self.dir_combo.setCurrentText(s.get("rag.direction", "both"))
         self.k_spin.setValue(int(s.get("rag.rag_k", 5)))
@@ -123,8 +129,9 @@ class SettingsDialog(QDialog):
         s.set("base_url", self.base_edit.text().strip())
         s.set("api_key", self.key_edit.text().strip())
         s.set("timeout", self.timeout_spin.value())
+        s.set("use_mock_api", self.mock_chk.isChecked())
 
-        s.set("rag.direction", self.dir_combo.currentText())
+        s.set("rag_direction", self.dir_combo.currentText())
         s.set("rag.rag_k", self.k_spin.value())
         s.set("rag.cof_threshold", round(self.th_spin.value(), 2))
 
