@@ -162,7 +162,7 @@ class IntroPage(QWidget):
 
         list_data_text = """
         <ul style='list-style-type: none; padding: 0; margin: 0;'>
-          <li style='margin-bottom: 8px;'><strong>Ingestion：</strong>支援 TXT / PDF / CSV</li>
+          <li style='margin-bottom: 8px;'><strong>Ingestion：</strong>支援 TXT(PDF/CSV TBC)</li>
           <li style='margin-bottom: 8px;'><strong>Embedding：</strong>OpenAI text-embedding-3-large</li>
           <li style='margin-bottom: 8px;'><strong>Retrieval：</strong>FAISS k-NN similarity search</li>
           <li style='margin-bottom: 8px;'><strong>Assessment：</strong>GPT-4o for Pass / Partial / Fail</li>
@@ -198,7 +198,7 @@ class IntroPage(QWidget):
 
         list_trust_text = """
         <ul style='list-style-type: none; padding: 0; margin: 0;'>
-          <li style='margin-bottom: 8px;'>✅ <strong>Offline Capability：</strong>單檔管線，可離線執行。</li>
+          <li style='margin-bottom: 8px;'>✅ <strong>Offline Capability：</strong>支援pipeline並可離線執行。</li>
           <li style='margin-bottom: 8px;'>🔒 <strong>Robust Caching：</strong>Content hashing 與 vector indexing。</li>
           <li style='margin-bottom: 8px;'>🔍 <strong>Full Traceability：</strong>logs/ 與 output/ 中的詳細日誌。</li>
         </ul>

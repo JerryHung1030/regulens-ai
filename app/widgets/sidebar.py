@@ -28,6 +28,28 @@ class Sidebar(QWidget):
 
         # Ensure list_projects is defined as early as possible
         self.list_projects = QListWidget()
+        self.list_projects.setStyleSheet("""
+            QListWidget {
+                border: 1px solid #cccccc; /* Light gray border for the list itself */
+                background-color: #ffffff; /* White background for the list area */
+                padding: 4px;
+            }
+            QListWidget::item {
+                padding: 8px 12px; /* Increased padding for items */
+                border-radius: 4px; /* Subtle rounded corners for items */
+                margin: 2px 0;
+            }
+            QListWidget::item:hover {
+                background-color: #e6f2ff; /* Light blue hover */
+                color: #222222; /* Darker text on hover */
+            }
+            QListWidget::item:selected {
+                background-color: #cce5ff; /* Slightly darker blue for selection */
+                color: #000000; /* Black text for selected item for clarity */
+                /* Optionally, add a border for selected item if needed */
+                /* border-left: 3px solid #007bff; */
+            }
+        """)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -42,11 +64,15 @@ class Sidebar(QWidget):
         self._btn_toggle.setStyleSheet("""
             QToolButton {
                 border: none;
-                padding: 4px;
+                padding: 6px; /* Slightly increased padding */
                 border-radius: 4px;
+                background-color: transparent; /* Make background transparent initially */
             }
             QToolButton:hover {
-                background-color: #e0e0e0;
+                background-color: #dddddd; /* Slightly darker gray for hover */
+            }
+            QToolButton:pressed {
+                background-color: #cccccc; /* Even darker for pressed state */
             }
         """)
         self._btn_toggle.clicked.connect(self._toggle)
@@ -64,12 +90,17 @@ class Sidebar(QWidget):
         self.btn_add_project.setStyleSheet("""
             QToolButton {
                 border: none;
-                padding: 4px;
+                padding: 6px; /* Consistent padding */
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 16px; /* Keep font size as is */
+                color: #333333; /* Match default text color */
+                background-color: transparent;
             }
             QToolButton:hover {
-                background-color: #e0e0e0;
+                background-color: #dddddd;
+            }
+            QToolButton:pressed {
+                background-color: #cccccc;
             }
         """)
         self.btn_add_project.clicked.connect(self.add_project_requested.emit)
@@ -159,9 +190,9 @@ class Sidebar(QWidget):
                 elif proj.name == "風險清冊範例":
                     prefix_tag = "<font color='#2e7d32'>SAMPLE</font>&nbsp;"  # Green tag
                 else:
-                    prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;" # Generic
+                    prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;"  # Generic
                 text_to_set = prefix_tag + proj.name
-            item.setText(text_to_set) # QListWidgetItem should render basic HTML for text
+            item.setText(text_to_set)  # QListWidgetItem should render basic HTML for text
             item.setData(Qt.DisplayRole, proj.name)   # plain text for look-ups
             self.list_projects.addItem(item)
 
