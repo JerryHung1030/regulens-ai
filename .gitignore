@@ -15,6 +15,9 @@ dist/
 
 # Logs
 logs/
+cache/
+output/
+*.meta.json
 
 # Test outputs
 htmlcov/

@@ -28,6 +28,30 @@ class Sidebar(QWidget):
 
         # Ensure list_projects is defined as early as possible
         self.list_projects = QListWidget()
+        self.list_projects.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.list_projects.setTextElideMode(Qt.ElideRight)
+        self.list_projects.setStyleSheet("""
+            QListWidget {
+                border: 1px solid #cccccc; /* Light gray border for the list itself */
+                background-color: #ffffff; /* White background for the list area */
+                padding: 4px;
+            }
+            QListWidget::item {
+                padding: 8px 12px; /* Increased padding for items */
+                border-radius: 4px; /* Subtle rounded corners for items */
+                margin: 2px 0;
+            }
+            QListWidget::item:hover {
+                background-color: #e6f2ff; /* Light blue hover */
+                color: #222222; /* Darker text on hover */
+            }
+            QListWidget::item:selected {
+                background-color: #cce5ff; /* Slightly darker blue for selection */
+                color: #000000; /* Black text for selected item for clarity */
+                /* Optionally, add a border for selected item if needed */
+                /* border-left: 3px solid #007bff; */
+            }
+        """)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -42,11 +66,15 @@ class Sidebar(QWidget):
         self._btn_toggle.setStyleSheet("""
             QToolButton {
                 border: none;
-                padding: 4px;
+                padding: 6px; /* Slightly increased padding */
                 border-radius: 4px;
+                background-color: transparent; /* Make background transparent initially */
             }
             QToolButton:hover {
-                background-color: #e0e0e0;
+                background-color: #dddddd; /* Slightly darker gray for hover */
+            }
+            QToolButton:pressed {
+                background-color: #cccccc; /* Even darker for pressed state */
             }
         """)
         self._btn_toggle.clicked.connect(self._toggle)
@@ -64,12 +92,17 @@ class Sidebar(QWidget):
         self.btn_add_project.setStyleSheet("""
             QToolButton {
                 border: none;
-                padding: 4px;
+                padding: 6px; /* Consistent padding */
                 border-radius: 4px;
-                font-size: 16px;
+                font-size: 16px; /* Keep font size as is */
+                color: #333333; /* Match default text color */
+                background-color: transparent;
             }
             QToolButton:hover {
-                background-color: #e0e0e0;
+                background-color: #dddddd;
+            }
+            QToolButton:pressed {
+                background-color: #cccccc;
             }
         """)
         self.btn_add_project.clicked.connect(self.add_project_requested.emit)
@@ -82,6 +115,9 @@ class Sidebar(QWidget):
         self.list_projects.itemClicked.connect(self._on_project_clicked)
         self.project_store.changed.connect(self.refresh_project_list)
         self.refresh_project_list()
+
+        # 強制給一個最小寬度，確保預設展開時能完整顯示大部分專案名稱
+        self.setMinimumWidth(200)
 
     def setup_initial_toggle_state(self):
         """
@@ -102,10 +138,14 @@ class Sidebar(QWidget):
             current_sizes = self._splitter.sizes()
             if len(current_sizes) > 1 and current_sizes[0] != self.COLLAPSED_WIDTH:
                 self._splitter.setSizes([self.COLLAPSED_WIDTH, current_sizes[1]])
+            # 即使是 collapsed，仍然讓自己維持一個最小寬度（方便動畫效果或顯示 Toggle Button）
+            self.setMinimumWidth(self.COLLAPSED_WIDTH)
         else:
             self.list_projects.show()
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
             self._btn_toggle.setToolTip("Collapse sidebar")
+            # 展開狀態下，保證可以看到至少 200px 寬度
+            self.setMinimumWidth(200)
 
     def _toggle(self):
         current_width = self._splitter.sizes()[0]
@@ -122,6 +162,8 @@ class Sidebar(QWidget):
             self._splitter.setSizes(current_sizes)
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))   # Collapse icon
             self._btn_toggle.setToolTip("Collapse sidebar")
+            # 展開時保證最小寬度
+            self.setMinimumWidth(200)
         else:
             # COLLAPSE
             self._splitter.setProperty("last_expanded_width", current_width)
@@ -133,6 +175,8 @@ class Sidebar(QWidget):
             self._splitter.setSizes(current_sizes)
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))  # Expand icon
             self._btn_toggle.setToolTip("Expand sidebar")
+            # 收起時的最小寬度，幫助保持外觀整齊
+            self.setMinimumWidth(self.COLLAPSED_WIDTH)
         self.toggled.emit()
 
     def _on_project_clicked(self, item: QListWidgetItem):
@@ -149,9 +193,30 @@ class Sidebar(QWidget):
         self.list_projects.clear()
         new_current_item = None
         for proj in self.project_store.projects:
-            item = QListWidgetItem(proj.name)
-            item.setData(Qt.UserRole, proj)  # Associate CompareProject object
+            item = QListWidgetItem()
+            item.setData(Qt.UserRole, proj)
+            text_to_set = proj.name
+            if proj.is_sample:
+                prefix_tag = ""
+                if proj.name == "ISO27k-A.9.4.2_強密碼合規稽核範例":
+                    prefix_tag = "<font color='#1565c0'>SAMPLE</font>&nbsp;"  # Blue tag
+                elif proj.name == "ISO27001-A.6.1.2_風險清冊稽核範例":
+                    prefix_tag = "<font color='#2e7d32'>SAMPLE</font>&nbsp;"  # Green tag
+                else:
+                    prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;"  # Generic
+                text_to_set = prefix_tag + proj.name
+            item.setText(text_to_set)  # QListWidgetItem should render basic HTML for text
+            item.setData(Qt.DisplayRole, proj.name)   # plain text for look-ups
             self.list_projects.addItem(item)
+
+            # If using QLabel for rich text:
+            # item = QListWidgetItem() # Create item without text
+            # label = QLabel(display_text)
+            # label.setTextFormat(Qt.RichText) # Ensure HTML is parsed
+            # self.list_projects.addItem(item)
+            # self.list_projects.setItemWidget(item, label) # Set QLabel as the widget for the item
+            # item.setData(Qt.UserRole, proj) # Associate CompareProject object AFTER adding item
+
             if current_project_data == proj:
                 new_current_item = item
         

@@ -38,4 +38,3 @@ class Settings:
         """Set a setting value and save to disk."""
         self._data[key] = value
         self._save()
-

@@ -1,28 +1,28 @@
 from __future__ import annotations
 
-import asyncio
 import sys
-# from pathlib import Path  # Keep for type hints if CompareProject uses it and is passed around
-# from typing import List, Optional, Dict, Any # Keep if type hints for CompareProject use them
+# from pathlib import Path
+# from typing import List, Optional, Dict, Any, Callable # For type hints
 
-from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt
+from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
-    QDialog,  # For SettingsDialog
+    QDialog,
     QMainWindow,
-    QMessageBox,  # For error reporting
-    QProgressDialog,  # For comparison progress
+    QMessageBox,
+    # QProgressDialog, # No longer used
 )
 
 # Local imports
-from .compare_manager import CompareManager
+from .widgets.progress_panel import ProgressPanel  # Added
 from .logger import logger
 from .settings import Settings
 from .settings_dialog import SettingsDialog
-from .models.project import CompareProject  # For type hinting and _run_compare
-# from app.widgets.project_editor import ProjectEditor # No longer directly used by MainWindow
-# from app.widgets.results_viewer import ResultsViewer  # Used in _compare_done (needs review)
+from .models.project import CompareProject
+from .pipeline import run_pipeline, PipelineSettings  # Added
+# from app.widgets.project_editor import ProjectEditor
+# from app.widgets.results_viewer import ResultsViewer
 from .widgets.intro_page import IntroPage
 from .views.workspace import Workspace
 from .stores.project_store import ProjectStore
@@ -35,6 +35,7 @@ from .stores.project_store import ProjectStore
 class _Signals(QObject):
     finished = Signal(object)
     error = Signal(Exception)
+    progress_updated = Signal(int, int, str, int)  # Added for thread-safe progress updates
 
 
 class _Worker(QRunnable):
@@ -60,13 +61,14 @@ class _Worker(QRunnable):
 class MainWindow(QMainWindow):
     comparison_finished = Signal(CompareProject)  # Signal to notify Workspace
 
-    def __init__(self, manager: CompareManager, settings: Settings):
+    def __init__(self, settings: Settings):
         super().__init__()
         self.setWindowTitle("Regulens‑AI")
-        self.manager = manager
-        self.settings = settings  # For SettingsDialog and API client
-        self.project_store = ProjectStore()  # Manages all project data
+        self.settings = settings
+        self.project_store = ProjectStore()
         self.threadpool = QThreadPool()
+        self._cancelled = False  # Added
+        self._progress_panel: ProgressPanel | None = None  # Added
 
         self._build_menubar()
 
@@ -98,26 +100,33 @@ class MainWindow(QMainWindow):
     def _open_settings(self):
         d = SettingsDialog(self.settings, self)
         if d.exec() == QDialog.accepted:
-            self._reload_api_client()
+            self._reload_pipeline_settings()
+            logger.info("Settings dialog accepted and pipeline settings reloaded.")
 
-    def _reload_api_client(self):
-        base = self.settings.get("base_url", "")
-        key = self.settings.get("api_key", "")
-        timeout = int(self.settings.get("timeout", 30))
-        self.manager.api_client.base_url = base
-        self.manager.api_client.api_key = key
-        self.manager.api_client.timeout = timeout
+    def _reload_pipeline_settings(self):
+        # This method will be updated when the new pipeline integration is clear.
+        # For now, it can log the relevant settings or re-initialize a conceptual PipelineSettings object.
+        logger.info("Reloading pipeline settings...")
+        # Example:
+        # pipeline_settings = {
+        #     "openai_api_key": self.settings.get("openai_api_key"),
+        #     "embedding_model": self.settings.get("embedding_model"),
+        #     "llm_model": self.settings.get("llm_model"),
+        # }
+        # logger.info(f"Pipeline settings: {pipeline_settings}")
+        # If there was a global or instance variable for pipeline config, update it here.
+        pass
 
     def _ensure_settings_configured(self) -> bool:
-        base_url = self.settings.get("base_url", "")
-        api_key = self.settings.get("api_key", "")
+        required_fields = ["openai_api_key", "embedding_model", "llm_model"]
+        missing_fields = [field for field in required_fields if not self.settings.get(field)]
 
-        if not base_url or not api_key:
+        if missing_fields:
             msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("Configuration Required")
-            msg_box.setText("Essential settings like API Base URL and API Key are missing. Please configure them now to proceed.")
-            open_settings_button = msg_box.addButton("Open Settings", QMessageBox.ActionRole)
-            cancel_button = msg_box.addButton("Cancel", QMessageBox.RejectRole)
+            msg_box.setWindowTitle("組態設定不完整")  # Configuration Incomplete
+            msg_box.setText("請先設定 OpenAI API Key 與模型參數，才能執行比較")  # Please set OpenAI API Key and model parameters to proceed.
+            open_settings_button = msg_box.addButton("開啟設定", QMessageBox.ActionRole)  # Open Settings
+            cancel_button = msg_box.addButton("取消", QMessageBox.RejectRole)  # Cancel
             msg_box.setDefaultButton(open_settings_button)
             
             msg_box.exec()
@@ -125,65 +134,107 @@ class MainWindow(QMainWindow):
             if msg_box.clickedButton() == cancel_button:
                 return False
             elif msg_box.clickedButton() == open_settings_button:
-                self._open_settings()  # Open the settings dialog
+                self._open_settings()
                 # Re-check after settings dialog is closed
-                base_url = self.settings.get("base_url", "")
-                api_key = self.settings.get("api_key", "")
-                if not base_url or not api_key:
-                    QMessageBox.warning(self, "Configuration Incomplete", "Settings are still missing. Comparison cannot proceed.")
+                still_missing = [field for field in required_fields if not self.settings.get(field)]
+                if still_missing:
+                    QMessageBox.warning(self, "組態設定不完整", "設定仍未完成，無法繼續執行。")  # Settings still incomplete, cannot proceed.
                     return False
-                return True  # Settings are now configured
-        return True  # Settings were already configured
+                return True
+        return True
 
     # ------------------------------------------------------------------
     # Comparison flow
     # ------------------------------------------------------------------
-    def _run_compare(self, proj: CompareProject):  # type: ignore[no-redef]
+    def _run_compare(self, proj: CompareProject):
+        # The `proj.ready` check is now more comprehensive.
         if not proj.ready:
+            QMessageBox.warning(self, "專案未就緒", "請確認所有必要的資料夾都已設定且包含有效的 .txt 檔案。")
             return
         
         if not self._ensure_settings_configured():
-            return  # Stop if settings are not configured
-    
-        prog = QProgressDialog("Comparing…", None, 0, len(proj.ref_paths), self)
-        prog.setWindowModality(Qt.WindowModal)
-        prog.setCancelButton(None)
-        prog.show()
+            # Message to user is handled within _ensure_settings_configured
+            return
 
-        def task():
-            # Retrieve RAG settings
-            scenario_params = {
-                "role_desc": self.settings.get("rag_role_desc", ""),
-                "reference_desc": self.settings.get("rag_reference_desc", ""),
-                "input_desc": self.settings.get("rag_input_desc", ""),
-                "direction": self.settings.get("rag_direction", "both"),
-                "rag_k": self.settings.get("rag_rag_k", 5),
-                "cof_threshold": self.settings.get("rag_cof_threshold", 0.5),
-                "llm_name": self.settings.get("rag_llm_name", "openai")
-                # project_id will be handled in ApiClient or CompareManager as it's not part of 'scenario'
-            }
-            for i, ref in enumerate(proj.ref_paths, start=1):
-                # Use proj.name as project_id for now
-                resp = asyncio.run(self.manager.acompare(proj.name, proj.input_path, ref, **scenario_params))  # type: ignore[arg-type]
-                proj.results[str(ref)] = resp.result
-                prog.setValue(i)
+        self._cancelled = False  # Reset cancellation flag for new run
+        self._progress_panel = ProgressPanel(self)  # Using new ProgressPanel
+        self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)
+        self._progress_panel.show()
+
+        def task_wrapper(worker_signals: _Signals):  # Renamed to avoid conflict, pass signals
+            try:
+                logger.info(f"Starting pipeline for project: {proj.name}")
+                current_pipeline_settings = PipelineSettings.from_settings(self.settings)
+
+                # Define the progress callback for run_pipeline
+                def progress_handler(stage_idx: int, total_stages: int, message: str, percent_complete: int):
+                    # This is called from the worker thread, emit signal for main thread update
+                    worker_signals.progress_updated.emit(stage_idx, total_stages, message, percent_complete)
+
+                run_pipeline(
+                    proj,
+                    current_pipeline_settings,
+                    progress_callback=progress_handler,  # Pass the new handler
+                    cancel_cb=self._is_pipeline_cancelled  # Pass cancellation check
+                )
+                logger.info(f"Pipeline finished for {proj.name}. Report: {proj.report_path}")
+            except Exception as e:
+                logger.error(f"Pipeline execution failed for {proj.name}: {e}", exc_info=True)
+                raise  # Re-raise to be caught by _Worker's error handling
             return proj
 
-        worker = _Worker(task)
-        worker.signals.error.connect(lambda e: self._compare_error(e, prog))  # type: ignore[attr-defined]
-        worker.signals.finished.connect(lambda p: self._compare_done(p, prog))  # type: ignore[attr-defined]
+        worker = _Worker(lambda: task_wrapper(worker.signals))  # Pass worker's signals to task_wrapper
+        worker.signals.error.connect(self._compare_error)  # Pass self._progress_panel implicitly
+        worker.signals.finished.connect(self._compare_done)  # Pass self._progress_panel implicitly
+        worker.signals.progress_updated.connect(self._update_progress_panel_on_signal)  # Connect new signal
         self.threadpool.start(worker)
 
-    def _compare_error(self, err: Exception, dlg: QProgressDialog):
-        dlg.close()
-        QMessageBox.critical(self, "比較失敗", str(err))
+    def _update_progress_panel_on_signal(self, stage_idx: int, total_stages: int, message: str, percent: int):
+        """Slot to update ProgressPanel from worker thread signal."""
+        if self._progress_panel:
+            self._progress_panel.update_progress(stage_idx, total_stages, message, percent)
 
-    def _compare_done(self, proj: CompareProject, dlg: QProgressDialog):  # type: ignore[no-redef]
-        dlg.close()
+    def _is_pipeline_cancelled(self) -> bool:
+        """Used by run_pipeline to check for cancellation."""
+        return self._cancelled
+
+    def _handle_pipeline_cancellation(self):
+        """Slot for ProgressPanel's cancelled signal."""
+        logger.info("Pipeline cancellation requested by user via ProgressPanel.")
+        self._cancelled = True
+        # ProgressPanel handles its own closure via reject() when cancel button is clicked.
+        # If pipeline aborts due to self._cancelled, _compare_error will be called.
+
+    def _compare_error(self, err: Exception):  # dlg parameter removed
+        if self._progress_panel:
+            try:
+                # Disconnect from panel's cancelled signal to avoid issues during cleanup
+                self._progress_panel.cancelled.disconnect(self._handle_pipeline_cancellation)
+            except RuntimeError:  # Signal might have already been disconnected or was never connected
+                logger.debug("Error disconnecting ProgressPanel.cancelled, possibly already disconnected.")
+            self._progress_panel.accept()  # Close the panel
+            self._progress_panel = None
+        self._cancelled = False  # Reset for the next run
+        
+        # Show error message
+        # Check if error is due to cancellation to show a more specific message
+        if "Cancelled by user" in str(err) or (isinstance(err, RuntimeError) and "cancel" in str(err).lower()):
+            QMessageBox.information(self, "操作已取消", "流程已被使用者取消。")  # Operation Cancelled, The process was cancelled by the user.
+        else:
+            QMessageBox.critical(self, "比較失敗", str(err))  # Comparison Failed
+
+    def _compare_done(self, proj: CompareProject):  # dlg parameter removed
+        if self._progress_panel:
+            try:
+                self._progress_panel.cancelled.disconnect(self._handle_pipeline_cancellation)
+            except RuntimeError:
+                logger.debug("Error disconnecting ProgressPanel.cancelled in _compare_done, possibly already disconnected.")
+            self._progress_panel.accept()  # Close the panel
+            self._progress_panel = None
+        self._cancelled = False  # Reset for the next run
+
         logger.info("comparison finished for %s", proj.name)
-        # Project results are updated in the worker task.
-        # Now, notify the workspace to display the results.
-        proj.changed.emit()  # Emit changed to trigger ProjectStore save and UI updates
+        proj.changed.emit()
         self.comparison_finished.emit(proj)
 
     # ------------------------------------------------------------------
@@ -199,14 +250,11 @@ class MainWindow(QMainWindow):
 # Manual launch
 # ----------------------------------------------------------------------------
 if __name__ == "__main__":  # pragma: no cover
-    from .api_client import ApiClient
-
     qapp = QApplication(sys.argv)
     sett = Settings()
-    client = ApiClient(sett.get("base_url", "https://api.example.com"), sett.get("api_key", ""))
-    mgr = CompareManager(client)
-
-    win = MainWindow(mgr, sett)
+    # ApiClient and CompareManager are removed.
+    # The MainWindow initialization is simplified.
+    win = MainWindow(sett)
     win.resize(1100, 720)
     win.show()
     sys.exit(qapp.exec())

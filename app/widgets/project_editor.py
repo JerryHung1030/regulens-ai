@@ -1,225 +1,568 @@
+# ---------- Reference ProjectEditor (drop-in replacement) ----------
 from __future__ import annotations
-
 from pathlib import Path
-
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QDir
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QToolButton,
-    QPushButton,
-    QFileDialog,
-    QInputDialog,
-    QMessageBox,
-    QStyle,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
+    QToolButton, QFileDialog, QInputDialog, QMessageBox,
+    QStyle, QTreeView, QTextEdit, QTabWidget, QSplitter, QFileSystemModel
 )
-
 from app.models.project import CompareProject
+from app.logger import logger
 
 
 class ProjectEditor(QWidget):
-    """用於選擇檔案與啟動比較的介面"""
+    """Folder picker + compare launcher."""
 
     compare_requested = Signal(CompareProject)
 
-    def __init__(self, project: CompareProject, parent: QWidget | None = None):
+    def __init__(self, project: CompareProject, parent=None):
         super().__init__(parent)
         self.project = project
+        # Updated base CSS for the card look
+        self._base_css = """
+            ProjectEditor {
+                background-color: #ffffff;
+                border-radius: 8px;
+                border: 1px solid #dadce0;
+            }
+        """
+        self.setStyleSheet(self._base_css)
+
+        # Initialize QFileSystemModels
+        self.controls_fs_model = QFileSystemModel()
+        self.controls_fs_model.setFilter(QDir.NoDotAndDotDot | QDir.AllEntries)
+        self.controls_fs_model.setRootPath(QDir.homePath())  # Placeholder
+
+        self.procedures_fs_model = QFileSystemModel()
+        self.procedures_fs_model.setFilter(QDir.NoDotAndDotDot | QDir.AllEntries)
+        self.procedures_fs_model.setRootPath(QDir.homePath())  # Placeholder
+
+        self.evidences_fs_model = QFileSystemModel()
+        self.evidences_fs_model.setFilter(QDir.NoDotAndDotDot | QDir.AllEntries)
+        self.evidences_fs_model.setRootPath(QDir.homePath())  # Placeholder
+
+        self._preview_is_visible = False  # For in-session state
+
         self._build_ui()
         self.project.changed.connect(self._refresh)
         self._refresh()
 
+    # ---------- UI ----------
     def _build_ui(self):
         lay = QVBoxLayout(self)
-        lay.setAlignment(Qt.AlignTop)
-        lay.setSpacing(20)
         lay.setContentsMargins(20, 20, 20, 20)
+        lay.setSpacing(15)
 
-        # 專案標題和操作按鈕
-        title_row = QHBoxLayout()
-        title = QLabel(f"<h2>{self.project.name}</h2>")
-        title.setStyleSheet("margin: 0;")
-        title_row.addWidget(title)
+        # Title row
+        head = QHBoxLayout()
+        self.lb_title = QLabel()
+        self.lb_title.setStyleSheet("""
+            QLabel {
+                font-size: 20px;
+                font-weight: 600;
+                color: #202124; /* Google's primary text color */
+                margin-bottom: 15px; 
+            }
+        """)
+        head.addWidget(self.lb_title)
+        # Tool buttons are styled in _tool_btn method
+        head.addWidget(self._tool_btn(QStyle.SP_FileDialogDetailedView, "Rename project", self._rename))
+        head.addWidget(self._tool_btn(QStyle.SP_DialogDiscardButton, "Delete project", self._delete))
+        head.addStretch()
+        lay.addLayout(head)
 
-        # 重命名按鈕
-        btn_rename = QToolButton()
-        btn_rename.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
-        btn_rename.setToolTip("重命名專案")
-        btn_rename.setStyleSheet("""
-            QToolButton {
-                border: none;
-                padding: 4px;
+        # Folder Selection Area
+        self.folder_selection_container = QWidget()
+        self.folder_selection_container.setStyleSheet("margin-bottom: 20px;")  # Space before compare button
+        folder_selection_layout = QVBoxLayout(self.folder_selection_container)
+        folder_selection_layout.setContentsMargins(0, 0, 0, 0)
+        folder_selection_layout.setSpacing(10)
+
+        self._ctrl_edit, self._proc_edit, self._evid_edit = [QLineEdit(readOnly=True) for _ in range(3)]
+        
+        line_edit_stylesheet = """
+            QLineEdit {
+                font-size: 14px;
+                padding: 8px 10px;
                 border-radius: 4px;
+                border: 1px solid #dadce0;
+                background-color: #f8f9fa;
+                color: #202124;
             }
-            QToolButton:hover {
-                background-color: #e0e0e0;
+            QLineEdit:read-only {
+                background-color: #f1f3f4;
             }
-        """)
-        btn_rename.clicked.connect(self._rename_project)
-        title_row.addWidget(btn_rename)
+            QLineEdit:focus {
+                border-color: #1a73e8; /* Google Blue focus */
+            }
+        """
+        for edit_widget in [self._ctrl_edit, self._proc_edit, self._evid_edit]:
+            edit_widget.setStyleSheet(line_edit_stylesheet)
 
-        # 刪除按鈕
-        btn_delete = QToolButton()
-        btn_delete.setIcon(self.style().standardIcon(QStyle.SP_DialogDiscardButton))
-        btn_delete.setToolTip("刪除專案")
-        btn_delete.setStyleSheet("""
-            QToolButton {
-                border: none;
-                padding: 4px;
-                border-radius: 4px;
-            }
-            QToolButton:hover {
-                background-color: #ffebee;
-            }
-        """)
-        btn_delete.clicked.connect(self._delete_project)
-        title_row.addWidget(btn_delete)
+        folder_configs = [
+            ("Controls folder:", self._ctrl_edit, self._pick_ctrl),
+            ("Procedures folder:", self._proc_edit, self._pick_proc),
+            ("Evidences folder:", self._evid_edit, self._pick_evid),
+        ]
 
-        title_row.addStretch()
-        lay.addLayout(title_row)
+        for label_text, line_edit_widget, pick_slot in folder_configs:
+            row_layout = QHBoxLayout()
+            label = QLabel(label_text)
+            label.setStyleSheet("""
+                QLabel {
+                    font-size: 14px;
+                    color: #3c4043;
+                    margin-right: 10px;
+                    min-width: 140px; /* Adjusted min-width */
+                }
+            """)
+            label.setAlignment(Qt.AlignVCenter)
+            row_layout.addWidget(label)
+            
+            browse_button = QPushButton("Browse…")
+            browse_button.setStyleSheet("""
+                QPushButton {
+                    font-size: 14px;
+                    padding: 8px 15px;
+                    border-radius: 4px;
+                    color: #1a73e8;
+                    border: 1px solid #dadce0;
+                    background-color: #ffffff;
+                }
+                QPushButton:hover {
+                    background-color: #f1f8ff;
+                    border-color: #1a73e8;
+                }
+                QPushButton:pressed {
+                    background-color: #e8f0fe;
+                }
+            """)
+            browse_button.clicked.connect(pick_slot)
+            # Add browse_button before line_edit_widget for tab order
+            row_layout.addWidget(browse_button)
+            row_layout.addWidget(line_edit_widget)  # Add line_edit_widget after browse_button
+            folder_selection_layout.addLayout(row_layout)
+        
+        # Set explicit tab order between browse buttons and their line edits if needed,
+        # but the addWidget order change should handle it for within the row.
+        # Example for inter-row or more complex scenarios:
+        # QWidget.setTabOrder(self.controls_browse_button, self._ctrl_edit) 
+        # QWidget.setTabOrder(self._ctrl_edit, self.procedures_browse_button)
+        # For now, relying on addWidget order.
 
-        # 檔案上傳區域
-        upload_frame = QWidget()
-        upload_frame.setStyleSheet("""
-            QWidget {
-                background-color: #f5f5f5;
-                border-radius: 8px;
-                padding: 16px;
-            }
-        """)
-        upload_lay = QVBoxLayout(upload_frame)
-        upload_lay.setSpacing(16)
+        lay.addWidget(self.folder_selection_container)
 
-        # 內規上傳
-        input_group = QWidget()
-        input_lay = QVBoxLayout(input_group)
-        input_lay.setSpacing(8)
-        
-        input_label = QLabel("內規檔案")
-        input_label.setStyleSheet("font-weight: bold;")
-        input_lay.addWidget(input_label)
-        
-        input_btn = QPushButton("選擇內規 JSON")
-        input_btn.setIcon(self.style().standardIcon(QStyle.SP_FileIcon))
-        input_btn.setStyleSheet("""
-            QPushButton {
-                padding: 8px 16px;
-                border-radius: 4px;
-                background-color: white;
-                border: 1px solid #e0e0e0;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-            }
-        """)
-        input_btn.clicked.connect(self._choose_input)
-        input_lay.addWidget(input_btn)
-        
-        self.lbl_input = QLabel("<i>未選擇</i>")
-        self.lbl_input.setStyleSheet("color: #666;")
-        input_lay.addWidget(self.lbl_input)
-        
-        upload_lay.addWidget(input_group)
+        # File Preview Section - Before Compare button
+        self.preview_container = QWidget()
+        self.preview_container.setObjectName("previewContainer")
+        preview_container_layout = QVBoxLayout(self.preview_container)
+        preview_container_layout.setContentsMargins(0, 10, 0, 0)  # Add some top margin
 
-        # 外規上傳
-        ref_group = QWidget()
-        ref_lay = QVBoxLayout(ref_group)
-        ref_lay.setSpacing(8)
-        
-        ref_label = QLabel("外規檔案")
-        ref_label.setStyleSheet("font-weight: bold;")
-        ref_lay.addWidget(ref_label)
-        
-        ref_btn = QPushButton("選擇外規 JSON")
-        ref_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogNewFolder))
-        ref_btn.setStyleSheet("""
-            QPushButton {
-                padding: 8px 16px;
-                border-radius: 4px;
-                background-color: white;
-                border: 1px solid #e0e0e0;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-            }
-        """)
-        ref_btn.clicked.connect(self._add_refs)
-        ref_lay.addWidget(ref_btn)
-        
-        self.lbl_refs = QLabel("<i>未選擇</i>")
-        self.lbl_refs.setStyleSheet("color: #666;")
-        ref_lay.addWidget(self.lbl_refs)
-        
-        upload_lay.addWidget(ref_group)
-        lay.addWidget(upload_frame)
+        self.toggle_preview_button = QPushButton()  # Text set based on _preview_is_visible
+        self.toggle_preview_button.setObjectName("togglePreviewButton")
+        preview_container_layout.addWidget(self.toggle_preview_button)
 
-        # 比較按鈕
-        self.btn_compare = QPushButton("開始比較")
+        self.preview_content_area = QWidget()
+        preview_content_layout = QVBoxLayout(self.preview_content_area)
+        preview_content_layout.setContentsMargins(0, 5, 0, 0)  # Small margin
+        preview_container_layout.addWidget(self.preview_content_area)
+
+        self.preview_tab_widget = QTabWidget()
+        self.preview_tab_widget.setObjectName("previewTabWidget")
+        preview_content_layout.addWidget(self.preview_tab_widget)
+
+        # Create tabs
+        folder_types = {
+            "Controls": ("controls_tree_view", "controls_text_preview", "Controls Files"),
+            "Procedures": ("procedures_tree_view", "procedures_text_preview", "Procedures Files"),
+            "Evidences": ("evidences_tree_view", "evidences_text_preview", "Evidences Files"),
+        }
+
+        for key, (tree_attr, text_attr, tab_label) in folder_types.items():
+            tab_content_widget = QWidget()
+            tab_layout = QVBoxLayout(tab_content_widget)
+            tab_layout.setContentsMargins(0, 0, 0, 0)
+
+            splitter = QSplitter(Qt.Horizontal)
+
+            # Left side: Tree View
+            tree_view = QTreeView()
+            setattr(self, tree_attr, tree_view)  # e.g., self.controls_tree_view = tree_view
+            tree_view.setObjectName(tree_attr)  # e.g., self.controls_tree_view.setObjectName("controlsTreeView")
+            
+            current_model = None
+
+            if key == "Controls":
+                current_model = self.controls_fs_model
+            elif key == "Procedures":
+                current_model = self.procedures_fs_model
+            elif key == "Evidences":
+                current_model = self.evidences_fs_model
+            
+            if current_model:
+                tree_view.setModel(current_model)
+                tree_view.setHeaderHidden(True)
+                for i in range(1, current_model.columnCount()):
+                    tree_view.hideColumn(i)
+            
+            splitter.addWidget(tree_view)
+
+            # Right side: Text Preview
+            text_preview = QTextEdit()
+            text_preview.setReadOnly(True)
+            setattr(self, text_attr, text_preview)  # e.g., self.controls_text_preview = text_preview
+            text_preview.setObjectName(text_attr)  # e.g., self.controls_text_preview.setObjectName("controlsTextPreview")
+            splitter.addWidget(text_preview)
+            
+            # Connect selection changed signal
+            if key == "Controls":
+                tree_view.selectionModel().selectionChanged.connect(
+                    lambda s, d, model=self.controls_fs_model, tp=self.controls_text_preview: 
+                    self._handle_tree_selection(s, d, model, tp)
+                )
+            elif key == "Procedures":
+                tree_view.selectionModel().selectionChanged.connect(
+                    lambda s, d, model=self.procedures_fs_model, tp=self.procedures_text_preview: 
+                    self._handle_tree_selection(s, d, model, tp)
+                )
+            elif key == "Evidences":
+                tree_view.selectionModel().selectionChanged.connect(
+                    lambda s, d, model=self.evidences_fs_model, tp=self.evidences_text_preview: 
+                    self._handle_tree_selection(s, d, model, tp)
+                )
+
+            splitter.setSizes([150, 350])  # Initial sizes (30% tree, 70% text approx)
+            tab_layout.addWidget(splitter)
+            self.preview_tab_widget.addTab(tab_content_widget, tab_label)
+
+        lay.addWidget(self.preview_container)
+
+        # Compare button - Moved to bottom right
+        self.btn_compare = QPushButton()  # Text set in _refresh
+        self.btn_compare.clicked.connect(lambda: self.compare_requested.emit(self.project))
         self.btn_compare.setStyleSheet("""
             QPushButton {
-                padding: 12px 24px;
-                border-radius: 6px;
-                background-color: #2196f3;
+                font-size: 15px;
+                font-weight: 500;
+                padding: 10px 24px;
+                border-radius: 4px;
                 color: white;
-                font-weight: bold;
+                background-color: #1a73e8;
                 border: none;
+                margin-top: 10px; 
+                margin-bottom: 10px;
             }
             QPushButton:hover {
-                background-color: #1976d2;
+                background-color: #1765cc;
+            }
+            QPushButton:pressed {
+                background-color: #1459b3;
             }
             QPushButton:disabled {
-                background-color: #bdbdbd;
+                background-color: #e0e0e0;
+                color: #aaaaaa;
             }
         """)
-        self.btn_compare.clicked.connect(lambda: self.compare_requested.emit(self.project))
-        lay.addWidget(self.btn_compare, alignment=Qt.AlignCenter)
-        lay.addStretch()
+        
+        # Create a container for the button to position it at the bottom right
+        button_container = QWidget()
+        button_container.setFixedHeight(60)  # 固定高度，預留空間
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.addStretch()  # Add stretch to push button to the right
+        button_layout.addWidget(self.btn_compare)
+        
+        # 將按鈕容器放在最底層
+        lay.addStretch()  # 先加入 stretch 將按鈕推到底部
+        lay.addWidget(button_container)
 
-    def _rename_project(self):
-        name, ok = QInputDialog.getText(
-            self,
-            "重命名專案",
-            "請輸入新的專案名稱：",
-            text=self.project.name
-        )
-        if ok and name:
-            self.project.rename(name)  # Emits project.updated
+        # Apply Stylesheet to the preview container
+        preview_stylesheet = """
+            QWidget#previewContainer {
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                margin-top: 15px;
+            }
 
-    def _delete_project(self):
-        reply = QMessageBox.question(
-            self,
-            "確認刪除",
-            f"確定要刪除專案「{self.project.name}」嗎？",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        if reply == QMessageBox.Yes:
+            QPushButton#togglePreviewButton {
+                font-size: 14px;
+                font-weight: 500;
+                color: #202124;
+                padding: 10px;
+                text-align: left;
+                border: 1px solid #dadce0; /* Match previewContainer border */
+                border-radius: 4px; /* Slightly rounded corners */
+                background-color: #f8f9fa; /* Light background */
+                margin: 0px; /* Remove previous margin if any, container handles it */
+            }
+            QPushButton#togglePreviewButton:hover {
+                background-color: #f1f3f4;
+            }
+            QPushButton#togglePreviewButton:pressed {
+                background-color: #e8eaed; /* Consistent pressed state */
+            }
+
+            QTabWidget#previewTabWidget::pane {
+                border-top: 1px solid #dadce0;
+                padding: 10px;
+                background-color: #ffffff;
+            }
+            QTabWidget#previewTabWidget::tab-bar {
+                alignment: left;
+            }
+            QTabBar::tab {
+                padding: 8px 16px;
+                border: 1px solid transparent;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                color: #5f6368;
+                background-color: #f1f3f4; /* Light background for inactive tabs */
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                color: #1a73e8;
+                background-color: #ffffff;
+                border: 1px solid #dadce0;
+                border-bottom-color: #ffffff; /* Blend with pane */
+            }
+            QTabBar::tab:!selected:hover {
+                background-color: #e8eaed;
+                color: #202124;
+            }
+
+            QTreeView { /* General styling for all tree views */
+                border: 1px solid #dadce0;
+                border-radius: 4px;
+                font-size: 13px;
+                background-color: #ffffff;
+            }
+            QTreeView::item {
+                padding: 4px; /* Spacing for items */
+            }
+            QTreeView::item:hover {
+                background-color: #f0f0f0;
+            }
+            QTreeView::item:selected {
+                background-color: #e8f0fe; /* Google's light blue selection */
+                color: #1967d2; /* Google's darker blue for selected text */
+            }
+            /* For tree view header, if it's shown */
+            QTreeView QHeaderView::section {
+                 background-color: #f8f9fa;
+                 border: none;
+                 padding: 4px;
+            }
+
+            QTextEdit { /* General styling for all text previews */
+                border: 1px solid #dadce0;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #f8f9fa;
+                font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+                font-size: 12px;
+                color: #3c4043;
+            }
+
+            QSplitter::handle {
+                background-color: #e0e0e0; /* Light gray for handle */
+            }
+            QSplitter::handle:horizontal {
+                width: 1px; /* Thin handle for minimal look */
+                margin: 2px 0;
+            }
+            QSplitter::handle:vertical {
+                height: 1px; /* Thin handle for minimal look */
+                margin: 0 2px;
+            }
+            QSplitter::handle:hover {
+                background-color: #bdbdbd;
+            }
+            QSplitter::handle:pressed {
+                background-color: #757575;
+            }
+        """
+        self.preview_container.setStyleSheet(preview_stylesheet)
+
+        # Connect toggle button
+        self.toggle_preview_button.clicked.connect(self._toggle_preview_visibility)
+        
+        # Set initial state for preview area based on the instance variable
+        self._update_preview_ui_state()
+
+    def _handle_tree_selection(self, selected, deselected, model: QFileSystemModel, text_preview: QTextEdit):
+        indexes = selected.indexes()
+        if indexes:
+            index = indexes[0]
+            file_path = model.filePath(index)
+            if model.fileInfo(index).isFile():
+                try:
+                    # Attempt to decode with UTF-8, then fallback to others if needed
+                    content = ""
+                    for encoding in ['utf-8', 'latin-1', 'cp1252']:  # Common encodings
+                        try:
+                            with open(file_path, 'r', encoding=encoding) as f:
+                                content = f.read()
+                            break  # Successfully read
+                        except UnicodeDecodeError:
+                            logger.warning(f"File {file_path} failed to decode with {encoding}")
+                            content = f"Error reading file: Could not decode with {encoding} or other tried encodings."
+                        except Exception as e_read:  # Catch other read errors like permission denied
+                            logger.error(f"Error reading file {file_path} with encoding {encoding}: {e_read}")
+                            content = f"Error reading file: {e_read}"
+                            break 
+                    text_preview.setText(content)
+                except Exception as e:  # General exception for file operations
+                    logger.error(f"Failed to open or read file {file_path}: {e}")
+                    text_preview.setText(f"Error opening or reading file: {e}")
+            else:  # It's a directory
+                text_preview.clear()
+        else:  # No selection
+            text_preview.clear()
+
+    def _toggle_preview_visibility(self):
+        self._preview_is_visible = not self._preview_is_visible
+        self._update_preview_ui_state()
+
+    def _update_preview_ui_state(self):
+        self.preview_content_area.setVisible(self._preview_is_visible)
+        if self._preview_is_visible:
+            self.toggle_preview_button.setText("Hide File Preview")
+        else:
+            self.toggle_preview_button.setText("Show File Preview")
+
+    # ---------- Helpers ----------
+    # def _row(self, line, chooser): # _row helper is no longer needed in this form
+    #     h = QHBoxLayout()
+    #     h.addWidget(line)
+    #     b = QPushButton("Browse…")
+    #     b.setStyleSheet("""
+    #         QPushButton {
+    #             padding: 8px 12px; /* Match QLineEdit padding */
+    #             background-color: #e9ecef; /* Light grayish blue */
+    #             border: 1px solid #ced4da;
+    #             border-radius: 4px;
+    #             color: #495057;
+    #             font-size: 14px;
+    #             font-weight: 500;
+    #         }
+    #         QPushButton:hover {
+    #             background-color: #dee2e6;
+    #         }
+    #         QPushButton:pressed {
+    #             background-color: #ced4da;
+    #         }
+    #     """)
+    #     b.clicked.connect(chooser)
+    #     h.addWidget(b)
+    #     return h
+
+    def _tool_btn(self, icon, tip, slot):
+        btn = QToolButton()
+        btn.setIcon(self.style().standardIcon(icon))
+        btn.setToolTip(tip)
+        btn.setStyleSheet("""
+            QToolButton {
+                border: none;
+                padding: 4px; /* Smaller padding for icon buttons */
+                border-radius: 12px; /* Half of width/height for circle (approx 24x24) */
+                background-color: transparent;
+                color: #5f6368; /* Google's standard icon color */
+            }
+            QToolButton:hover {
+                background-color: #f0f0f0; /* Light gray for hover, adjust as needed */
+            }
+            QToolButton:pressed {
+                background-color: #e0e0e0; /* Darker gray for pressed */
+            }
+        """)
+        btn.setFixedSize(24, 24)  # Ensure circularity if padding is small
+        btn.clicked.connect(slot)
+        return btn
+
+    # ---------- Folder pickers ----------
+    def _pick_ctrl(self):
+        self._pick("controls_dir", self._ctrl_edit)
+
+    def _pick_proc(self): 
+        self._pick("procedures_dir", self._proc_edit)
+
+    def _pick_evid(self): 
+        self._pick("evidences_dir", self._evid_edit)
+
+    def _pick(self, attr, edit):
+        start = str(getattr(self.project, attr) or Path.home())
+        path = QFileDialog.getExistingDirectory(self, "Select folder", start)
+        if path:
+            setattr(self.project, attr, Path(path))
+            self.project.changed.emit()
+            if edit:  # 'edit' is the QLineEdit associated with this picker
+                edit.setFocus()  # Set focus to the line edit as a visual cue
+
+    # ---------- Project operations ----------
+    def _rename(self):
+        new, ok = QInputDialog.getText(self, "Rename project", "New name:", text=self.project.name)
+        if ok and new: 
+            self.project.rename(new)
+            
+    def _delete(self):
+        if QMessageBox.question(self, "Delete", f'Delete "{self.project.name}"?') == QMessageBox.Yes:
             self.project.deleted.emit()
 
-    # ------ File pickers ----------------------------------------------
-    def _choose_input(self):
-        path, _ = QFileDialog.getOpenFileName(self, "選擇內規 JSON", "", "JSON Files (*.json)")
-        self.project.set_input(Path(path) if path else None)
-
-    def _add_refs(self):
-        paths, _ = QFileDialog.getOpenFileNames(self, "選擇外規 JSON", "", "JSON Files (*.json)")
-        if paths:
-            self.project.set_refs([Path(p) for p in paths])
-
-    # ------------------------------------------------------------------
+    # ---------- Refresh ----------
     def _refresh(self):
-        """更新 UI 顯示"""
-        # 更新標題
-        title = self.findChild(QLabel)
-        if title:
-            title.setText(f"<h2>{self.project.name}</h2>")
+        self.lb_title.setText(f"<h2>{self.project.name}</h2>")
+
+        # Update path edits
+        controls_path_str = str(self.project.controls_dir or "")
+        procedures_path_str = str(self.project.procedures_dir or "")
+        evidences_path_str = str(self.project.evidences_dir or "")
+
+        self._ctrl_edit.setText(controls_path_str)
+        self._proc_edit.setText(procedures_path_str)
+        self._evid_edit.setText(evidences_path_str)
+
+        # Update FileSystemModels and TreeViews
+        self.controls_fs_model.setRootPath(controls_path_str if controls_path_str else QDir.homePath())
+        self.controls_tree_view.setRootIndex(self.controls_fs_model.index(controls_path_str))
+        self.controls_text_preview.clear()
+
+        self.procedures_fs_model.setRootPath(procedures_path_str if procedures_path_str else QDir.homePath())
+        self.procedures_tree_view.setRootIndex(self.procedures_fs_model.index(procedures_path_str))
+        self.procedures_text_preview.clear()
+
+        self.evidences_fs_model.setRootPath(evidences_path_str if evidences_path_str else QDir.homePath())
+        self.evidences_tree_view.setRootIndex(self.evidences_fs_model.index(evidences_path_str))
+        self.evidences_text_preview.clear()
         
-        # 更新檔案路徑顯示
-        self.lbl_input.setText(str(self.project.input_path) if self.project.input_path else "<i>未選擇</i>")
-        if self.project.ref_paths:
-            self.lbl_refs.setText("\n".join(str(p) for p in self.project.ref_paths))
+        # For tree views, ensure columns are hidden after model reset if necessary
+        # This might be redundant if setModel doesn't reset column visibility, but safe to include.
+        for tv, model in [
+            (self.controls_tree_view, self.controls_fs_model),
+            (self.procedures_tree_view, self.procedures_fs_model),
+            (self.evidences_tree_view, self.evidences_fs_model)
+        ]:
+            tv.setHeaderHidden(True)  # Re-apply in case it was reset
+            for i in range(1, model.columnCount()):
+                tv.hideColumn(i)
+
+        if self.project.is_sample:
+            self.btn_compare.setText("Re-run sample")
+            # For sample projects, we might want a slightly different overall card style
+            # The self.setStyleSheet below will override the _base_css for the ProjectEditor itself.
+            sample_style = f"""
+                ProjectEditor {{
+                    background-color: {"#e3f2fd" if self.project.name == "ISO27k-A.9.4.2_強密碼合規稽核範例" else "#f1f8e9"};
+                    border-radius: 8px;
+                    border: 1px solid #dadce0; /* Keep consistent border */
+                    /* Consider adding a subtle dashed border on top or left for distinction if needed */
+                    /* border-top: 2px dashed #1a73e8; */
+                }}
+            """
+            self.setStyleSheet(sample_style)
         else:
-            self.lbl_refs.setText("<i>未選擇</i>")
+            self.btn_compare.setText("Start compare")
+            self.setStyleSheet(self._base_css)  # Apply the base style for non-sample projects
+
         self.btn_compare.setEnabled(self.project.ready)
+# --------------------------------------------------------------------

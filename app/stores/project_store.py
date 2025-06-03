@@ -11,24 +11,68 @@ from app.models.project import CompareProject
 
 class ProjectStore(QObject):
     changed = Signal()
-    _PATH = Path.home() / ".config" / "regulens-ai" / "projects.json"
+    # _PATH is now an instance variable set in __init__
 
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
+        # Determine path at runtime to respect potential mocks of Path.home() in tests
+        self._PATH: Path = Path.home() / ".config" / "regulens-ai" / "projects.json"
         self.projects: List[CompareProject] = self._load()
 
     def _load(self) -> List[CompareProject]:
+        initial_file_exists = self._PATH.exists()
+        initial_file_empty = False
+        if initial_file_exists:
+            if self._PATH.stat().st_size == 0:
+                initial_file_empty = True
+
         try:
-            if not self._PATH.exists():
-                return []
-            with open(self._PATH, "r", encoding="utf-8") as f:
-                projects_data = json.load(f)
-            # Ensure projects_data is a list
-            if not isinstance(projects_data, list):
-                return []
-            return [CompareProject.from_dict(d) for d in projects_data if isinstance(d, dict)]
-        except (FileNotFoundError, json.JSONDecodeError, TypeError):
-            return []
+            if not initial_file_exists or initial_file_empty:
+                projects = []
+            else:
+                with open(self._PATH, "r", encoding="utf-8") as f:
+                    projects_data = json.load(f)
+                if not isinstance(projects_data, list):  # Ensure projects_data is a list
+                    projects = []
+                else:
+                    projects = [CompareProject.from_dict(d) for d in projects_data if isinstance(d, dict)]
+        except (json.JSONDecodeError, TypeError) as e:  # Catch errors during parsing
+            print(f"Error loading projects.json: {e}. Starting with an empty project list.")
+            projects = []
+
+        if not projects and (not initial_file_exists or initial_file_empty):
+            self._create_sample_projects_and_data()
+            # _create_sample_projects_and_data will call _save, which might re-populate self.projects
+            # So we return self.projects which should now contain samples.
+            # Or, ensure _create_sample_projects_and_data directly returns the projects it created.
+            # For simplicity, let's assume _create_sample_projects_and_data updates self.projects
+            # and then we return self.projects here.
+            # Re-assign projects to self.projects after sample creation.
+            projects = self.projects
+
+        return projects
+
+    def _create_sample_projects_and_data(self):
+        sample_base_dir = Path.home() / "regulens-ai" / "sample_data"
+
+        project1 = CompareProject(
+            name="ISO27k-A.9.4.2_強密碼合規稽核範例",
+            controls_dir=sample_base_dir / "sample1" / "controls",
+            procedures_dir=sample_base_dir / "sample1" / "procedures",
+            evidences_dir=sample_base_dir / "sample1" / "evidences",
+            is_sample=True
+        )
+        project2 = CompareProject(
+            name="ISO27001-A.6.1.2_風險清冊稽核範例",
+            controls_dir=sample_base_dir / "sample2" / "controls",
+            procedures_dir=sample_base_dir / "sample2" / "procedures",
+            evidences_dir=sample_base_dir / "sample2" / "evidences",
+            is_sample=True
+        )
+
+        # Ensure self.projects is an empty list before adding samples
+        self.projects = [project1, project2]
+        self._save()  # Save projects.json
 
     def _save(self):
         self._PATH.parent.mkdir(parents=True, exist_ok=True)
