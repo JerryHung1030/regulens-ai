@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
+
 class TripleAssessment(BaseModel):
     control_doc_id: str
     procedure_doc_id: str
@@ -14,6 +15,7 @@ class TripleAssessment(BaseModel):
     score: Optional[float] = None  # numeric score if applicable
     llm_raw_output: Optional[Dict[str, Any]] = None  # for debugging
 
+
 class PairAssessment(BaseModel):
     control_doc_id: str
     procedure_doc_id: str
@@ -22,18 +24,19 @@ class PairAssessment(BaseModel):
     evidence_assessments: List[TripleAssessment]  # list of evidence assessments for this pair
     overall_score: Optional[float] = None
 
-class MatchSet(BaseModel):
-    query_norm_doc_id: str    # NormDoc ID of the query document
-    query_embed_set_id: str   # EmbedSet ID of the query chunk
-    query_chunk_text: str     # Text of the query chunk
 
-    matched_norm_doc_id: str  # NormDoc ID of the matched document
-    matched_embed_set_id: str # EmbedSet ID of the matched chunk
-    matched_chunk_text: str   # Text of the matched chunk
+class MatchSet(BaseModel):
+    query_norm_doc_id: str     # NormDoc ID of the query document
+    query_embed_set_id: str    # EmbedSet ID of the query chunk
+    query_chunk_text: str      # Text of the query chunk
+
+    matched_norm_doc_id: str   # NormDoc ID of the matched document
+    matched_embed_set_id: str  # EmbedSet ID of the matched chunk
+    matched_chunk_text: str    # Text of the matched chunk
     
-    score: float              # Similarity score (e.g., 1 / (1 + L2_distance))
+    score: float               # Similarity score (e.g., 1 / (1 + L2_distance))
     # Optional: raw L2 distance if needed for fine-tuning thresholds later
-    raw_faiss_distance: Optional[float] = None 
+    raw_faiss_distance: Optional[float] = None
 
     # To identify the relationship (e.g. Control -> Procedure)
     query_doc_type: str 

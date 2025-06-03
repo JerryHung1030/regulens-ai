@@ -9,6 +9,7 @@ from pydantic import BaseModel
 # For generic type hinting of BaseModel subtypes
 T = TypeVar('T', bound=BaseModel)
 
+
 class CacheService:
     def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
@@ -72,7 +73,6 @@ class CacheService:
         except Exception as e:
             print(f"An unexpected error occurred while saving NumPy array {file_path}: {e}")
 
-
     def load_numpy(self, key: str) -> Optional[np.ndarray]:
         """
         Loads a NumPy array from cache.
@@ -86,7 +86,7 @@ class CacheService:
         except IOError as e:
             print(f"Error loading NumPy array from {file_path}: {e}")
             return None
-        except Exception as e: # Catch other potential errors like unpickling errors
+        except Exception as e:  # Catch other potential errors like unpickling errors
             print(f"An unexpected error occurred while loading NumPy array {file_path}: {e}")
             return None
 
@@ -96,6 +96,7 @@ class CacheService:
         """
         file_path = self.cache_dir / f"{key}.{extension}"
         return file_path.exists()
+
 
 if __name__ == '__main__':
     # Example Usage (conceptual):

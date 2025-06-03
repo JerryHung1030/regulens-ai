@@ -70,11 +70,11 @@ class SettingsDialog(QDialog):
     def _build_models_tab(self) -> QWidget:
         w = QFormLayout()
 
-        self.key_edit = QLineEdit() # Moved from General
+        self.key_edit = QLineEdit()  # Moved from General
         self.key_edit.setEchoMode(QLineEdit.Password)
         w.addRow("OpenAI API Key", self.key_edit)
 
-        self.timeout_spin = QSpinBox() # Moved from General
+        self.timeout_spin = QSpinBox()  # Moved from General
         self.timeout_spin.setRange(1, 300)
         w.addRow("OpenAI Client Timeout (s)", self.timeout_spin)
 
@@ -135,7 +135,7 @@ class SettingsDialog(QDialog):
         w.addRow("Report Theme CSS", report_theme_layout)
 
         self.language_combo = QComboBox()
-        self.language_combo.addItems(["en", "zh"]) # English, Chinese
+        self.language_combo.addItems(["en", "zh"])  # English, Chinese
         w.addRow("Report Language", self.language_combo)
         
         container = QWidget()
@@ -161,8 +161,8 @@ class SettingsDialog(QDialog):
     def _load(self):
         s = self.settings
         # General Tab
-        self.key_edit.setText(s.get("openai_api_key", "")) # Changed key name to be more specific
-        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60))) # Changed key name
+        self.key_edit.setText(s.get("openai_api_key", ""))  # Changed key name to be more specific
+        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60)))  # Changed key name
 
         # Models Tab
         self.embedding_model_combo.setCurrentText(s.get("embedding_model", "text-embedding-3-large"))
@@ -177,7 +177,6 @@ class SettingsDialog(QDialog):
         # Output Tab
         self.report_theme_edit.setText(s.get("report_theme", "default.css"))
         self.language_combo.setCurrentText(s.get("language", "en"))
-
 
     def _save(self):
         s = self.settings

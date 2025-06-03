@@ -1,6 +1,6 @@
 import re
 import unicodedata
-from typing import List, Dict, Any
+from typing import List
 
 # Adjust import based on project structure and PYTHONPATH
 try:
@@ -20,6 +20,7 @@ RE_SECTION_NUMBERS = re.compile(r'^\s*([(\[]?\w+([.]\w+)*[.)\]]?\s*)+')
 RE_SECTION_TITLES = re.compile(r'^\s*(Chapter|Section|Part|Article)\s+[\w\d\-.]+\s*[:\-–]?\s*', flags=re.IGNORECASE)
 # Pattern for consolidating multiple newlines
 RE_MULTI_NEWLINE = re.compile(r'\n\s*\n+')
+
 
 def normalize_document(raw_doc: RawDoc) -> NormDoc:
     text = raw_doc.content
@@ -46,7 +47,7 @@ def normalize_document(raw_doc: RawDoc) -> NormDoc:
 
         # If line is empty after stripping, skip it to consolidate blank lines later
         if not stripped_line:
-            processed_lines.append("") # Keep it as an empty string to allow newline consolidation
+            processed_lines.append("")  # Keep it as an empty string to allow newline consolidation
             continue
 
         # 3. Section Number/Title Cleaning
@@ -61,7 +62,7 @@ def normalize_document(raw_doc: RawDoc) -> NormDoc:
         # or if the original line was ALL CAPS and relatively short.
         is_potential_section = False
         if (not cleaned_line and stripped_line) or \
-           (stripped_line.isupper() and len(stripped_line) < 150 and len(stripped_line) > 3): # Min length for ALL CAPS
+           (stripped_line.isupper() and len(stripped_line) < 150 and len(stripped_line) > 3):  # Min length for ALL CAPS
             # Further check: if it contained mostly section-like patterns
             if RE_SECTION_NUMBERS.match(stripped_line) or RE_SECTION_TITLES.match(stripped_line) or stripped_line.isupper():
                 identified_sections_basic.append(stripped_line)
@@ -77,11 +78,9 @@ def normalize_document(raw_doc: RawDoc) -> NormDoc:
             # If it was ONLY a section header and now empty, don't add an empty line
             pass
 
-
     normalization_steps_applied.append("leading_trailing_strip_lines")
-    if "RE_SECTION_NUMBERS" not in str(normalization_steps_applied): # Avoid duplicate from loop
+    if "RE_SECTION_NUMBERS" not in str(normalization_steps_applied):  # Avoid duplicate from loop
         normalization_steps_applied.append("basic_section_number_title_removal")
-
 
     # Reconstruct text: join lines with single newline
     final_text_content = "\n".join(processed_lines)
@@ -91,7 +90,6 @@ def normalize_document(raw_doc: RawDoc) -> NormDoc:
     # Effectively, this means multiple original blank lines become one.
     final_text_content = RE_MULTI_NEWLINE.sub('\n', final_text_content).strip()
     normalization_steps_applied.append("extra_newline_consolidation")
-
 
     # 5. NormDoc Creation
     norm_doc_id = f"norm_{raw_doc.id}"
@@ -108,6 +106,7 @@ def normalize_document(raw_doc: RawDoc) -> NormDoc:
         metadata=metadata,
         doc_type=raw_doc.doc_type
     )
+
 
 if __name__ == '__main__':
     from pathlib import Path
@@ -133,16 +132,15 @@ if __name__ == '__main__':
     raw_doc_sample_3_unicode = RawDoc(
         id="test_raw_doc_789_unicode",
         source_path=Path("dummy/sample3_unicode.txt"),
-        content="Th\u00e9 Qu\u00efck Br\u00f6wn F\u00f6x\n\nN\u00e3ive approach vs. \u004e\u0061\u00ef\u0076\u0065 approach.", # NFC vs NFD
+        content="Th\u00e9 Qu\u00efck Br\u00f6wn F\u00f6x\n\nN\u00e3ive approach vs. \u004e\u0061\u00ef\u0076\u0065 approach.",  # NFC vs NFD
         metadata={"original_filename": "sample3_unicode.txt"},
         doc_type="evidence"
     )
 
-
     test_docs = [raw_doc_sample_1, raw_doc_sample_2, raw_doc_sample_3_unicode]
 
     for i, raw_doc_sample in enumerate(test_docs):
-        print(f"\n--- Normalizing Sample {i+1} (ID: {raw_doc_sample.id}) ---")
+        print(f"\n--- Normalizing Sample {i + 1} (ID: {raw_doc_sample.id}) ---")
         norm_doc_output = normalize_document(raw_doc_sample)
         print(f"Original Content:\n'''{raw_doc_sample.content}'''")
         print(f"\nNormalized Document (ID: {norm_doc_output.id}):")

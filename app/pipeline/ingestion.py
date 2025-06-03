@@ -29,7 +29,7 @@ def _calculate_file_hash(file_path: Path) -> str:
         return sha256_hash.hexdigest()
     except IOError as e:
         print(f"Error reading file {file_path} for hashing: {e}")
-        return "" # Return empty string or raise error
+        return ""  # Return empty string or raise error
 
 
 def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
@@ -43,7 +43,7 @@ def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
     for file_path in input_dir.rglob("*"):
         if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
             file_hash = _calculate_file_hash(file_path)
-            if not file_hash: # Skip if hashing failed
+            if not file_hash:  # Skip if hashing failed
                 continue
 
             content = ""
@@ -68,7 +68,7 @@ def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
                     except Exception as e:
                         print(f"Error processing PDF {file_path}: {e}")
                         metadata["errors"].append(f"PDF processing error: {str(e)}")
-                        content = "" # Ensure content is empty if PDF parsing fails
+                        content = ""  # Ensure content is empty if PDF parsing fails
 
                 elif file_path.suffix.lower() == ".txt":
                     try:
@@ -82,17 +82,16 @@ def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
                         except Exception as e_latin1:
                             print(f"Error reading TXT {file_path} with latin-1: {e_latin1}")
                             metadata["errors"].append(f"Latin-1 decoding error: {str(e_latin1)}")
-                            content = "" # Ensure content is empty
+                            content = ""  # Ensure content is empty
                     except Exception as e:
                         print(f"Error reading TXT {file_path}: {e}")
                         metadata["errors"].append(f"TXT reading error: {str(e)}")
                         content = ""
 
-
                 elif file_path.suffix.lower() == ".csv":
                     try:
                         df = pd.read_csv(file_path)
-                        content = df.to_csv(index=False) # Consistent string representation
+                        content = df.to_csv(index=False)  # Consistent string representation
                         metadata["num_rows"] = len(df)
                         metadata["num_cols"] = len(df.columns)
                         metadata["headers"] = list(df.columns)
@@ -107,7 +106,7 @@ def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
                     id=file_hash,
                     source_path=abs_file_path,
                     content=content,
-                    metadata=metadata.copy(), # Use a copy for RawDoc
+                    metadata=metadata.copy(),  # Use a copy for RawDoc
                     doc_type=doc_type
                 )
                 raw_docs.append(raw_doc_instance)
@@ -119,7 +118,7 @@ def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
                     "source_path": str(abs_file_path),
                     "original_filename": file_path.name,
                     "doc_type": doc_type,
-                    "num_pages": metadata.get("num_pages"), # Specific for PDF
+                    "num_pages": metadata.get("num_pages"),  # Specific for PDF
                     "num_rows": metadata.get("num_rows"),   # Specific for CSV
                     "num_cols": metadata.get("num_cols"),   # Specific for CSV
                     "headers": metadata.get("headers"),     # Specific for CSV
@@ -142,6 +141,7 @@ def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
                 continue
                 
     return raw_docs
+
 
 if __name__ == '__main__':
     print("Starting ingestion module test...")
@@ -173,9 +173,8 @@ if __name__ == '__main__':
         print("reportlab not found, skipping real PDF creation for test. Place a PDF manually for testing.")
         (sub_dir_controls / "real_control.pdf").write_text("This is a placeholder for a PDF.")
 
-
     (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8")
-    (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0') # Invalid UTF-8
+    (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0')  # Invalid UTF-8
 
     print(f"\nIngesting 'control' documents from: {sub_dir_controls}")
     control_docs = ingest_documents(sub_dir_controls, "control")
@@ -184,9 +183,8 @@ if __name__ == '__main__':
         meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
         print(f"  Meta JSON exists: {meta_json_file.exists()}")
         if meta_json_file.exists():
-             with open(meta_json_file, 'r') as f_meta:
-                 print(f"  Meta JSON content: {json.load(f_meta)}")
-
+            with open(meta_json_file, 'r') as f_meta:
+                print(f"  Meta JSON content: {json.load(f_meta)}")
 
     print(f"\nIngesting 'procedure' documents from: {sub_dir_procedures}")
     procedure_docs = ingest_documents(sub_dir_procedures, "procedure")
@@ -195,11 +193,11 @@ if __name__ == '__main__':
         meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
         print(f"  Meta JSON exists: {meta_json_file.exists()}")
         if meta_json_file.exists():
-             with open(meta_json_file, 'r') as f_meta:
-                 print(f"  Meta JSON content: {json.load(f_meta)}")
+            with open(meta_json_file, 'r') as f_meta:
+                print(f"  Meta JSON content: {json.load(f_meta)}")
 
     # Test with a non-existent directory
-    print(f"\nIngesting from non-existent directory:")
+    print("\nIngesting from non-existent directory:")
     non_existent_docs = ingest_documents(Path("non_existent_dir_test"), "error_test")
     print(f"  Number of documents found: {len(non_existent_docs)}")
 

@@ -2,12 +2,14 @@ from typing import List, Dict, Any
 from pathlib import Path
 from pydantic import BaseModel
 
+
 class RawDoc(BaseModel):
     id: str  # e.g., SHA256 of content or unique identifier
     source_path: Path
     content: str
     metadata: Dict[str, Any]  # e.g., page numbers for PDF, original filename
     doc_type: str  # e.g., "control", "procedure", "evidence"
+
 
 class NormDoc(BaseModel):
     id: str  # can be same as RawDoc id or derived
@@ -17,6 +19,7 @@ class NormDoc(BaseModel):
     metadata: Dict[str, Any]  # updated metadata
     doc_type: str
 
+
 class EmbedSet(BaseModel):
     id: str  # e.g., hash of the NormDoc id + chunk index
     norm_doc_id: str
@@ -25,6 +28,7 @@ class EmbedSet(BaseModel):
     chunk_index: int
     total_chunks: int
     doc_type: str
+
 
 class IndexMeta(BaseModel):
     index_file_path: Path  # Path to the .faiss file

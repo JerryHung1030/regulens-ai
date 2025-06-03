@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Optional, Dict
 
-import faiss # type: ignore
+import faiss  # type: ignore
 import numpy as np
 
 # Adjust import based on project structure and PYTHONPATH
@@ -14,15 +14,15 @@ try:
 except ImportError:
     import sys
     sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-    from app.models.docs import EmbedSet, IndexMeta # type: ignore
-    from app.models.assessments import MatchSet # type: ignore
-    from app.pipeline.index import create_or_load_index # type: ignore
+    from app.models.docs import EmbedSet, IndexMeta  # type: ignore
+    from app.models.assessments import MatchSet  # type: ignore
+    from app.pipeline.index import create_or_load_index  # type: ignore
 
 
 def retrieve_similar_chunks(
     query_embed_set: EmbedSet,
     target_index_meta: IndexMeta,
-    target_embed_sets_map: Dict[str, EmbedSet], # Maps EmbedSet.id to EmbedSet object
+    target_embed_sets_map: Dict[str, EmbedSet],  # Maps EmbedSet.id to EmbedSet object
     k_results: int,
     faiss_index_obj: Optional[faiss.Index] = None,
     id_map_list_obj: Optional[List[str]] = None  # List of EmbedSet.id, index is FAISS ID
@@ -58,7 +58,7 @@ def retrieve_similar_chunks(
         print(f"Error loading index or ID map for doc_type '{target_index_meta.doc_type}' (model: {target_index_meta.model_name}): {e}")
         return results
 
-    if loaded_index is None or loaded_id_map is None: # Should have been caught by exceptions, but as safeguard
+    if loaded_index is None or loaded_id_map is None:  # Should have been caught by exceptions, but as safeguard
         print("Error: Failed to obtain valid index or ID map.")
         return results
         
@@ -92,14 +92,14 @@ def retrieve_similar_chunks(
         # print(f"Performing FAISS search with k={actual_k} for query {query_embed_set.id} against {target_index_meta.doc_type} index.")
         distances, faiss_ids = loaded_index.search(query_vector_np, actual_k)
         
-    except RuntimeError as re: # Catch FAISS specific runtime errors
+    except RuntimeError as re:  # Catch FAISS specific runtime errors
         print(f"FAISS runtime error during search for query {query_embed_set.id}: {re}")
         return results
     except Exception as e:
         print(f"Unexpected error during FAISS search for query {query_embed_set.id}: {e}")
         return results
 
-    for i in range(faiss_ids.shape[1]): # Iterate through found neighbors for the query
+    for i in range(faiss_ids.shape[1]):  # Iterate through found neighbors for the query
         faiss_internal_id = faiss_ids[0, i]
         dist = distances[0, i]
 
@@ -134,12 +134,13 @@ def retrieve_similar_chunks(
             score=similarity_score,
             raw_faiss_distance=float(dist),
             query_doc_type=query_embed_set.doc_type,
-            matched_doc_type=target_index_meta.doc_type # Or matched_embed_set.doc_type
+            matched_doc_type=target_index_meta.doc_type  # Or matched_embed_set.doc_type
         ))
         
     # Results from FAISS are already sorted by distance (ascending),
     # so the derived similarity_score (descending) will also be sorted.
     return results
+
 
 if __name__ == '__main__':
     print("Starting retrieval module test...")
@@ -173,7 +174,7 @@ if __name__ == '__main__':
     target_embed_sets_data_map: Dict[str, EmbedSet] = {}
     for i in range(num_target_items):
         # Make one target intentionally very similar to the query
-        if i == num_target_items // 2: # Middle item
+        if i == num_target_items // 2:  # Middle item
             emb_vector = query_embedding_vector 
         else:
             emb_vector = np.random.rand(test_dimension).astype('float32')
@@ -181,10 +182,10 @@ if __name__ == '__main__':
         es_id = f"target_es_{i:03d}"
         es = EmbedSet(
             id=es_id, 
-            norm_doc_id=f"target_norm_doc_{i//3}", 
+            norm_doc_id=f"target_norm_doc_{i // 3}", 
             chunk_text=f"This is target chunk text number {i}.", 
             embedding=list(emb_vector), 
-            chunk_index=i%3, 
+            chunk_index=i % 3, 
             total_chunks=3, 
             doc_type=target_doc_type_name
         )
@@ -221,7 +222,7 @@ if __name__ == '__main__':
                 # print(f"    Matched Text: '{match.matched_chunk_text}'")
             assert len(matches_k3) <= 3
             # Check if the intentionally similar item is the top match (score close to 1.0)
-            assert matches_k3[0].matched_embed_set_id == f"target_es_{num_target_items//2:03d}", "Top match is not the intentionally similar item."
+            assert matches_k3[0].matched_embed_set_id == f"target_es_{num_target_items // 2:03d}", "Top match is not the intentionally similar item."
             assert matches_k3[0].score > 0.999, "Score of intentionally similar item is not close to 1.0."
             print("Top 3 retrieval test passed.")
         else:
@@ -253,9 +254,9 @@ if __name__ == '__main__':
         # (faiss.IndexFlatL2(test_dimension) then faiss.write_index() would create such a file)
         # This part of the test is more conceptual unless we actually write an empty FAISS file.
         # For now, we assume create_or_load_index handles empty list and retrieve_similar_chunks handles ntotal=0.
-        if empty_idx_meta is None: # create_or_load_index returns None for empty list.
-             print("Skipping direct test with empty IndexMeta as create_or_load_index handles empty list by returning None.")
-             print("The retrieve_similar_chunks function's internal check for loaded_index.ntotal == 0 covers empty index files.")
+        if empty_idx_meta is None:  # create_or_load_index returns None for empty list.
+            print("Skipping direct test with empty IndexMeta as create_or_load_index handles empty list by returning None.")
+            print("The retrieve_similar_chunks function's internal check for loaded_index.ntotal == 0 covers empty index files.")
 
     # Clean up
     try:

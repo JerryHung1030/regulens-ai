@@ -2,7 +2,8 @@ from typing import Optional
 from pathlib import Path
 from pydantic import BaseModel
 
-class ArchivedPipelineSettings(BaseModel): # Renamed from PipelineSettings
+
+class ArchivedPipelineSettings(BaseModel):  # Renamed from PipelineSettings
     openai_api_key: Optional[str] = None
     embedding_model: str = "text-embedding-3-large"
     llm_model: str = "gpt-4o"
