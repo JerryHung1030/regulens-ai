@@ -50,14 +50,14 @@ This allows you to explore the application's features without needing your own d
 
 **Directory Structure for Sample Data (`~/regulens-ai/sample_data/`)**:
 
-*   **Sample 1: 強密碼合規範例 (Strong Password Compliance Example)**
+*   **Sample 1: ISO27k-A.9.4.2_強密碼合規稽核範例 (Strong Password Compliance Example)**
     *   Purpose: Demonstrates a typical log audit or technical configuration verification scenario. For example, checking system configurations or logs against strong password policies.
     *   Files:
         *   `sample1/controls/control1.txt` (e.g., password policy document)
         *   `sample1/procedures/procedure1.txt` (e.g., steps to audit password settings)
         *   `sample1/evidences/evidence1.txt` (e.g., system configuration export or log snippets)
 
-*   **Sample 2: 風險清冊範例 (Risk Register Example)**
+*   **Sample 2: ISO27001-A.6.1.2_風險清冊稽核範例 (Risk Register Example)**
     *   Purpose: Illustrates mapping items from a risk register or an IT asset inventory to applicable controls and procedures. For example, ensuring each identified risk has corresponding mitigation procedures and controls in place.
     *   Files:
         *   `sample2/controls/controlA.txt` (e.g., a set of security controls)
@@ -69,7 +69,7 @@ Each `.txt` file will contain placeholder text relevant to its purpose.
 ## Screenshots (Coming Soon)
 
 *   `[Placeholder for Screenshot: Main interface showing the three-column layout for Controls, Procedures, and Evidences]`
-*   `[Placeholder for Screenshot: Sidebar with sample projects "強密碼合規範例" and "風險清冊範例" highlighted, showing their distinct tags/colors]`
+*   `[Placeholder for Screenshot: Sidebar with sample projects "ISO27k-A.9.4.2_強密碼合規稽核範例" and "ISO27001-A.6.1.2_風險清冊稽核範例" highlighted, showing their distinct tags/colors]`
 *   `[Placeholder for Screenshot: Updated Settings Dialog focusing on OpenAI API key, Embedding Model, and LLM Model configuration]`
 
 ## Running Tests

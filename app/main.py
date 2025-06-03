@@ -5,13 +5,11 @@ planned GUI workflow. It loads API settings from ``config_default.yaml`` and
 outputs the raw Markdown diff to ``stdout`` or a file.
 """
 
-from pathlib import Path
-import argparse
 import sys
 try:  # optional dependency
     import yaml
 except Exception:  # pragma: no cover - fallback for minimal environments
-    yaml = None # type: ignore
+    yaml = None  # type: ignore
 
 from .logger import logger
 # Import GUI components
@@ -42,7 +40,7 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("Application starting...")
 
     qapp = QApplication(sys.argv if argv is None else [sys.argv[0]] + argv)
-    settings = Settings() # Load settings (e.g., from config_default.yaml or user settings)
+    settings = Settings()  # Load settings (e.g., from config_default.yaml or user settings)
 
     # MainWindow no longer takes CompareManager
     main_window = MainWindow(settings)

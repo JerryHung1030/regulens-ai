@@ -56,14 +56,14 @@ class ProjectStore(QObject):
         sample_base_dir = Path.home() / "regulens-ai" / "sample_data"
 
         project1 = CompareProject(
-            name="強密碼合規範例",
+            name="ISO27k-A.9.4.2_強密碼合規稽核範例",
             controls_dir=sample_base_dir / "sample1" / "controls",
             procedures_dir=sample_base_dir / "sample1" / "procedures",
             evidences_dir=sample_base_dir / "sample1" / "evidences",
             is_sample=True
         )
         project2 = CompareProject(
-            name="風險清冊範例",
+            name="ISO27001-A.6.1.2_風險清冊稽核範例",
             controls_dir=sample_base_dir / "sample2" / "controls",
             procedures_dir=sample_base_dir / "sample2" / "procedures",
             evidences_dir=sample_base_dir / "sample2" / "evidences",

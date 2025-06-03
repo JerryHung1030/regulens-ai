@@ -28,6 +28,8 @@ class Sidebar(QWidget):
 
         # Ensure list_projects is defined as early as possible
         self.list_projects = QListWidget()
+        self.list_projects.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.list_projects.setTextElideMode(Qt.ElideRight)
         self.list_projects.setStyleSheet("""
             QListWidget {
                 border: 1px solid #cccccc; /* Light gray border for the list itself */
@@ -114,6 +116,9 @@ class Sidebar(QWidget):
         self.project_store.changed.connect(self.refresh_project_list)
         self.refresh_project_list()
 
+        # 強制給一個最小寬度，確保預設展開時能完整顯示大部分專案名稱
+        self.setMinimumWidth(200)
+
     def setup_initial_toggle_state(self):
         """
         Sets the initial visibility of list_projects and the toggle button's icon/tooltip
@@ -133,10 +138,14 @@ class Sidebar(QWidget):
             current_sizes = self._splitter.sizes()
             if len(current_sizes) > 1 and current_sizes[0] != self.COLLAPSED_WIDTH:
                 self._splitter.setSizes([self.COLLAPSED_WIDTH, current_sizes[1]])
+            # 即使是 collapsed，仍然讓自己維持一個最小寬度（方便動畫效果或顯示 Toggle Button）
+            self.setMinimumWidth(self.COLLAPSED_WIDTH)
         else:
             self.list_projects.show()
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
             self._btn_toggle.setToolTip("Collapse sidebar")
+            # 展開狀態下，保證可以看到至少 200px 寬度
+            self.setMinimumWidth(200)
 
     def _toggle(self):
         current_width = self._splitter.sizes()[0]
@@ -153,6 +162,8 @@ class Sidebar(QWidget):
             self._splitter.setSizes(current_sizes)
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))   # Collapse icon
             self._btn_toggle.setToolTip("Collapse sidebar")
+            # 展開時保證最小寬度
+            self.setMinimumWidth(200)
         else:
             # COLLAPSE
             self._splitter.setProperty("last_expanded_width", current_width)
@@ -164,6 +175,8 @@ class Sidebar(QWidget):
             self._splitter.setSizes(current_sizes)
             self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))  # Expand icon
             self._btn_toggle.setToolTip("Expand sidebar")
+            # 收起時的最小寬度，幫助保持外觀整齊
+            self.setMinimumWidth(self.COLLAPSED_WIDTH)
         self.toggled.emit()
 
     def _on_project_clicked(self, item: QListWidgetItem):
@@ -185,9 +198,9 @@ class Sidebar(QWidget):
             text_to_set = proj.name
             if proj.is_sample:
                 prefix_tag = ""
-                if proj.name == "強密碼合規範例":
+                if proj.name == "ISO27k-A.9.4.2_強密碼合規稽核範例":
                     prefix_tag = "<font color='#1565c0'>SAMPLE</font>&nbsp;"  # Blue tag
-                elif proj.name == "風險清冊範例":
+                elif proj.name == "ISO27001-A.6.1.2_風險清冊稽核範例":
                     prefix_tag = "<font color='#2e7d32'>SAMPLE</font>&nbsp;"  # Green tag
                 else:
                     prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;"  # Generic

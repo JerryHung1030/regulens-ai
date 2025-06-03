@@ -32,8 +32,8 @@ def test_project_store_creates_samples_on_fresh_start(mock_home_dir: Path):
         store = ProjectStore()  # This should trigger sample creation
 
         assert len(store.projects) == 2
-        project1 = store.get_project_by_name("強密碼合規範例")
-        project2 = store.get_project_by_name("風險清冊範例")
+        project1 = store.get_project_by_name("ISO27k-A.9.4.2_強密碼合規稽核範例")
+        project2 = store.get_project_by_name("ISO27001-A.6.1.2_風險清冊稽核範例")
 
         assert project1 is not None
         assert project1.is_sample is True
@@ -48,8 +48,8 @@ def test_project_store_creates_samples_on_fresh_start(mock_home_dir: Path):
         with open(projects_json_path, "r", encoding="utf-8") as f:
             saved_data = json.load(f)
         assert len(saved_data) == 2
-        assert saved_data[0]["name"] == "強密碼合規範例"
-        assert saved_data[1]["name"] == "風險清冊範例"
+        assert saved_data[0]["name"] == "ISO27k-A.9.4.2_強密碼合規稽核範例"
+        assert saved_data[1]["name"] == "ISO27001-A.6.1.2_風險清冊稽核範例"
 
         # Verify that sample files were created
         sample1_control_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample1" / "controls" / "control1.txt"
