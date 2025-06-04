@@ -44,6 +44,7 @@ class SettingsDialog(QDialog):
         tabs.addTab(self._build_models_tab(), "Models")
         tabs.addTab(self._build_retrieval_tab(), "Retrieval")
         tabs.addTab(self._build_output_tab(), "Output")
+        tabs.addTab(self._build_appearance_tab(), "Appearance") # New tab
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
         buttons.accepted.connect(self._save)
@@ -141,6 +142,17 @@ class SettingsDialog(QDialog):
         container = QWidget()
         container.setLayout(w)
         return container
+
+    def _build_appearance_tab(self) -> QWidget:
+        w = QFormLayout()
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Light", "Dark"])
+        w.addRow("Application Theme:", self.theme_combo)
+
+        container = QWidget()
+        container.setLayout(w)
+        return container
         
     # --- File Dialog Helpers ---
     def _browse_local_model_path(self):
@@ -178,6 +190,9 @@ class SettingsDialog(QDialog):
         self.report_theme_edit.setText(s.get("report_theme", "default.css"))
         self.language_combo.setCurrentText(s.get("language", "en"))
 
+        # Appearance Tab
+        self.theme_combo.setCurrentText(s.get("theme", "Light")) # Default to "Light" to match combo
+
     def _save(self):
         s = self.settings
         # General Tab
@@ -197,5 +212,8 @@ class SettingsDialog(QDialog):
         # Output Tab
         s.set("report_theme", self.report_theme_edit.text().strip())
         s.set("language", self.language_combo.currentText())
+
+        # Appearance Tab
+        s.set("theme", self.theme_combo.currentText()) # Save selected theme
         
         self.accept()

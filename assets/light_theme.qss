@@ -1,0 +1,231 @@
+/* Light Theme for Regulens-AI */
+
+QWidget {
+    background-color: #F0F0F0; /* Light Gray Background */
+    color: #222222; /* Dark Gray/Black Text */
+    border: 1px solid #BBBBBB; /* Light-Medium Gray Borders for some widgets */
+}
+
+QMainWindow, QDialog {
+    background-color: #F0F0F0;
+    color: #222222;
+}
+
+/* Remove border from specific layout widgets */
+QFrame, QWidget#qt_scrollarea_viewport, QWidget#qt_tabwidget_stackedwidget, QScrollArea {
+    border: none;
+}
+
+QLabel {
+    background-color: transparent; /* Labels should blend with parent */
+    color: #222222;
+    border: none;
+}
+
+QPushButton {
+    background-color: #007ACC; /* Bright Blue Accent */
+    color: #FFFFFF; /* White Text */
+    border: 1px solid #005A9E;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+QPushButton:hover {
+    background-color: #005A9E; /* Darker Blue on Hover */
+}
+
+QPushButton:pressed {
+    background-color: #004C8A; /* Even Darker Blue when Pressed */
+}
+
+QPushButton:disabled {
+    background-color: #B0B0B0;
+    color: #707070;
+    border-color: #A0A0A0;
+}
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: #FFFFFF; /* White Background for Input Fields */
+    color: #222222;
+    border: 1px solid #BBBBBB;
+    padding: 3px;
+    border-radius: 3px;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
+    border: 1px solid #007ACC; /* Blue border on focus */
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 1px;
+    border-left-color: #BBBBBB;
+    border-left-style: solid;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+QComboBox::down-arrow {
+    /* Default arrow will be used if no image is specified */
+    /* image: url(PLACEHOLDER_DOWN_ARROW_LIGHT.png); */
+}
+
+QListView, QTreeView, QTableView {
+    background-color: #FFFFFF;
+    color: #222222;
+    border: 1px solid #BBBBBB;
+    alternate-background-color: #E8E8E8; /* Slightly different for alternating rows */
+}
+
+QHeaderView::section {
+    background-color: #E0E0E0;
+    color: #222222;
+    padding: 4px;
+    border: 1px solid #BBBBBB;
+}
+
+QMenu {
+    background-color: #FFFFFF;
+    color: #222222;
+    border: 1px solid #BBBBBB;
+}
+
+QMenu::item {
+    padding: 5px 20px 5px 20px;
+}
+
+QMenu::item:selected {
+    background-color: #007ACC;
+    color: #FFFFFF;
+}
+
+QMenuBar {
+    background-color: #E0E0E0;
+    color: #222222;
+}
+
+QMenuBar::item {
+    background-color: transparent;
+    padding: 4px 8px;
+}
+
+QMenuBar::item:selected {
+    background-color: #007ACC;
+    color: #FFFFFF;
+}
+
+QMenuBar::item:pressed {
+    background-color: #005A9E;
+}
+
+QStatusBar {
+    background-color: #E0E0E0;
+    color: #222222;
+}
+
+QTabWidget::pane {
+    border-top: 1px solid #BBBBBB;
+    background-color: #F0F0F0;
+}
+
+QTabBar::tab {
+    background-color: #DCDCDC;
+    color: #222222;
+    border: 1px solid #BBBBBB;
+    border-bottom: none; /* Tab connected to pane */
+    padding: 5px 10px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+QTabBar::tab:selected {
+    background-color: #F0F0F0; /* Selected tab matches pane */
+    color: #222222;
+    /* Make it look connected by removing the bottom border of the tab
+       and ensuring the pane's top border is visible. */
+    border-bottom-color: #F0F0F0; 
+}
+
+QTabBar::tab:!selected {
+    margin-top: 2px; /* make non-selected tabs look slightly offset */
+}
+
+
+QTabBar::tab:hover {
+    background-color: #C8C8C8;
+}
+
+QGroupBox {
+    background-color: transparent; /* GroupBox itself is transparent */
+    color: #222222;
+    border: 1px solid #BBBBBB;
+    border-radius: 4px;
+    margin-top: 10px; /* Space for title */
+    padding: 10px; /* Padding inside the groupbox */
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px 0 3px;
+    background-color: #F0F0F0; /* Match background for title */
+    color: #222222;
+    left: 10px; /* Indent title slightly */
+}
+
+QToolTip {
+    background-color: #FFFFE1; /* Pale yellow, typical for tooltips */
+    color: #222222;
+    border: 1px solid #BBBBBB;
+    padding: 2px;
+}
+
+QScrollBar:vertical {
+    border: 1px solid #BBBBBB;
+    background: #E8E8E8;
+    width: 15px;
+    margin: 1px 0 1px 0; /* Adjusted margin for better spacing */
+    border-radius: 7px;
+}
+QScrollBar::handle:vertical {
+    background: #C0C0C0;
+    min-height: 20px;
+    border-radius: 7px;
+    border: 1px solid #A9A9A9; /* Border for the handle */
+}
+QScrollBar::handle:vertical:hover {
+    background: #A9A9A9;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px; /* No buttons */
+    background: none;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QScrollBar:horizontal {
+    border: 1px solid #BBBBBB;
+    background: #E8E8E8;
+    height: 15px;
+    margin: 0 1px 0 1px; /* Adjusted margin */
+    border-radius: 7px;
+}
+QScrollBar::handle:horizontal {
+    background: #C0C0C0;
+    min-width: 20px;
+    border-radius: 7px;
+    border: 1px solid #A9A9A9; /* Border for the handle */
+}
+QScrollBar::handle:horizontal:hover {
+    background: #A9A9A9;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px; /* No buttons */
+    background: none;
+}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}

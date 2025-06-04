@@ -11,14 +11,16 @@ try:  # optional dependency
 except Exception:  # pragma: no cover - fallback for minimal environments
     yaml = None  # type: ignore
 
+# from pathlib import Path # No longer needed here
 from .logger import logger
 # Import GUI components
 from PySide6.QtWidgets import QApplication
 from .mainwindow import MainWindow
 from .settings import Settings
+from .theme_utils import apply_theme # New import
 
 
-# def _load_config(path: Path) -> dict:
+# def _load_config(path: Path) -> dict: # Functions get_theme_qss and apply_theme are removed
 #     """Load configuration from YAML without requiring PyYAML."""
 #     text = path.read_text()
 #     if yaml is not None:
@@ -41,6 +43,8 @@ def main(argv: list[str] | None = None) -> None:
 
     qapp = QApplication(sys.argv if argv is None else [sys.argv[0]] + argv)
     settings = Settings()  # Load settings (e.g., from config_default.yaml or user settings)
+
+    apply_theme(qapp, settings) # <<< APPLY THEME HERE
 
     # MainWindow no longer takes CompareManager
     main_window = MainWindow(settings)

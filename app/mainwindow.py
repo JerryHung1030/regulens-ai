@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
 # Local imports
 from .widgets.progress_panel import ProgressPanel  # Added
 from .logger import logger
+# from .main import apply_theme # Remove this
+from .theme_utils import apply_theme # New import
 from .settings import Settings
 from .settings_dialog import SettingsDialog
 from .models.project import CompareProject
@@ -102,6 +104,15 @@ class MainWindow(QMainWindow):
         if d.exec() == QDialog.accepted:
             self._reload_pipeline_settings()
             logger.info("Settings dialog accepted and pipeline settings reloaded.")
+            
+            # Re-apply theme in case it changed
+            app_instance = QApplication.instance()
+            if app_instance: # Should always exist here
+                logger.info("Re-applying theme after settings change...")
+                apply_theme(app_instance, self.settings)
+                logger.info("Theme re-applied successfully.")
+            else: # pragma: no cover
+                logger.error("QApplication instance not found, cannot re-apply theme.")
 
     def _reload_pipeline_settings(self):
         # This method will be updated when the new pipeline integration is clear.
