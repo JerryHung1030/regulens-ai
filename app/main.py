@@ -14,8 +14,10 @@ except Exception:  # pragma: no cover - fallback for minimal environments
 from .logger import logger
 # Import GUI components
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QFont
 from .mainwindow import MainWindow
 from .settings import Settings
+from pathlib import Path
 
 
 # def _load_config(path: Path) -> dict:
@@ -40,7 +42,28 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("Application starting...")
 
     qapp = QApplication(sys.argv if argv is None else [sys.argv[0]] + argv)
+    # 設定支援中文的字體
+    font = QFont()
+    font.setFamily("WenQuanYi Zen Hei") # 或者尝试其他支援中文的字體，如 "Noto Sans CJK SC"
+    qapp.setFont(font)
+
     settings = Settings()  # Load settings (e.g., from config_default.yaml or user settings)
+
+    # Load and apply theme CSS
+    theme_name = settings.get("theme", "default")
+    logger.info(f"Loaded theme setting: {theme_name}")
+
+    if theme_name == "dark":
+        css_file_path = Path(__file__).parent / "assets" / "dark.css"
+        logger.info(f"Attempting to load CSS from: {css_file_path}")
+        if css_file_path.exists():
+            with open(css_file_path, "r", encoding="utf-8") as f:
+                css_content = f.read()
+                qapp.setStyleSheet(css_content)
+                logger.info("Dark theme CSS applied successfully.")
+        else:
+            logger.warning(f"Dark theme CSS file not found: {css_file_path}")
+    # Add logic for other themes here if needed
 
     # MainWindow no longer takes CompareManager
     main_window = MainWindow(settings)

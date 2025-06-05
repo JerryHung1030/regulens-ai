@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from PySide6.QtCore import Signal
+
 from .settings import Settings
 
 
@@ -27,6 +29,8 @@ class SettingsDialog(QDialog):
     immediately *after* the user presses **Save** (we emit the built‑in
     ``accepted`` signal).
     """
+
+    settings_saved = Signal()
 
     def __init__(self, settings: Settings, parent=None) -> None:  # noqa: D401  – Qt style
         super().__init__(parent)
@@ -40,7 +44,7 @@ class SettingsDialog(QDialog):
     # ---------------------------------------------------------------------
     def _init_ui(self) -> None:
         tabs = QTabWidget(self)
-        # tabs.addTab(self._build_general_tab(), "General") # Removed General tab
+        tabs.addTab(self._build_general_tab(), "General")
         tabs.addTab(self._build_models_tab(), "Models")
         tabs.addTab(self._build_retrieval_tab(), "Retrieval")
         tabs.addTab(self._build_output_tab(), "Output")
@@ -57,11 +61,9 @@ class SettingsDialog(QDialog):
     def _build_general_tab(self) -> QWidget:
         w = QFormLayout()
 
-        # General tab is now potentially empty or for other settings.
-        # For now, let's leave it, it can be removed if it remains empty.
-        # Example:
-        # self.some_other_general_setting_edit = QLineEdit()
-        # w.addRow("Some Other General Setting:", self.some_other_general_setting_edit)
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Light", "Dark", "System"])
+        w.addRow("Application Theme:", self.theme_combo)
 
         container = QWidget()
         container.setLayout(w)
@@ -160,11 +162,15 @@ class SettingsDialog(QDialog):
     # ---------------------------------------------------------------------
     def _load(self):
         s = self.settings
-        # General Tab
-        self.key_edit.setText(s.get("openai_api_key", ""))  # Changed key name to be more specific
-        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60)))  # Changed key name
 
-        # Models Tab
+        # General Tab
+        current_theme_value = s.get("theme", "system")
+        theme_map = {"light": "Light", "dark": "Dark", "system": "System"}
+        self.theme_combo.setCurrentText(theme_map.get(current_theme_value.lower(), "System"))
+
+        # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
+        self.key_edit.setText(s.get("openai_api_key", ""))
+        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60)))
         self.embedding_model_combo.setCurrentText(s.get("embedding_model", "text-embedding-3-large"))
         self.llm_model_combo.setCurrentText(s.get("llm_model", "gpt-4o"))
         self.local_model_path_edit.setText(s.get("local_model_path", ""))
@@ -180,11 +186,15 @@ class SettingsDialog(QDialog):
 
     def _save(self):
         s = self.settings
+
         # General Tab
+        selected_theme_text = self.theme_combo.currentText()
+        theme_value_map = {"Light": "light", "Dark": "dark", "System": "system"}
+        s.set("theme", theme_value_map.get(selected_theme_text, "system"))
+
+        # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
         s.set("openai_api_key", self.key_edit.text().strip())
         s.set("openai_client_timeout", self.timeout_spin.value())
-
-        # Models Tab
         s.set("embedding_model", self.embedding_model_combo.currentText())
         s.set("llm_model", self.llm_model_combo.currentText())
         s.set("local_model_path", self.local_model_path_edit.text().strip())
@@ -197,5 +207,6 @@ class SettingsDialog(QDialog):
         # Output Tab
         s.set("report_theme", self.report_theme_edit.text().strip())
         s.set("language", self.language_combo.currentText())
-        
+
+        self.settings_saved.emit()
         self.accept()

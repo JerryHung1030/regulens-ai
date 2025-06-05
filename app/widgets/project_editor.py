@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal, QDir
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
     QToolButton, QFileDialog, QInputDialog, QMessageBox,
-    QStyle, QTreeView, QTextEdit, QTabWidget, QSplitter, QFileSystemModel
+    QStyle, QTreeView, QTextEdit, QTabWidget, QSplitter, QFileSystemModel, QSizePolicy
 )
 from app.models.project import CompareProject
 from app.logger import logger
@@ -20,14 +20,14 @@ class ProjectEditor(QWidget):
         super().__init__(parent)
         self.project = project
         # Updated base CSS for the card look
-        self._base_css = """
-            ProjectEditor {
-                background-color: #ffffff;
-                border-radius: 8px;
-                border: 1px solid #dadce0;
-            }
-        """
-        self.setStyleSheet(self._base_css)
+        # self._base_css = """
+        #     ProjectEditor {
+        #         background-color: #ffffff;
+        #         border-radius: 8px;
+        #         border: 1px solid #dadce0;
+        #     }
+        # """
+        # self.setStyleSheet(self._base_css) # Remove this line
 
         # Initialize QFileSystemModels
         self.controls_fs_model = QFileSystemModel()
@@ -57,14 +57,15 @@ class ProjectEditor(QWidget):
         # Title row
         head = QHBoxLayout()
         self.lb_title = QLabel()
-        self.lb_title.setStyleSheet("""
-            QLabel {
-                font-size: 20px;
-                font-weight: 600;
-                color: #202124; /* Google's primary text color */
-                margin-bottom: 15px; 
-            }
-        """)
+        # Remove the setStyleSheet call below this line
+        # self.lb_title.setStyleSheet("""
+        #     QLabel {
+        #         font-size: 20px;
+        #         font-weight: 600;
+        #         color: #202124; /* Google's primary text color */
+        #         margin-bottom: 15px; 
+        #     }
+        # """)
         head.addWidget(self.lb_title)
         # Tool buttons are styled in _tool_btn method
         head.addWidget(self._tool_btn(QStyle.SP_FileDialogDetailedView, "Rename project", self._rename))
@@ -74,70 +75,82 @@ class ProjectEditor(QWidget):
 
         # Folder Selection Area
         self.folder_selection_container = QWidget()
-        self.folder_selection_container.setStyleSheet("margin-bottom: 20px;")  # Space before compare button
+        # Remove the setStyleSheet call below this line
+        # self.folder_selection_container.setStyleSheet("margin-bottom: 20px;")  # Space before compare button
         folder_selection_layout = QVBoxLayout(self.folder_selection_container)
         folder_selection_layout.setContentsMargins(0, 0, 0, 0)
         folder_selection_layout.setSpacing(10)
 
         self._ctrl_edit, self._proc_edit, self._evid_edit = [QLineEdit(readOnly=True) for _ in range(3)]
         
-        line_edit_stylesheet = """
-            QLineEdit {
-                font-size: 14px;
-                padding: 8px 10px;
-                border-radius: 4px;
-                border: 1px solid #dadce0;
-                background-color: #f8f9fa;
-                color: #202124;
-            }
-            QLineEdit:read-only {
-                background-color: #f1f3f4;
-            }
-            QLineEdit:focus {
-                border-color: #1a73e8; /* Google Blue focus */
-            }
-        """
+        # Remove the setStyleSheet call below this line
+        # line_edit_stylesheet = """
+        #     QLineEdit {
+        #         font-size: 14px;
+        #         padding: 8px 10px;
+        #         border-radius: 4px;
+        #         border: 1px solid #dadce0;
+        #         background-color: #f8f9fa;
+        #         color: #202124;
+        #     }
+        #     QLineEdit:read-only {
+        #         background-color: #f1f3f4;
+        #     }
+        #     QLineEdit:focus {
+        #         border-color: #1a73e8; /* Google Blue focus */
+        #     }
+        # """
         for edit_widget in [self._ctrl_edit, self._proc_edit, self._evid_edit]:
-            edit_widget.setStyleSheet(line_edit_stylesheet)
+            # Remove the setStyleSheet call below this line
+            pass # Keep pass or other logic if needed after removing setStyleSheet
 
         folder_configs = [
-            ("Controls folder:", self._ctrl_edit, self._pick_ctrl),
+            ("Controls folder    :", self._ctrl_edit, self._pick_ctrl),
             ("Procedures folder:", self._proc_edit, self._pick_proc),
-            ("Evidences folder:", self._evid_edit, self._pick_evid),
+            ("Evidences folder  :", self._evid_edit, self._pick_evid),
         ]
 
         for label_text, line_edit_widget, pick_slot in folder_configs:
             row_layout = QHBoxLayout()
+            # Set vertical alignment for the row layout
+            row_layout.setAlignment(Qt.AlignVCenter)
             label = QLabel(label_text)
-            label.setStyleSheet("""
-                QLabel {
-                    font-size: 14px;
-                    color: #3c4043;
-                    margin-right: 10px;
-                    min-width: 140px; /* Adjusted min-width */
-                }
-            """)
-            label.setAlignment(Qt.AlignVCenter)
+            # Remove the setStyleSheet call below this line
+            # label.setStyleSheet("""
+            #     QLabel {
+            #         font-size: 14px;
+            #         color: #3c4043;
+            #         margin-right: 10px;
+            #         min-width: 140px; /* Adjusted min-width */
+            #     }
+            # """)
+            label.setObjectName(f"{label_text.replace(' ', '_').lower()}_label")
+            # Set fixed vertical size policy for QLabel
+            label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             row_layout.addWidget(label)
             
             browse_button = QPushButton("Browse…")
-            browse_button.setStyleSheet("""
-                QPushButton {
-                    font-size: 14px;
-                    padding: 8px 15px;
-                    border-radius: 4px;
-                    color: #1a73e8;
-                    border: 1px solid #dadce0;
-                    background-color: #ffffff;
-                }
-                QPushButton:hover {
-                    background-color: #f1f8ff;
-                    border-color: #1a73e8;
-                }
-                QPushButton:pressed {
-                    background-color: #e8f0fe;
-                }
-            """)
+            # Remove the setStyleSheet call below this line
+            # browse_button.setStyleSheet("""
+            #     QPushButton {
+            #         font-size: 14px;
+            #         padding: 8px 15px;
+            #         border-radius: 4px;
+            #         color: #1a73e8;
+            #         border: 1px solid #dadce0;
+            #         background-color: #ffffff;
+            #     }
+            #     QPushButton:hover {
+            #         background-color: #f1f8ff;
+            #         border-color: #1a73e8;
+            #     }
+            #     QPushButton:pressed {
+            #         background-color: #e8f0fe;
+            #     }
+            # """)
+            browse_button.setObjectName(f"{label_text.replace(' ', '_').lower()}_browse_button")
+            # Set fixed vertical size policy for QPushButton
+            browse_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             browse_button.clicked.connect(pick_slot)
             # Add browse_button before line_edit_widget for tab order
             row_layout.addWidget(browse_button)
@@ -241,29 +254,30 @@ class ProjectEditor(QWidget):
         # Compare button - Moved to bottom right
         self.btn_compare = QPushButton()  # Text set in _refresh
         self.btn_compare.clicked.connect(lambda: self.compare_requested.emit(self.project))
-        self.btn_compare.setStyleSheet("""
-            QPushButton {
-                font-size: 15px;
-                font-weight: 500;
-                padding: 10px 24px;
-                border-radius: 4px;
-                color: white;
-                background-color: #1a73e8;
-                border: none;
-                margin-top: 10px; 
-                margin-bottom: 10px;
-            }
-            QPushButton:hover {
-                background-color: #1765cc;
-            }
-            QPushButton:pressed {
-                background-color: #1459b3;
-            }
-            QPushButton:disabled {
-                background-color: #e0e0e0;
-                color: #aaaaaa;
-            }
-        """)
+        # Remove the setStyleSheet call below this line
+        # self.btn_compare.setStyleSheet("""
+        #     QPushButton {
+        #         font-size: 15px;
+        #         font-weight: 500;
+        #         padding: 10px 24px;
+        #         border-radius: 4px;
+        #         color: white;
+        #         background-color: #1a73e8;
+        #         border: none;
+        #         margin-top: 10px; 
+        #         margin-bottom: 10px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #1765cc;
+        #     }
+        #     QPushButton:pressed {
+        #         background-color: #1459b3;
+        #     }
+        #     QPushButton:disabled {
+        #         background-color: #e0e0e0;
+        #         color: #aaaaaa;
+        #     }
+        # """)
         
         # Create a container for the button to position it at the bottom right
         button_container = QWidget()
@@ -276,113 +290,6 @@ class ProjectEditor(QWidget):
         # 將按鈕容器放在最底層
         lay.addStretch()  # 先加入 stretch 將按鈕推到底部
         lay.addWidget(button_container)
-
-        # Apply Stylesheet to the preview container
-        preview_stylesheet = """
-            QWidget#previewContainer {
-                border: 1px solid #e0e0e0;
-                border-radius: 4px;
-                margin-top: 15px;
-            }
-
-            QPushButton#togglePreviewButton {
-                font-size: 14px;
-                font-weight: 500;
-                color: #202124;
-                padding: 10px;
-                text-align: left;
-                border: 1px solid #dadce0; /* Match previewContainer border */
-                border-radius: 4px; /* Slightly rounded corners */
-                background-color: #f8f9fa; /* Light background */
-                margin: 0px; /* Remove previous margin if any, container handles it */
-            }
-            QPushButton#togglePreviewButton:hover {
-                background-color: #f1f3f4;
-            }
-            QPushButton#togglePreviewButton:pressed {
-                background-color: #e8eaed; /* Consistent pressed state */
-            }
-
-            QTabWidget#previewTabWidget::pane {
-                border-top: 1px solid #dadce0;
-                padding: 10px;
-                background-color: #ffffff;
-            }
-            QTabWidget#previewTabWidget::tab-bar {
-                alignment: left;
-            }
-            QTabBar::tab {
-                padding: 8px 16px;
-                border: 1px solid transparent;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-                color: #5f6368;
-                background-color: #f1f3f4; /* Light background for inactive tabs */
-                margin-right: 2px;
-            }
-            QTabBar::tab:selected {
-                color: #1a73e8;
-                background-color: #ffffff;
-                border: 1px solid #dadce0;
-                border-bottom-color: #ffffff; /* Blend with pane */
-            }
-            QTabBar::tab:!selected:hover {
-                background-color: #e8eaed;
-                color: #202124;
-            }
-
-            QTreeView { /* General styling for all tree views */
-                border: 1px solid #dadce0;
-                border-radius: 4px;
-                font-size: 13px;
-                background-color: #ffffff;
-            }
-            QTreeView::item {
-                padding: 4px; /* Spacing for items */
-            }
-            QTreeView::item:hover {
-                background-color: #f0f0f0;
-            }
-            QTreeView::item:selected {
-                background-color: #e8f0fe; /* Google's light blue selection */
-                color: #1967d2; /* Google's darker blue for selected text */
-            }
-            /* For tree view header, if it's shown */
-            QTreeView QHeaderView::section {
-                 background-color: #f8f9fa;
-                 border: none;
-                 padding: 4px;
-            }
-
-            QTextEdit { /* General styling for all text previews */
-                border: 1px solid #dadce0;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #f8f9fa;
-                font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-                font-size: 12px;
-                color: #3c4043;
-            }
-
-            QSplitter::handle {
-                background-color: #e0e0e0; /* Light gray for handle */
-            }
-            QSplitter::handle:horizontal {
-                width: 1px; /* Thin handle for minimal look */
-                margin: 2px 0;
-            }
-            QSplitter::handle:vertical {
-                height: 1px; /* Thin handle for minimal look */
-                margin: 0 2px;
-            }
-            QSplitter::handle:hover {
-                background-color: #bdbdbd;
-            }
-            QSplitter::handle:pressed {
-                background-color: #757575;
-            }
-        """
-        self.preview_container.setStyleSheet(preview_stylesheet)
 
         # Connect toggle button
         self.toggle_preview_button.clicked.connect(self._toggle_preview_visibility)
@@ -562,7 +469,8 @@ class ProjectEditor(QWidget):
             self.setStyleSheet(sample_style)
         else:
             self.btn_compare.setText("Start compare")
-            self.setStyleSheet(self._base_css)  # Apply the base style for non-sample projects
+            # Remove the setStyleSheet call below this line
+            # self.setStyleSheet(self._base_css)  # Apply the base style for non-sample projects
 
         self.btn_compare.setEnabled(self.project.ready)
 # --------------------------------------------------------------------

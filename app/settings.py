@@ -32,6 +32,8 @@ class Settings:
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a setting value."""
+        if key == "theme":
+            return self._data.get(key, "system")
         return self._data.get(key, default)
 
     def set(self, key: str, value: Any) -> None:

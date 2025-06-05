@@ -1,0 +1,156 @@
+/* Light Theme for Regulens-AI */
+QWidget {
+    background-color: #f0f0f0; /* Light gray background */
+    color: #000000; /* Black text */
+}
+
+QMainWindow {
+    background-color: #e0e0e0; /* Slightly darker for main window */
+}
+
+QMenuBar {
+    background-color: #d0d0d0;
+}
+
+QMenu {
+    background-color: #f0f0f0;
+    border: 1px solid #c0c0c0;
+}
+
+QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: #ffffff; /* White background for input fields */
+    color: #000000;
+    border: 1px solid #c0c0c0;
+    padding: 2px;
+}
+
+QPushButton {
+    background-color: #c0c0c0;
+    color: #000000;
+    border: 1px solid #a0a0a0;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #d0d0d0;
+}
+
+QPushButton:pressed {
+    background-color: #b0b0b0;
+}
+
+QTabWidget::pane {
+    border-top: 1px solid #c0c0c0;
+}
+
+QTabBar::tab {
+    background: #d0d0d0;
+    border: 1px solid #c0c0c0;
+    padding: 5px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background: #f0f0f0;
+    border-bottom-color: #f0f0f0; /* Make selected tab blend with pane */
+}
+
+QTabBar::tab:!selected:hover {
+    background: #e0e0e0;
+}
+
+QDialog { /* Added style for QDialog */
+    border: 1px solid #a0a0a0; /* Medium gray border */
+    border-radius: 4px;
+}
+
+QListWidget { /* Added style for QListWidget for Light Theme */
+    background-color: #ffffff; /* White background for list */
+    border: 1px solid #c0c0c0;
+    padding: 4px;
+    border-radius: 4px; /* Added border-radius for consistency */
+}
+
+QListWidget::item { /* Added style for QListWidget items for Light Theme */
+    color: #000000; /* Black text for items */
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+QListWidget::item:hover { /* Added hover style for items for Light Theme */
+    background-color: #e0e0e0; /* Light gray hover background */
+}
+
+QListWidget::item:selected { /* Added selected style for items for Light Theme */
+    background-color: #a0c0f0; /* Light blue background for selected */
+    color: #000000; /* Black text for selected */
+    border: 1px solid #7090c0; /* Slightly darker border for selected */
+}
+
+/* Add styling for IntroPage and its components in Light Theme */
+
+QWidget#introPage {
+    background-color: #f0f0f0; /* Use main background color */
+}
+
+QWidget#introPage QLabel {
+    color: #000000; /* Black text color for all labels on intro page */
+    background-color: transparent; /* Make QLabel background transparent */
+}
+
+QWidget#introPage QLabel h1, QWidget#introPage QLabel h2, QWidget#introPage QLabel h3 {
+    color: #333333; /* Darker color for titles */
+}
+
+QWidget#introPage QLabel p {
+    color: #555555; /* Slightly darker gray for subtitle paragraph */
+}
+
+QFrame#pipelineCard, QFrame#dataJourneyCard, QFrame#trustCard {
+    background-color: #f0f0f0; /* Card background - Match introPage background */
+    border: 1px solid #c0c0c0; /* Card border */
+    border-radius: 8px;
+    padding: 20px; /* Internal padding for cards */
+}
+
+QFrame#pipelineCard QLabel, QFrame#dataJourneyCard QLabel, QFrame#trustCard QLabel {
+    color: #000000; /* Black text for labels inside cards */
+}
+
+/* Specific styles for elements within pipelineCard */
+QFrame#pipelineCard QLabel[text="📄"], QFrame#pipelineCard QLabel[text="⚙️"], QFrame#pipelineCard QLabel[text="🤖"], QFrame#pipelineCard QLabel[text="📝"] {
+    font-size: 16pt; /* Emoji size */
+}
+
+QFrame#pipelineCard QLabel[text="⬇️"] {
+    font-size: 18pt; /* Arrow size */
+    color: #1a73e8; /* Google Blue color for arrows */
+    margin: 8px 0;
+}
+
+QFrame#pipelineCard QLabel strong {
+    color: #333333; /* Darker color for strong text in workflow steps */
+}
+
+QFrame#pipelineCard QLabel small {
+    color: #555555; /* Slightly darker gray for small text */
+}
+
+QPushButton#getStartedButton {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 12px 32px;
+    border-radius: 4px;
+    color: white;
+    background-color: #1a73e8; /* Google Blue */
+    border: none;
+}
+
+QPushButton#getStartedButton:hover {
+    background-color: #1765cc;
+}
+
+QPushButton#getStartedButton:pressed {
+    background-color: #1459b3;
+}

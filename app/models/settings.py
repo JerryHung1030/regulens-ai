@@ -13,3 +13,4 @@ class ArchivedPipelineSettings(BaseModel):  # Renamed from PipelineSettings
     score_threshold: float = 0.7
     report_theme: str = "default.css"
     language: str = "en"  # for report generation, if needed
+    theme: str = "default"

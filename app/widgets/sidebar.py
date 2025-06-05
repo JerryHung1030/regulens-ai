@@ -30,28 +30,6 @@ class Sidebar(QWidget):
         self.list_projects = QListWidget()
         self.list_projects.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.list_projects.setTextElideMode(Qt.ElideRight)
-        self.list_projects.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #cccccc; /* Light gray border for the list itself */
-                background-color: #ffffff; /* White background for the list area */
-                padding: 4px;
-            }
-            QListWidget::item {
-                padding: 8px 12px; /* Increased padding for items */
-                border-radius: 4px; /* Subtle rounded corners for items */
-                margin: 2px 0;
-            }
-            QListWidget::item:hover {
-                background-color: #e6f2ff; /* Light blue hover */
-                color: #222222; /* Darker text on hover */
-            }
-            QListWidget::item:selected {
-                background-color: #cce5ff; /* Slightly darker blue for selection */
-                color: #000000; /* Black text for selected item for clarity */
-                /* Optionally, add a border for selected item if needed */
-                /* border-left: 3px solid #007bff; */
-            }
-        """)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -95,7 +73,6 @@ class Sidebar(QWidget):
                 padding: 6px; /* Consistent padding */
                 border-radius: 4px;
                 font-size: 16px; /* Keep font size as is */
-                color: #333333; /* Match default text color */
                 background-color: transparent;
             }
             QToolButton:hover {

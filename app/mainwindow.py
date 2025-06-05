@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-# from pathlib import Path
+from pathlib import Path # Added
 # from typing import List, Optional, Dict, Any, Callable # For type hints
 
 from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal
@@ -77,6 +77,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.intro_page)
         
         self.workspace = None  # Will be initialized in _enter_workspace
+        self.apply_theme()
 
     def _enter_workspace(self):
         if not self.workspace:  # Create workspace only if it doesn't exist
@@ -99,6 +100,7 @@ class MainWindow(QMainWindow):
 
     def _open_settings(self):
         d = SettingsDialog(self.settings, self)
+        d.settings_saved.connect(self.apply_theme)
         if d.exec() == QDialog.accepted:
             self._reload_pipeline_settings()
             logger.info("Settings dialog accepted and pipeline settings reloaded.")
@@ -116,6 +118,34 @@ class MainWindow(QMainWindow):
         # logger.info(f"Pipeline settings: {pipeline_settings}")
         # If there was a global or instance variable for pipeline config, update it here.
         pass
+
+    def apply_theme(self):
+        theme_setting = self.settings.get('theme', 'system') # Default to 'system'
+        qss = ""
+        try:
+            if theme_setting == 'dark':
+                qss_path = Path(__file__).parent / ".." / "assets" / "dark_theme.qss"
+                if qss_path.exists():
+                    qss = qss_path.read_text()
+                else:
+                    logger.error(f"Dark theme file not found: {qss_path}")
+            elif theme_setting == 'light':
+                qss_path = Path(__file__).parent / ".." / "assets" / "light_theme.qss"
+                if qss_path.exists():
+                    qss = qss_path.read_text()
+                else:
+                    logger.error(f"Light theme file not found: {qss_path}")
+            # If theme_setting is 'system', qss remains "" which clears custom styles.
+            
+            app = QApplication.instance()
+            if app:
+                app.setStyleSheet(qss)
+                logger.info(f"Applied {theme_setting} theme.")
+            else: # Should not happen in a running Qt app
+                logger.error("QApplication instance not found when applying theme.")
+
+        except Exception as e:
+            logger.error(f"Error applying theme '{theme_setting}': {e}", exc_info=True)
 
     def _ensure_settings_configured(self) -> bool:
         required_fields = ["openai_api_key", "embedding_model", "llm_model"]
