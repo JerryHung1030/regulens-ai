@@ -13,6 +13,7 @@ from PySide6.QtCore import Signal, Qt
 
 from app.stores.project_store import ProjectStore
 from app.models.project import CompareProject
+from app.utils.font_manager import get_font  # 新增字體管理器導入
 
 
 class Sidebar(QWidget):
@@ -30,6 +31,8 @@ class Sidebar(QWidget):
         self.list_projects = QListWidget()
         self.list_projects.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.list_projects.setTextElideMode(Qt.ElideRight)
+        # 設定列表字體
+        self.list_projects.setFont(get_font('regular', 10))
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -82,6 +85,8 @@ class Sidebar(QWidget):
                 background-color: #cccccc;
             }
         """)
+        # 設定按鈕字體
+        self.btn_add_project.setFont(get_font('regular', 16))
         self.btn_add_project.clicked.connect(self.add_project_requested.emit)
         top_row_layout.addWidget(self.btn_add_project)
         top_row_layout.addStretch(1)  # Push buttons to the left
@@ -177,7 +182,7 @@ class Sidebar(QWidget):
                 prefix_tag = ""
                 if proj.name == "ISO27k-A.9.4.2_強密碼合規稽核範例":
                     prefix_tag = "<font color='#1565c0'>SAMPLE</font>&nbsp;"  # Blue tag
-                elif proj.name == "ISO27001-A.6.1.2_風險清冊稽核範例":
+                elif proj.name == "ISO27k-A.6.1.2_風險清冊稽核範例":
                     prefix_tag = "<font color='#2e7d32'>SAMPLE</font>&nbsp;"  # Green tag
                 else:
                     prefix_tag = "<font color='gray'>SAMPLE</font>&nbsp;"  # Generic

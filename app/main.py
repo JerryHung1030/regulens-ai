@@ -5,6 +5,8 @@ planned GUI workflow. It loads API settings from ``config_default.yaml`` and
 outputs the raw Markdown diff to ``stdout`` or a file.
 """
 
+from __future__ import annotations
+
 import sys
 try:  # optional dependency
     import yaml
@@ -15,9 +17,12 @@ from .logger import logger
 # Import GUI components
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt # Added for Qt.ColorScheme
 from .mainwindow import MainWindow
 from .settings import Settings
-from pathlib import Path
+# from pathlib import Path # No longer needed for direct QSS file access here
+from .utils.theme_manager import load_qss_with_theme, get_available_themes # Import the new function and get_available_themes
+from .utils.font_manager import load_custom_fonts, get_font
 
 def main(argv: list[str] | None = None) -> None:
     # CLI argument parsing can be added here if needed for GUI configuration
@@ -25,50 +30,61 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("Application starting...")
 
     qapp = QApplication(sys.argv if argv is None else [sys.argv[0]] + argv)
-    # 設定支援中文的字體
-    font = QFont()
-    font.setFamily("WenQuanYi Zen Hei") # 或者尝试其他支援中文的字體，如 "Noto Sans CJK SC"
-    qapp.setFont(font)
+    
+    # 載入自定義字體
+    load_custom_fonts()
+    
+    # 設定預設字體
+    default_font = get_font('regular', 10)  # 使用較小的字體大小
+    qapp.setFont(default_font)
 
     settings = Settings()  # Load settings (e.g., from config_default.yaml or user settings)
 
     # Load and apply theme CSS
-    theme_name = settings.get("theme", "default")
-    logger.info(f"Loaded theme setting: {theme_name}")
+    theme_setting = settings.get("theme", "default")
+    logger.debug(f"Loaded theme setting: {theme_setting}")
 
-    if theme_name == "dark":
-        css_file_path = Path(__file__).parent.parent / "assets" / "dark_theme.qss"
-        logger.info(f"Attempting to load CSS from: {css_file_path}")
-        if css_file_path.exists():
-            with open(css_file_path, "r", encoding="utf-8") as f:
-                css_content = f.read()
-                qapp.setStyleSheet(css_content)
-                logger.info("Dark theme CSS applied successfully.")
-        else:
-            logger.warning(f"Dark theme CSS file not found: {css_file_path}")
-    elif theme_name == "light":
-        css_file_path = Path(__file__).parent.parent / "assets" / "light_theme.qss"
-        logger.info(f"Attempting to load CSS from: {css_file_path}")
-        if css_file_path.exists():
-            with open(css_file_path, "r", encoding="utf-8") as f:
-                css_content = f.read()
-                qapp.setStyleSheet(css_content)
-                logger.info("Light theme CSS applied successfully.")
-        else:
-            logger.warning(f"Light theme CSS file not found: {css_file_path}")
-    elif theme_name == "system":
-        # 檢測系統主題
+    effective_theme_name = ""
+
+    if theme_setting == "system":
         is_dark_mode = qapp.styleHints().colorScheme() == Qt.ColorScheme.Dark
-        theme_file = "dark_theme.qss" if is_dark_mode else "light_theme.qss"
-        css_file_path = Path(__file__).parent.parent / "assets" / theme_file
-        logger.info(f"Attempting to load system theme CSS from: {css_file_path}")
-        if css_file_path.exists():
-            with open(css_file_path, "r", encoding="utf-8") as f:
-                css_content = f.read()
-                qapp.setStyleSheet(css_content)
-                logger.info(f"System theme CSS ({theme_file}) applied successfully.")
-        else:
-            logger.warning(f"System theme CSS file not found: {css_file_path}")
+        try:
+            themes = get_available_themes()
+            if is_dark_mode:
+                # 移除 light 和 dark 主題，只考慮其他深色主題
+                dark_themes = [t for t in themes if t not in ['light', 'dark']]
+                effective_theme_name = dark_themes[0] if dark_themes else "dark"
+            else:
+                effective_theme_name = "light"
+        except Exception:
+            effective_theme_name = "dark" if is_dark_mode else "light"
+        logger.debug(f"System theme detected: {'Dark' if is_dark_mode else 'Light'}. Effective theme: {effective_theme_name}")
+    else:
+        try:
+            themes = get_available_themes()
+            if theme_setting.lower() in themes:
+                effective_theme_name = theme_setting.lower()
+            else:
+                effective_theme_name = "light"
+                logger.warning(f"Theme '{theme_setting}' not found, defaulting to 'light'")
+        except Exception:
+            effective_theme_name = "light"
+            logger.warning(f"Error loading themes, defaulting to 'light'")
+
+    if effective_theme_name:
+        try:
+            logger.debug(f"Attempting to load and apply theme: {effective_theme_name}")
+            themed_qss = load_qss_with_theme(effective_theme_name)
+            qapp.setStyleSheet(themed_qss)
+            logger.debug(f"{effective_theme_name.capitalize()} theme QSS applied successfully.")
+        except FileNotFoundError as e:
+            logger.error(f"Theme file not found for '{effective_theme_name}': {e}. Please ensure base.qss and theme JSON exist in assets/ and assets/themes/.")
+        except Exception as e:
+            logger.error(f"Error loading theme '{effective_theme_name}': {e}")
+    else:
+        # This case should ideally not be reached if we always default to light.
+        logger.warning("No effective theme name determined. No theme will be applied.")
+
 
     # MainWindow no longer takes CompareManager
     main_window = MainWindow(settings)

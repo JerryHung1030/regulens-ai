@@ -121,37 +121,26 @@ class MainWindow(QMainWindow):
 
     def apply_theme(self):
         theme_setting = self.settings.get('theme', 'system') # Default to 'system'
-        qss = ""
         try:
-            if theme_setting == 'dark':
-                qss_path = Path(__file__).parent / ".." / "assets" / "dark_theme.qss"
-                if qss_path.exists():
-                    qss = qss_path.read_text(encoding='utf-8')
-                else:
-                    logger.error(f"Dark theme file not found: {qss_path}")
-            elif theme_setting == 'light':
-                qss_path = Path(__file__).parent / ".." / "assets" / "light_theme.qss"
-                if qss_path.exists():
-                    qss = qss_path.read_text(encoding='utf-8')
-                else:
-                    logger.error(f"Light theme file not found: {qss_path}")
-            elif theme_setting == 'system':
+            if theme_setting == 'system':
                 # 檢測系統主題
                 app = QApplication.instance()
                 if app:
                     # 檢查系統是否處於深色模式
                     is_dark_mode = app.styleHints().colorScheme() == Qt.ColorScheme.Dark
-                    theme_file = "dark_theme.qss" if is_dark_mode else "light_theme.qss"
-                    qss_path = Path(__file__).parent / ".." / "assets" / theme_file
-                    if qss_path.exists():
-                        qss = qss_path.read_text(encoding='utf-8')
-                    else:
-                        logger.error(f"System theme file not found: {qss_path}")
+                    effective_theme = "dark" if is_dark_mode else "light"
+                else:
+                    effective_theme = "light"  # 默認使用淺色主題
+            else:
+                effective_theme = theme_setting.lower()
+
+            from .utils.theme_manager import load_qss_with_theme
+            qss = load_qss_with_theme(effective_theme)
             
             app = QApplication.instance()
             if app:
                 app.setStyleSheet(qss)
-                logger.info(f"Applied {theme_setting} theme.")
+                logger.debug(f"Applied {effective_theme} theme.")
             else: # Should not happen in a running Qt app
                 logger.error("QApplication instance not found when applying theme.")
 

@@ -65,7 +65,7 @@ class ProjectStore(QObject):
             is_sample=True
         )
         project2 = CompareProject(
-            name="ISO27001-A.6.1.2_風險清冊稽核範例",
+            name="ISO27k-A.6.1.2_風險清冊稽核範例",
             controls_dir=sample_base_dir / "sample2" / "controls",
             procedures_dir=sample_base_dir / "sample2" / "procedures",
             evidences_dir=sample_base_dir / "sample2" / "evidences",

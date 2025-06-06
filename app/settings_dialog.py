@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal
 
 from .settings import Settings
+from .utils.theme_manager import get_available_themes
+from .logger import logger
 
 
 class SettingsDialog(QDialog):
@@ -62,7 +64,22 @@ class SettingsDialog(QDialog):
         w = QFormLayout()
 
         self.theme_combo = QComboBox()
-        self.theme_combo.addItems(["Light", "Dark", "System"])
+        try:
+            # 獲取可用的主題列表
+            themes = get_available_themes()
+            # 確保 light 和 dark 主題在列表的最前面
+            if "light" in themes:
+                themes.remove("light")
+            if "dark" in themes:
+                themes.remove("dark")
+            themes = ["light", "dark"] + sorted(themes)  # 其他主題按字母順序排序
+            # 添加 "System" 選項
+            themes.append("system")
+            self.theme_combo.addItems(themes)
+        except Exception as e:
+            logger.error(f"Error loading themes: {e}")
+            # 如果出錯，至少提供基本選項
+            self.theme_combo.addItems(["light", "dark", "system"])
         w.addRow("Application Theme:", self.theme_combo)
 
         container = QWidget()
@@ -165,8 +182,7 @@ class SettingsDialog(QDialog):
 
         # General Tab
         current_theme_value = s.get("theme", "system")
-        theme_map = {"light": "Light", "dark": "Dark", "system": "System"}
-        self.theme_combo.setCurrentText(theme_map.get(current_theme_value.lower(), "System"))
+        self.theme_combo.setCurrentText(current_theme_value.capitalize())
 
         # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
         self.key_edit.setText(s.get("openai_api_key", ""))
@@ -188,9 +204,8 @@ class SettingsDialog(QDialog):
         s = self.settings
 
         # General Tab
-        selected_theme_text = self.theme_combo.currentText()
-        theme_value_map = {"Light": "light", "Dark": "dark", "System": "system"}
-        s.set("theme", theme_value_map.get(selected_theme_text, "system"))
+        selected_theme = self.theme_combo.currentText().lower()
+        s.set("theme", selected_theme)
 
         # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
         s.set("openai_api_key", self.key_edit.text().strip())

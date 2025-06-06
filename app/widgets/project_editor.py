@@ -105,9 +105,9 @@ class ProjectEditor(QWidget):
             pass # Keep pass or other logic if needed after removing setStyleSheet
 
         folder_configs = [
-            ("Controls folder    :", self._ctrl_edit, self._pick_ctrl),
-            ("Procedures folder:", self._proc_edit, self._pick_proc),
-            ("Evidences folder  :", self._evid_edit, self._pick_evid),
+            ("Controls Folder:", self._ctrl_edit, self._pick_ctrl),
+            ("Procedures Folder:", self._proc_edit, self._pick_proc),
+            ("Evidences Folder:", self._evid_edit, self._pick_evid),
         ]
 
         for label_text, line_edit_widget, pick_slot in folder_configs:
@@ -115,18 +115,11 @@ class ProjectEditor(QWidget):
             # Set vertical alignment for the row layout
             row_layout.setAlignment(Qt.AlignVCenter)
             label = QLabel(label_text)
-            # Remove the setStyleSheet call below this line
-            # label.setStyleSheet("""
-            #     QLabel {
-            #         font-size: 14px;
-            #         color: #3c4043;
-            #         margin-right: 10px;
-            #         min-width: 140px; /* Adjusted min-width */
-            #     }
-            # """)
             label.setObjectName(f"{label_text.replace(' ', '_').lower()}_label")
+            # Set fixed width for the label to ensure alignment
+            label.setFixedWidth(180)  # 設定固定寬度
             # Set fixed vertical size policy for QLabel
-            label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+            label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             row_layout.addWidget(label)
             
             browse_button = QPushButton("Browse…")
