@@ -19,23 +19,6 @@ from .mainwindow import MainWindow
 from .settings import Settings
 from pathlib import Path
 
-
-# def _load_config(path: Path) -> dict:
-#     """Load configuration from YAML without requiring PyYAML."""
-#     text = path.read_text()
-#     if yaml is not None:
-#         return yaml.safe_load(text)
-#     data: dict[str, str] = {}
-#     for line in text.splitlines():
-#         line = line.strip()
-#         if not line or line.startswith("#"):
-#             continue
-#         if ":" in line:
-#             k, v = line.split(":", 1)
-#             data[k.strip()] = v.strip().strip('"')
-#     return data
-
-
 def main(argv: list[str] | None = None) -> None:
     # CLI argument parsing can be added here if needed for GUI configuration
     # For now, we directly launch the GUI.
@@ -54,7 +37,7 @@ def main(argv: list[str] | None = None) -> None:
     logger.info(f"Loaded theme setting: {theme_name}")
 
     if theme_name == "dark":
-        css_file_path = Path(__file__).parent / "assets" / "dark.css"
+        css_file_path = Path(__file__).parent.parent / "assets" / "dark_theme.qss"
         logger.info(f"Attempting to load CSS from: {css_file_path}")
         if css_file_path.exists():
             with open(css_file_path, "r", encoding="utf-8") as f:
@@ -63,7 +46,29 @@ def main(argv: list[str] | None = None) -> None:
                 logger.info("Dark theme CSS applied successfully.")
         else:
             logger.warning(f"Dark theme CSS file not found: {css_file_path}")
-    # Add logic for other themes here if needed
+    elif theme_name == "light":
+        css_file_path = Path(__file__).parent.parent / "assets" / "light_theme.qss"
+        logger.info(f"Attempting to load CSS from: {css_file_path}")
+        if css_file_path.exists():
+            with open(css_file_path, "r", encoding="utf-8") as f:
+                css_content = f.read()
+                qapp.setStyleSheet(css_content)
+                logger.info("Light theme CSS applied successfully.")
+        else:
+            logger.warning(f"Light theme CSS file not found: {css_file_path}")
+    elif theme_name == "system":
+        # 檢測系統主題
+        is_dark_mode = qapp.styleHints().colorScheme() == Qt.ColorScheme.Dark
+        theme_file = "dark_theme.qss" if is_dark_mode else "light_theme.qss"
+        css_file_path = Path(__file__).parent.parent / "assets" / theme_file
+        logger.info(f"Attempting to load system theme CSS from: {css_file_path}")
+        if css_file_path.exists():
+            with open(css_file_path, "r", encoding="utf-8") as f:
+                css_content = f.read()
+                qapp.setStyleSheet(css_content)
+                logger.info(f"System theme CSS ({theme_file}) applied successfully.")
+        else:
+            logger.warning(f"System theme CSS file not found: {css_file_path}")
 
     # MainWindow no longer takes CompareManager
     main_window = MainWindow(settings)

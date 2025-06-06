@@ -4,7 +4,7 @@ import sys
 from pathlib import Path # Added
 # from typing import List, Optional, Dict, Any, Callable # For type hints
 
-from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal
+from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
@@ -126,16 +126,27 @@ class MainWindow(QMainWindow):
             if theme_setting == 'dark':
                 qss_path = Path(__file__).parent / ".." / "assets" / "dark_theme.qss"
                 if qss_path.exists():
-                    qss = qss_path.read_text()
+                    qss = qss_path.read_text(encoding='utf-8')
                 else:
                     logger.error(f"Dark theme file not found: {qss_path}")
             elif theme_setting == 'light':
                 qss_path = Path(__file__).parent / ".." / "assets" / "light_theme.qss"
                 if qss_path.exists():
-                    qss = qss_path.read_text()
+                    qss = qss_path.read_text(encoding='utf-8')
                 else:
                     logger.error(f"Light theme file not found: {qss_path}")
-            # If theme_setting is 'system', qss remains "" which clears custom styles.
+            elif theme_setting == 'system':
+                # 檢測系統主題
+                app = QApplication.instance()
+                if app:
+                    # 檢查系統是否處於深色模式
+                    is_dark_mode = app.styleHints().colorScheme() == Qt.ColorScheme.Dark
+                    theme_file = "dark_theme.qss" if is_dark_mode else "light_theme.qss"
+                    qss_path = Path(__file__).parent / ".." / "assets" / theme_file
+                    if qss_path.exists():
+                        qss = qss_path.read_text(encoding='utf-8')
+                    else:
+                        logger.error(f"System theme file not found: {qss_path}")
             
             app = QApplication.instance()
             if app:

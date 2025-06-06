@@ -53,7 +53,9 @@ class ProjectStore(QObject):
         return projects
 
     def _create_sample_projects_and_data(self):
-        sample_base_dir = Path.home() / "regulens-ai" / "sample_data"
+        # 使用當前工作目錄作為基準
+        current_dir = Path.cwd()
+        sample_base_dir = current_dir / "sample_data"
 
         project1 = CompareProject(
             name="ISO27k-A.9.4.2_強密碼合規稽核範例",

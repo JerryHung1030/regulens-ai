@@ -10,33 +10,61 @@ QMainWindow {
 
 QMenuBar {
     background-color: #d0d0d0;
+    color: #000000;
+}
+
+QMenuBar::item:selected {
+    background-color: #e0e0e0;
 }
 
 QMenu {
     background-color: #f0f0f0;
     border: 1px solid #c0c0c0;
+    color: #000000;
+}
+
+QMenu::item:selected {
+    background-color: #e0e0e0;
 }
 
 QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
     background-color: #ffffff; /* White background for input fields */
     color: #000000;
     border: 1px solid #c0c0c0;
-    padding: 2px;
+    padding: 5px; /* Adjusted padding to match buttons */
+    border-radius: 4px;
+    vertical-align: middle; /* Attempt to vertical align */
+    margin: 0; /* Remove default margin */
+}
+
+QComboBox::drop-down {
+    border-left: 1px solid #c0c0c0;
+}
+
+QComboBox QAbstractItemView { /* Dropdown list style */
+    background-color: #ffffff;
+    color: #000000;
+    selection-background-color: #e0e0e0;
 }
 
 QPushButton {
-    background-color: #c0c0c0;
-    color: #000000;
-    border: 1px solid #a0a0a0;
-    padding: 5px;
+    background-color: #c0c0c0; /* Light gray background for buttons */
+    color: #000000; /* Black text on buttons */
+    border: 1px solid #a0a0a0; /* Subtle border */
+    padding: 5px 10px; /* Adjusted padding */
+    border-radius: 4px;
+    vertical-align: middle; /* Attempt to vertical align */
+    margin: 0; /* Remove default margin */
 }
 
 QPushButton:hover {
-    background-color: #d0d0d0;
+    background-color: #d0d0d0; /* Lighter hover effect */
+    border-color: #b0b0b0;
 }
 
 QPushButton:pressed {
-    background-color: #b0b0b0;
+    background-color: #b0b0b0; /* Darker pressed effect */
+    border-color: #909090;
 }
 
 QTabWidget::pane {
@@ -46,95 +74,238 @@ QTabWidget::pane {
 QTabBar::tab {
     background: #d0d0d0;
     border: 1px solid #c0c0c0;
-    padding: 5px;
+    padding: 8px 16px; /* Adjusted padding to match dark theme */
     margin-right: 2px;
+    color: #666666; /* Dark gray for inactive tabs */
 }
 
 QTabBar::tab:selected {
     background: #f0f0f0;
+    color: #000000; /* Black text for selected */
     border-bottom-color: #f0f0f0; /* Make selected tab blend with pane */
 }
 
 QTabBar::tab:!selected:hover {
     background: #e0e0e0;
+    color: #000000;
 }
 
-QDialog { /* Added style for QDialog */
-    border: 1px solid #a0a0a0; /* Medium gray border */
-    border-radius: 4px;
+/* Style for scrollbars */
+QScrollBar:vertical {
+    border: 1px solid #c0c0c0;
+    background: #f0f0f0;
+    width: 10px;
+    margin: 0px 0px 0px 0px;
 }
 
-QListWidget { /* Added style for QListWidget for Light Theme */
+QScrollBar::handle:vertical {
+    background: #c0c0c0;
+    min-height: 20px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: none;
+    border: none;
+    height: 0px;
+    width: 0px;
+}
+
+QScrollBar:horizontal {
+    border: 1px solid #c0c0c0;
+    background: #f0f0f0;
+    height: 10px;
+    margin: 0px 0px 0px 0px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #c0c0c0;
+    min-width: 20px;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    background: none;
+    border: none;
+    height: 0px;
+    width: 0px;
+}
+
+QLabel { /* Added style for QLabel */
+    color: #000000; /* Black text color */
+    padding: 5px 0; /* Added vertical padding */
+    vertical-align: middle; /* Attempt to vertical align */
+    margin: 0; /* Remove default margin */
+}
+
+QFrame[frameShape="4"] { /* Added style for QFrame with StyledPanel */
+    background-color: #ffffff; /* White background for panels */
+    border: 1px solid #c0c0c0; /* Subtle border */
+    border-radius: 8px; /* Rounded corners */
+    padding: 20px; /* Internal padding */
+}
+
+QListWidget { /* Added style for QListWidget */
     background-color: #ffffff; /* White background for list */
     border: 1px solid #c0c0c0;
     padding: 4px;
-    border-radius: 4px; /* Added border-radius for consistency */
 }
 
-QListWidget::item { /* Added style for QListWidget items for Light Theme */
+QListWidget::item { /* Added style for QListWidget items */
     color: #000000; /* Black text for items */
     padding: 8px 12px;
     border-radius: 4px;
     margin: 2px 0;
 }
 
-QListWidget::item:hover { /* Added hover style for items for Light Theme */
-    background-color: #e0e0e0; /* Light gray hover background */
+QListWidget::item:hover { /* Added hover style for items */
+    background-color: #e0e0e0;
 }
 
-QListWidget::item:selected { /* Added selected style for items for Light Theme */
+QListWidget::item:selected { /* Added selected style for items */
     background-color: #a0c0f0; /* Light blue background for selected */
     color: #000000; /* Black text for selected */
     border: 1px solid #7090c0; /* Slightly darker border for selected */
 }
 
-/* Add styling for IntroPage and its components in Light Theme */
+QToolButton { /* Added style for QToolButton */
+    border: none;
+    padding: 4px;
+    border-radius: 12px;
+    background-color: transparent;
+    color: #666666; /* Dark gray icon color */
+}
 
+QToolButton:hover { /* Added hover style for QToolButton */
+    background-color: #e0e0e0;
+}
+
+QToolButton:pressed { /* Added pressed style for QToolButton */
+    background-color: #d0d0d0;
+}
+
+QPushButton#togglePreviewButton { /* Adjusted style for toggle preview button */
+    font-size: 14px;
+    font-weight: 500;
+    color: #000000; /* Black text */
+    padding: 10px; /* Keep original padding for this button */
+    text-align: left;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    background-color: #ffffff;
+    margin: 0px;
+}
+
+QPushButton#togglePreviewButton:hover {
+    background-color: #e0e0e0;
+}
+
+QPushButton#togglePreviewButton:pressed {
+    background-color: #d0d0d0;
+}
+
+QTabWidget::pane#previewTabWidget { /* Added style for preview tab widget pane */
+    border-top: 1px solid #c0c0c0;
+    padding: 10px;
+    background-color: #f0f0f0;
+}
+
+QTreeView { /* Added style for QTreeView */
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    font-size: 13px;
+    background-color: #ffffff;
+    color: #000000; /* Black text */
+    vertical-align: middle; /* Attempt to vertical align */
+}
+
+QTreeView::item { /* Added style for QTreeView items */
+    padding: 4px;
+}
+
+QTreeView::item:hover { /* Added hover style for QTreeView items */
+    background-color: #e0e0e0;
+}
+
+QTreeView::item:selected { /* Added selected style for QTreeView items */
+    background-color: #a0c0f0; /* Light blue background for selected */
+    color: #000000; /* Black text for selected */
+}
+
+QTextEdit { /* Added style for QTextEdit */
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #ffffff;
+    color: #000000;
+    vertical-align: middle;
+}
+
+QSplitter::handle {
+    background-color: #c0c0c0;
+}
+
+QSplitter::handle:horizontal {
+    width: 1px;
+    margin: 2px 0;
+}
+
+QSplitter::handle:vertical {
+    height: 1px;
+    margin: 0 2px;
+}
+
+QSplitter::handle:hover {
+    background-color: #b0b0b0;
+}
+
+QSplitter::handle:pressed {
+    background-color: #a0a0a0;
+}
+
+/* IntroPage specific styles */
 QWidget#introPage {
-    background-color: #f0f0f0; /* Use main background color */
+    background-color: #f0f0f0;
 }
 
 QWidget#introPage QLabel {
-    color: #000000; /* Black text color for all labels on intro page */
-    background-color: transparent; /* Make QLabel background transparent */
+    color: #000000;
+    background-color: transparent;
 }
 
 QWidget#introPage QLabel h1, QWidget#introPage QLabel h2, QWidget#introPage QLabel h3 {
-    color: #333333; /* Darker color for titles */
+    color: #333333;
 }
 
 QWidget#introPage QLabel p {
-    color: #555555; /* Slightly darker gray for subtitle paragraph */
+    color: #555555;
 }
 
 QFrame#pipelineCard, QFrame#dataJourneyCard, QFrame#trustCard {
-    background-color: #f0f0f0; /* Card background - Match introPage background */
-    border: 1px solid #c0c0c0; /* Card border */
+    background-color: #f0f0f0;
+    border: 1px solid #c0c0c0;
     border-radius: 8px;
-    padding: 20px; /* Internal padding for cards */
+    padding: 20px;
 }
 
 QFrame#pipelineCard QLabel, QFrame#dataJourneyCard QLabel, QFrame#trustCard QLabel {
-    color: #000000; /* Black text for labels inside cards */
+    color: #000000;
 }
 
-/* Specific styles for elements within pipelineCard */
 QFrame#pipelineCard QLabel[text="📄"], QFrame#pipelineCard QLabel[text="⚙️"], QFrame#pipelineCard QLabel[text="🤖"], QFrame#pipelineCard QLabel[text="📝"] {
-    font-size: 16pt; /* Emoji size */
+    font-size: 16pt;
 }
 
 QFrame#pipelineCard QLabel[text="⬇️"] {
-    font-size: 18pt; /* Arrow size */
-    color: #1a73e8; /* Google Blue color for arrows */
+    font-size: 18pt;
+    color: #1a73e8;
     margin: 8px 0;
 }
 
 QFrame#pipelineCard QLabel strong {
-    color: #333333; /* Darker color for strong text in workflow steps */
+    color: #333333;
 }
 
 QFrame#pipelineCard QLabel small {
-    color: #555555; /* Slightly darker gray for small text */
+    color: #555555;
 }
 
 QPushButton#getStartedButton {
@@ -143,7 +314,7 @@ QPushButton#getStartedButton {
     padding: 12px 32px;
     border-radius: 4px;
     color: white;
-    background-color: #1a73e8; /* Google Blue */
+    background-color: #1a73e8;
     border: none;
 }
 
