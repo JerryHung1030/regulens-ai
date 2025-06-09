@@ -380,7 +380,8 @@ def run_pipeline(
         report_output_dir=output_dir,
         report_filename_base=report_filename_base,
         report_theme_css_path=css_path_to_use,
-        make_pdf=False
+        make_pdf=False,
+        language=settings.language
     )
 
     if markdown_report_path:

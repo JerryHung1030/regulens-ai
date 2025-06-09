@@ -20,6 +20,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt # Added for Qt.ColorScheme
 from .mainwindow import MainWindow
 from .settings import Settings
+from .translator import Translator
 # from pathlib import Path # No longer needed for direct QSS file access here
 from .utils.theme_manager import load_qss_with_theme, get_available_themes # Import the new function and get_available_themes
 from .utils.font_manager import load_custom_fonts, get_font
@@ -39,6 +40,8 @@ def main(argv: list[str] | None = None) -> None:
     qapp.setFont(default_font)
 
     settings = Settings()  # Load settings (e.g., from config_default.yaml or user settings)
+    initial_lang = settings.get("language", "en")
+    translator = Translator(initial_language=initial_lang)
 
     # Load and apply theme CSS
     theme_setting = settings.get("theme", "default")
@@ -87,7 +90,7 @@ def main(argv: list[str] | None = None) -> None:
 
 
     # MainWindow no longer takes CompareManager
-    main_window = MainWindow(settings)
+    main_window = MainWindow(settings, translator)
     main_window.resize(1100, 720)
     main_window.show()
 
