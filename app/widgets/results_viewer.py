@@ -342,109 +342,21 @@ class ResultsViewer(QWidget):
         # TODO: Hook up self.tr properly if not already available through QObject inheritance
         title_suffix = self.tr("Comparison Results", " - Comparison Results")
         self._title = QLabel(f"<h2>{title_suffix}</h2>")
-        self._title.setStyleSheet("""
-            QLabel {
-                font-size: 16px; /* Adjusted from 20px */
-                font-weight: 500; /* Medium weight */
-                color: #333333; /* Standard dark text color */
-                margin: 0; /* Keep existing margin */
-            }
-        """)
         title_row.addWidget(self._title)
         title_row.addStretch(1)
 
         btn_export = QPushButton(self.tr("export_report", "Export Report..."))
         btn_export.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
-        btn_export.setStyleSheet("""
-            QPushButton {
-                padding: 8px 16px;
-                border-radius: 4px;
-                background-color: #e8e8e8; /* Light gray, distinct from primary actions */
-                border: 1px solid #cccccc;
-                color: #333333;
-                font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #d8d8d8;
-                border-color: #bbbbbb;
-            }
-            QPushButton:pressed {
-                background-color: #c8c8c8;
-            }
-        """)
         btn_export.clicked.connect(self._export_report)
         title_row.addWidget(btn_export)
 
         btn_back = QPushButton(self.tr("back_to_edit", "Back to Edit"))
         btn_back.setIcon(self.style().standardIcon(QStyle.SP_ArrowBack))
-        btn_back.setStyleSheet("""
-            QPushButton {
-                padding: 8px 16px;
-                border-radius: 4px;
-                background-color: transparent; /* Outlined button style */
-                border: 1px solid #cccccc;
-                color: #555555; /* Slightly lighter text */
-                font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0; /* Light background on hover */
-                border-color: #bbbbbb;
-            }
-            QPushButton:pressed {
-                background-color: #e0e0e0;
-            }
-        """)
         btn_back.clicked.connect(self._go_back)
         title_row.addWidget(btn_back)
         lay.addLayout(title_row)
 
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #dcdcdc; /* Slightly softer border */
-                border-top: none; /* Top border handled by TabBar or covered by it */
-                border-radius: 0 0 4px 4px; /* Rounded bottom corners */
-                background-color: white;
-                padding: 16px; /* Add padding inside the tab pane */
-            }
-            QTabBar::tab {
-                padding: 10px 20px; /* Increased padding for tabs */
-                margin-right: 1px;
-                background-color: #f0f0f0; /* Light gray for inactive tabs */
-                border: 1px solid #dcdcdc;
-                border-bottom: none; /* Tab border doesn't include bottom line */
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-                color: #555555; /* Text color for inactive tabs */
-                font-weight: 500;
-            }
-            QTabBar::tab:selected {
-                background-color: white; /* Selected tab matches pane background */
-                color: #1a73e8; /* Primary color for selected tab text */
-                border-color: #dcdcdc;
-                /* To make the selected tab appear connected to the pane,
-                   its bottom border is often removed or set to the pane's background color.
-                   However, QTabBar draws its own base line. We can make the selected tab
-                   visually sit on top by ensuring its background is white. */
-                /* For a line indicator:
-                border-bottom: 3px solid #1a73e8;
-                padding-bottom: 7px; /* Adjust padding to account for border */
-                */
-            }
-            QTabBar::tab:!selected:hover {
-                background-color: #e6e6e6; /* Hover for non-selected tabs */
-                color: #333333;
-            }
-            QTabBar::tab:selected:hover {
-                background-color: #fdfdfd; /* Slight hover for selected tab if needed */
-            }
-            QTabBar {
-                /* This draws a line under the tab bar. Set to transparent or tab pane's border color */
-                /* border-bottom: 1px solid #dcdcdc; */ 
-                /* Alternatively, remove it if QTabWidget::pane border-top is visible and sufficient */
-                /* Or use QTabBar::tear and QTabBar::scroller for more control if needed */
-            }
-        """)
         lay.addWidget(self.tabs)
         logger.debug("UI building completed, calling initial refresh")
         self._refresh()

@@ -3,16 +3,40 @@ from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
 )
 from PySide6.QtCore import Qt, Signal
+from ..translator import Translator # Assuming translator.py is in app/
+from ..logger import logger # Assuming logger.py is in app/
 
 
 class IntroPage(QWidget):
     start_requested = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, translator: Translator, parent=None):
         super().__init__(parent)
         self.setObjectName("introPage")
-        self._init_ui()
-        self._apply_styles()
+        self.translator = translator
+        self._init_ui() # Creates UI elements
+        
+        # Connect signal and call retranslate for initial setup
+        self.translator.language_changed.connect(self._retranslate_ui)
+        self._retranslate_ui()
+
+
+    def _retranslate_ui(self):
+        # Update subtitle
+        if hasattr(self, 'subtitle_label'):
+            self.subtitle_label.setText(self.translator.get("intro_subtitle", "<p style='margin:0px;'>Compliance document comparison, one-click audit report generation</p>"))
+        
+        # Update pipeline card title
+        if hasattr(self, 'pipeline_card_title_label'):
+            self.pipeline_card_title_label.setText(self.translator.get("intro_workflow_title", "<h2>Workflow</h2>"))
+
+        # Update Get Started button
+        if hasattr(self, 'get_started_button'):
+            self.get_started_button.setText(self.translator.get("intro_get_started_button", "Get Started"))
+
+        # TODO: Add more elements here, like pipeline steps, data journey, trust card texts
+        # For now, log that other parts would be updated
+        logger.debug("IntroPage retranslated (partially). More elements pending full refactor.")
 
     def _init_ui(self):
         # Main Layout
@@ -47,14 +71,11 @@ class IntroPage(QWidget):
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(title_label)
 
-        # Subtitle (取消自動換行，減小字體)
-        subtitle_text = "<p style='margin:0px;'>合規文件比對，一鍵產出審計報告</p>"
-        subtitle_label = QLabel(subtitle_text)
-        subtitle_label.setTextFormat(Qt.TextFormat.RichText)
-        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_label.setStyleSheet("color: #1565c0;")
-        # 不使用 setWordWrap，以免被強制換行
-        header_layout.addWidget(subtitle_label)
+        # Subtitle
+        self.subtitle_label = QLabel(self.translator.get("intro_subtitle", "<p style='margin:0px;'>合規文件比對，一鍵產出審計報告</p>"))
+        self.subtitle_label.setTextFormat(Qt.TextFormat.RichText)
+        self.subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header_layout.addWidget(self.subtitle_label)
 
         return header_layout
 
@@ -98,11 +119,10 @@ class IntroPage(QWidget):
         card_layout.setSpacing(15)
         card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        title = QLabel("<h2>工作流程</h2>")
-        title.setTextFormat(Qt.TextFormat.RichText)
-        title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        title.setStyleSheet("margin-bottom: 5px;")
-        card_layout.addWidget(title)
+        self.pipeline_card_title_label = QLabel(self.translator.get("intro_workflow_title", "<h2>工作流程</h2>"))
+        self.pipeline_card_title_label.setTextFormat(Qt.TextFormat.RichText)
+        self.pipeline_card_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        card_layout.addWidget(self.pipeline_card_title_label)
 
         workflow_steps_layout = QVBoxLayout()
         workflow_steps_layout.setSpacing(12)  # 微調步驟間距
@@ -120,12 +140,10 @@ class IntroPage(QWidget):
 
             step_icon_label = QLabel(icon)
             step_icon_label.setFixedWidth(30)
-            step_icon_label.setStyleSheet("font-size: 16pt;")  # Emoji 大小由 18pt → 16pt
 
             step_text_label = QLabel(text)
             step_text_label.setTextFormat(Qt.TextFormat.RichText)
             step_text_label.setWordWrap(True)
-            step_text_label.setStyleSheet("font-size: 12pt;")  # 步驟文字由 14pt → 12pt
 
             step_layout.addWidget(step_icon_label)
             step_layout.addWidget(step_text_label)
@@ -134,8 +152,6 @@ class IntroPage(QWidget):
             if i < len(steps_data) - 1:
                 arrow_label = QLabel("⬇️")
                 arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                arrow_label.setStyleSheet("font-size: 18pt; color: #1565c0; margin: 8px 0;")  
-                # 箭頭由 20pt → 18pt
                 workflow_steps_layout.addWidget(arrow_label)
 
         card_layout.addLayout(workflow_steps_layout)
@@ -157,7 +173,6 @@ class IntroPage(QWidget):
         title = QLabel("<h3>資料流程 (Data Journey)</h3>")
         title.setTextFormat(Qt.TextFormat.RichText)
         title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        title.setStyleSheet("margin-bottom: 0px;")
         card_layout.addWidget(title)
 
         list_data_text = """
@@ -172,7 +187,6 @@ class IntroPage(QWidget):
         list_data_label = QLabel(list_data_text)
         list_data_label.setTextFormat(Qt.TextFormat.RichText)
         list_data_label.setWordWrap(True)
-        list_data_label.setStyleSheet("font-size: 12pt; color: #555555; margin: 0px;")
         # 卡片內文列表由 14pt → 12pt
         card_layout.addWidget(list_data_label)
         card_layout.addStretch(1)
@@ -193,7 +207,6 @@ class IntroPage(QWidget):
         title = QLabel("<h3>為什麼信任 Regulens-AI？</h3>")
         title.setTextFormat(Qt.TextFormat.RichText)
         title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        title.setStyleSheet("margin-bottom: 0px;")
         card_layout.addWidget(title)
 
         list_trust_text = """
@@ -206,8 +219,6 @@ class IntroPage(QWidget):
         list_trust_label = QLabel(list_trust_text)
         list_trust_label.setTextFormat(Qt.TextFormat.RichText)
         list_trust_label.setWordWrap(True)
-        list_trust_label.setStyleSheet("font-size: 12pt; color: #555555; margin: 0px;")
-        # 卡片內文列表由 14pt → 12pt
         card_layout.addWidget(list_trust_label)
         card_layout.addStretch(1)
         card.setLayout(card_layout)
@@ -218,7 +229,7 @@ class IntroPage(QWidget):
         cta_layout.setContentsMargins(0, 40, 0, 0)
         cta_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.get_started_button = QPushButton("Get Started")
+        self.get_started_button = QPushButton(self.translator.get("intro_get_started_button", "Get Started"))
         self.get_started_button.setObjectName("getStartedButton")
         self.get_started_button.setFixedSize(220, 50)
         self.get_started_button.clicked.connect(self.start_requested.emit)
@@ -231,67 +242,6 @@ class IntroPage(QWidget):
         cta_layout.addLayout(button_container_layout)
         return cta_layout
 
-    def _apply_styles(self):
-        self.setStyleSheet("""
-            /* 背景 */
-            #introPage {
-                background-color: #ffffff;
-            }
-
-            /* 卡片樣式：背景、邊框、圓角、內部填充 */
-            QFrame#pipelineCard, QFrame#dataJourneyCard, QFrame#trustCard {
-                background-color: #fafafa;
-                border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                padding: 20px; /* 統一卡片內邊距 */
-            }
-
-            /* 全域標籤預設 */
-            QLabel {
-                color: #333333;
-                margin: 0px;
-            }
-
-            /* 標題與副標題字體大小（已調整小一號） */
-            QLabel h1 {
-                font-size: 28pt;   /* 原 32pt → 28pt */
-                font-weight: bold;
-            }
-            QLabel h2 {
-                font-size: 20pt;   /* 原 24pt → 20pt */
-                font-weight: bold;
-            }
-            QLabel h3 {
-                font-size: 16pt;   /* 原 20pt → 16pt */
-                font-weight: bold;
-            }
-            QLabel p {
-                font-size: 14pt;   /* 原 18pt → 14pt */
-            }
-
-            /* 卡片內文列表字體（已調整小一號） */
-            QLabel[richtext] {
-                /* 改為 12pt（原 14pt → 12pt） */
-                font-size: 12pt;
-            }
-
-            /* 按鈕字體（已調整小一號） */
-            QPushButton#getStartedButton {
-                background-color: #1565c0;
-                color: white;
-                border-radius: 8px;
-                padding: 10px 20px;
-                font-size: 14pt;  /* 原 16pt → 14pt */
-                font-weight: bold;
-            }
-            QPushButton#getStartedButton:hover {
-                background-color: #1976d2;
-            }
-            QPushButton#getStartedButton:pressed {
-                background-color: #0d47a1;
-            }
-        """)
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -299,7 +249,14 @@ if __name__ == '__main__':
     main_window.setWindowTitle("Regulens-AI Introduction (PySide6)")
     main_window.setGeometry(100, 100, 1200, 900)
 
-    intro_page = IntroPage()
+    # Dummy translator for standalone execution
+    class DummyTranslator:
+        def get(self, key, default_text=""): return default_text
+        def current_lang_code(self): return "en"
+        language_changed = Signal() # Dummy signal
+
+    translator_instance = DummyTranslator()
+    intro_page = IntroPage(translator_instance)
     
     def on_start_requested():
         print("Get Started button clicked! (PySide6) Transitioning to next page...")

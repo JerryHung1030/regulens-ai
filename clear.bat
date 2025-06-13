@@ -1,25 +1,36 @@
 @echo off
-REM 清除 Regulens AI 相關的配置和緩存文件
+chcp 65001 > nul
+echo Clearing Regulens-AI cache and output directories...
 
-REM 清除配置目錄
-if exist "%USERPROFILE%\.config\regulens-ai" (
-    rmdir /s /q "%USERPROFILE%\.config\regulens-ai"
+REM Set target directories
+set CACHE_DIR=%~dp0cache
+set OUTPUT_DIR=%~dp0output
+
+REM Clear cache directory
+if exist "%CACHE_DIR%" (
+    echo Clearing cache directory: %CACHE_DIR%
+    rmdir /s /q "%CACHE_DIR%"
+    if exist "%CACHE_DIR%" (
+        echo Warning: Failed to clear cache directory
+    ) else (
+        echo Cache directory cleared
+    )
+) else (
+    echo Cache directory does not exist
 )
 
-REM 清除配置文件
-if exist "%USERPROFILE%\.regulens-ai.json" (
-    del /f /q "%USERPROFILE%\.regulens-ai.json"
+REM Clear output directory
+if exist "%OUTPUT_DIR%" (
+    echo Clearing output directory: %OUTPUT_DIR%
+    rmdir /s /q "%OUTPUT_DIR%"
+    if exist "%OUTPUT_DIR%" (
+        echo Warning: Failed to clear output directory
+    ) else (
+        echo Output directory cleared
+    )
+) else (
+    echo Output directory does not exist
 )
 
-REM 清除緩存目錄
-if exist "%USERPROFILE%\regulens-ai\cache" (
-    rmdir /s /q "%USERPROFILE%\regulens-ai\cache"
-)
-
-REM 清除輸出目錄
-if exist "%USERPROFILE%\regulens-ai\output" (
-    rmdir /s /q "%USERPROFILE%\regulens-ai\output"
-)
-
-echo 清除完成！
+echo Clear operation completed
 pause 

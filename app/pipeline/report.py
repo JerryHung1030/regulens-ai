@@ -127,12 +127,11 @@ def generate_report(
     report_output_dir: Path,
     report_filename_base: str = "compliance_audit_report",
     report_theme_css_path: Optional[Path] = None,
-    make_pdf: bool = False
+    make_pdf: bool = False,
+    language: str = "en"  # Added language parameter with default
 ) -> Optional[Path]:
 
-    settings = Settings()
-    lang = settings.get("language", "en")
-    texts = MESSAGES.get(lang, MESSAGES["en"])
+    texts = MESSAGES.get(language, MESSAGES["en"]) # Use language parameter
 
     try:
         report_output_dir.mkdir(parents=True, exist_ok=True)

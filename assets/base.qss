@@ -1,0 +1,339 @@
+/* Base Theme for Regulens-AI - Colors are placeholders */
+/* Theme Name: @theme_name */
+
+QWidget {
+    background-color: @background_primary;
+    color: @text_primary;
+}
+
+QMainWindow {
+    background-color: @background_main_window;
+}
+
+QMenuBar {
+    background-color: @menubar_background;
+    color: @menubar_text;
+}
+
+QMenuBar::item:selected {
+    background-color: @menubar_item_selected_background;
+}
+
+QMenu {
+    background-color: @menu_background;
+    border: 1px solid @menu_border;
+    color: @menu_text;
+}
+
+QMenu::item:selected {
+    background-color: @menu_item_selected_background;
+}
+
+QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: @input_background;
+    color: @input_text;
+    border: 1px solid @input_border;
+    padding: 5px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin: 0;
+}
+
+QComboBox::drop-down {
+    border-left: 1px solid @input_dropdown_border;
+}
+
+QComboBox QAbstractItemView { /* Dropdown list style */
+    background-color: @input_dropdown_list_background;
+    color: @input_dropdown_list_text;
+    selection-background-color: @input_dropdown_list_selection_background;
+}
+
+QPushButton {
+    background-color: @button_background;
+    color: @button_text;
+    border: 1px solid @button_border;
+    padding: 5px 10px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin: 0;
+}
+
+QPushButton:hover {
+    background-color: @button_hover_background;
+    border-color: @button_hover_border;
+}
+
+QPushButton:pressed {
+    background-color: @button_pressed_background;
+    border-color: @button_pressed_border;
+}
+
+QTabWidget::pane {
+    border-top: 1px solid @tab_pane_border;
+}
+
+QTabBar::tab {
+    background: @tab_background;
+    border: 1px solid @tab_border; /* Default border for non-selected tabs */
+    padding: 8px 16px; /* Adjusted to match new JSON structure */
+    margin-right: 2px;
+    color: @tab_text;
+    border-top-left-radius: 4px; /* Added from dark_theme specific QTabBar::tab */
+    border-top-right-radius: 4px; /* Added from dark_theme specific QTabBar::tab */
+}
+
+QTabBar::tab:selected {
+    background: @tab_selected_background;
+    color: @tab_selected_text;
+    border: 1px solid @tab_selected_border_color; /* Use specific border color for selected tab */
+    border-bottom-color: @tab_selected_border_bottom_color; /* Make selected tab blend with pane */
+}
+
+QTabBar::tab:!selected:hover {
+    background: @tab_hover_background;
+    color: @tab_hover_text; /* Ensure this is correctly placeholderized */
+}
+
+/* Style for scrollbars */
+QScrollBar:vertical {
+    border: 1px solid @scrollbar_border;
+    background: @scrollbar_background;
+    width: 10px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:vertical {
+    background: @scrollbar_handle_background;
+    min-height: 20px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: none;
+    border: none;
+    height: 0px;
+    width: 0px;
+}
+
+QScrollBar:horizontal {
+    border: 1px solid @scrollbar_border;
+    background: @scrollbar_background;
+    height: 10px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:horizontal {
+    background: @scrollbar_handle_background;
+    min-width: 20px;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    background: none;
+    border: none;
+    height: 0px;
+    width: 0px;
+}
+
+QLabel {
+    color: @label_text;
+    padding: 5px 0;
+    vertical-align: middle;
+    margin: 0;
+}
+
+/* 新增檔案夾標籤的樣式 */
+QLabel[objectName$="_label"] {
+    font-size: 14px;
+    color: @label_text;
+    padding-right: 10px;
+    text-align: right;  /* 文字靠右對齊 */
+}
+
+QFrame[frameShape="4"] { /* StyledPanel */
+    background-color: @frame_styled_panel_background;
+    border: 1px solid @frame_styled_panel_border;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+QListWidget {
+    background-color: @list_widget_background;
+    border: 1px solid @list_widget_border;
+    padding: 4px;
+}
+
+QListWidget::item {
+    color: @list_widget_item_text;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+QListWidget::item:hover {
+    background-color: @list_widget_item_hover_background;
+}
+
+QListWidget::item:selected {
+    background-color: @list_widget_item_selected_background;
+    color: @list_widget_item_selected_text;
+    border: 1px solid @list_widget_item_selected_border; /* Added for consistency, light theme uses it */
+}
+
+QToolButton {
+    border: none;
+    padding: 4px;
+    border-radius: 12px;
+    background-color: transparent; /* Explicitly transparent */
+    color: @tool_button_text;
+}
+
+QToolButton:hover {
+    background-color: @tool_button_hover_background;
+}
+
+QToolButton:pressed {
+    background-color: @tool_button_pressed_background;
+}
+
+QPushButton#togglePreviewButton {
+    font-size: 14px;
+    font-weight: 500;
+    color: @button_toggle_preview_text;
+    padding: 10px;
+    text-align: left;
+    border: 1px solid @button_toggle_preview_border;
+    border-radius: 4px;
+    background-color: @button_toggle_preview_background;
+    margin: 0px;
+}
+
+QPushButton#togglePreviewButton:hover {
+    background-color: @button_toggle_preview_hover_background;
+}
+
+QPushButton#togglePreviewButton:pressed {
+    background-color: @button_toggle_preview_pressed_background;
+}
+
+QTabWidget::pane#previewTabWidget {
+    border-top: 1px solid @preview_tab_widget_pane_border;
+    padding: 10px;
+    background-color: @preview_tab_widget_pane_background;
+}
+
+
+QTreeView {
+    border: 1px solid @treeview_border;
+    border-radius: 4px;
+    font-size: 13px;
+    background-color: @treeview_background;
+    color: @treeview_text;
+    vertical-align: middle;
+}
+
+QTreeView::item {
+    padding: 4px;
+}
+
+QTreeView::item:hover {
+    background-color: @treeview_item_hover_background;
+}
+
+QTreeView::item:selected {
+    background-color: @treeview_item_selected_background;
+    color: @treeview_item_selected_text;
+}
+
+QTextEdit {
+    border: 1px solid @text_edit_border;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: @text_edit_background;
+    color: @text_edit_text;
+    vertical-align: middle;
+}
+
+
+QSplitter::handle {
+    background-color: @splitter_handle_background;
+}
+
+QSplitter::handle:horizontal {
+    width: 1px;
+    margin: 2px 0;
+}
+
+QSplitter::handle:vertical {
+    height: 1px;
+    margin: 0 2px;
+}
+
+QSplitter::handle:hover {
+    background-color: @splitter_handle_hover_background;
+}
+
+QSplitter::handle:pressed {
+    background-color: @splitter_handle_pressed_background;
+}
+
+/* IntroPage and its components */
+
+QWidget#introPage {
+    background-color: @intro_page_background;
+}
+
+QWidget#introPage QLabel {
+    color: @intro_page_label_text;
+    background-color: transparent;
+}
+
+QWidget#introPage QLabel h1, QWidget#introPage QLabel h2, QWidget#introPage QLabel h3 {
+    color: @intro_page_title_text;
+}
+
+QWidget#introPage QLabel p {
+    color: @intro_page_subtitle_text;
+}
+
+QFrame#pipelineCard, QFrame#dataJourneyCard, QFrame#trustCard {
+    background-color: @intro_card_background;
+    border: 1px solid @intro_card_border;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+QFrame#pipelineCard QLabel, QFrame#dataJourneyCard QLabel, QFrame#trustCard QLabel {
+    color: @intro_card_label_text;
+}
+
+QFrame#pipelineCard QLabel[text="📄"], QFrame#pipelineCard QLabel[text="⚙️"], QFrame#pipelineCard QLabel[text="🤖"], QFrame#pipelineCard QLabel[text="📝"] {
+    font-size: 16pt;
+}
+
+QFrame#pipelineCard QLabel[text="⬇️"] {
+    font-size: 18pt;
+    color: @intro_arrow_icon_color;
+    margin: 8px 0;
+}
+
+QFrame#pipelineCard QLabel strong {
+    color: @intro_strong_text_color;
+}
+
+QFrame#pipelineCard QLabel small {
+    color: @intro_small_text_color;
+}
+
+QPushButton#getStartedButton {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 12px 32px;
+    border-radius: 4px;
+    color: @button_get_started_text;
+    background-color: @button_get_started_background;
+    border: none;
+}
+
+QPushButton#getStartedButton:hover {
+    background-color: @button_get_started_hover_background;
+}
+
+QPushButton#getStartedButton:pressed {
+    background-color: @button_get_started_pressed_background;
+}

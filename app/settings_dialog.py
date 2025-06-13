@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
+    QLabel, # Added QLabel
     QLineEdit,
     QPushButton,
     QSpinBox,
@@ -16,7 +17,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from PySide6.QtCore import Signal
+
 from .settings import Settings
+from .translator import Translator
+from .utils.theme_manager import get_available_themes
+from .logger import logger
 
 
 class SettingsDialog(QDialog):
@@ -28,118 +34,202 @@ class SettingsDialog(QDialog):
     ``accepted`` signal).
     """
 
-    def __init__(self, settings: Settings, parent=None) -> None:  # noqa: D401  – Qt style
+    settings_saved = Signal()
+
+    def __init__(self, settings: Settings, translator: Translator, parent=None) -> None:  # noqa: D401  – Qt style
         super().__init__(parent)
-        self.setWindowTitle("Settings")
+        # Title set in _retranslate_ui
         self.settings = settings
-        self._init_ui()
-        self._load()
+        self.translator = translator
+        
+        # Store labels for retranslation
+        self.general_labels = {}
+        self.models_labels = {}
+        self.retrieval_labels = {}
+        self.output_labels = {}
+
+        self._init_ui() # Builds UI, including initial text from translator
+        self._load()    # Loads settings into UI elements
+
+        self.translator.language_changed.connect(self._retranslate_ui)
+        self._retranslate_ui() # Set initial translated text
+
+    def _retranslate_ui(self):
+        self.setWindowTitle(self.translator.get("settings_dialog_title", "Settings"))
+        
+        self.tabs.setTabText(0, self.translator.get("settings_tab_general", "General"))
+        self.tabs.setTabText(1, self.translator.get("settings_tab_models", "Models"))
+        self.tabs.setTabText(2, self.translator.get("settings_tab_retrieval", "Retrieval"))
+        self.tabs.setTabText(3, self.translator.get("settings_tab_output", "Output"))
+
+        # Update labels in General tab
+        if self.general_app_theme_label:
+            self.general_app_theme_label.setText(self.translator.get("settings_label_app_theme", "Application Theme:"))
+
+        # Update labels and buttons in Models tab
+        if self.models_api_key_label:
+            self.models_api_key_label.setText(self.translator.get("settings_label_openai_api_key", "OpenAI API Key:"))
+        if self.models_timeout_label:
+            self.models_timeout_label.setText(self.translator.get("settings_label_openai_timeout", "OpenAI Client Timeout (s):"))
+        if self.models_embedding_label:
+            self.models_embedding_label.setText(self.translator.get("settings_label_embedding_model", "Embedding Model:"))
+        if self.models_llm_label:
+            self.models_llm_label.setText(self.translator.get("settings_label_llm_model", "LLM Model:"))
+        if self.models_local_path_label:
+            self.models_local_path_label.setText(self.translator.get("settings_label_local_model_path", "Local Model Path (Optional):"))
+        if hasattr(self, 'local_model_button') and self.local_model_button:
+            self.local_model_button.setText(self.translator.get("settings_button_browse", "Browse..."))
+
+        # Update labels in Retrieval tab
+        if self.retrieval_top_k_label:
+            self.retrieval_top_k_label.setText(self.translator.get("settings_label_top_k_proc", "Top-K Procedure Matches:"))
+        if self.retrieval_top_m_label:
+            self.retrieval_top_m_label.setText(self.translator.get("settings_label_top_m_evid", "Top-M Evidence Matches:"))
+        if self.retrieval_score_thresh_label:
+            self.retrieval_score_thresh_label.setText(self.translator.get("settings_label_score_thresh", "Score Threshold (Match Filtering):"))
+
+        # Update labels and buttons in Output tab
+        if self.output_report_theme_label:
+            self.output_report_theme_label.setText(self.translator.get("settings_label_report_theme_css", "Report Theme CSS:"))
+        if hasattr(self, 'report_theme_button') and self.report_theme_button:
+            self.report_theme_button.setText(self.translator.get("settings_button_browse_css", "Browse CSS..."))
+        if self.output_report_lang_label:
+            self.output_report_lang_label.setText(self.translator.get("settings_label_report_language", "Report Language:"))
+        
+        logger.debug("SettingsDialog UI retranslated")
 
     # ---------------------------------------------------------------------
     # UI helpers
     # ---------------------------------------------------------------------
     def _init_ui(self) -> None:
-        tabs = QTabWidget(self)
-        # tabs.addTab(self._build_general_tab(), "General") # Removed General tab
-        tabs.addTab(self._build_models_tab(), "Models")
-        tabs.addTab(self._build_retrieval_tab(), "Retrieval")
-        tabs.addTab(self._build_output_tab(), "Output")
+        self.tabs = QTabWidget(self) # Store self.tabs
+        self.tabs.addTab(self._build_general_tab(), self.translator.get("settings_tab_general", "General"))
+        self.tabs.addTab(self._build_models_tab(), self.translator.get("settings_tab_models", "Models"))
+        self.tabs.addTab(self._build_retrieval_tab(), self.translator.get("settings_tab_retrieval", "Retrieval"))
+        self.tabs.addTab(self._build_output_tab(), self.translator.get("settings_tab_output", "Output"))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
+        # TODO: Translate Save/Cancel buttons if not handled by Qt locale
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(tabs)
+        layout.addWidget(self.tabs)
         layout.addWidget(buttons)
 
     # ----- per‑tab builders ------------------------------------------------
     def _build_general_tab(self) -> QWidget:
-        w = QFormLayout()
+        page = QWidget()
+        layout = QFormLayout(page)
 
-        # General tab is now potentially empty or for other settings.
-        # For now, let's leave it, it can be removed if it remains empty.
-        # Example:
-        # self.some_other_general_setting_edit = QLineEdit()
-        # w.addRow("Some Other General Setting:", self.some_other_general_setting_edit)
-
+        self.theme_combo = QComboBox()
+        try:
+            themes = get_available_themes()
+            if "light" in themes: themes.remove("light")
+            if "dark" in themes: themes.remove("dark")
+            themes = ["light", "dark"] + sorted(themes) + ["system"]
+            self.theme_combo.addItems(themes)
+        except Exception as e:
+            logger.error(f"Error loading themes: {e}")
+            self.theme_combo.addItems(["light", "dark", "system"])
+        
+        self.general_app_theme_label = layout.addRow(self.translator.get("settings_label_app_theme", "Application Theme:"), self.theme_combo)
+        # For QFormLayout, addRow returns the QLabel it creates if a string is passed for the label.
+        # We need to retrieve it to update it later.
+        # However, the most robust way is to create QLabel explicitly if we want to store and update it.
+        # For this iteration, let's assume direct update or simpler retrieval.
+        # If QFormLayout.labelForField is not working as expected, we might need to store the QLabel object created by addRow.
+        # Let's assume storing the layout and iterating or finding label by field for now.
+        # For simplicity, I will create QLabels and store them.
+        
+        # Re-doing with explicit QLabel for easier storage and update
+        page_layout = QFormLayout()
+        self.general_app_theme_label = QLabel(self.translator.get("settings_label_app_theme", "Application Theme:"))
+        page_layout.addRow(self.general_app_theme_label, self.theme_combo)
+        
         container = QWidget()
-        container.setLayout(w)
+        container.setLayout(page_layout)
         return container
 
     def _build_models_tab(self) -> QWidget:
-        w = QFormLayout()
+        page_layout = QFormLayout()
 
-        self.key_edit = QLineEdit()  # Moved from General
+        self.key_edit = QLineEdit()
         self.key_edit.setEchoMode(QLineEdit.Password)
-        w.addRow("OpenAI API Key", self.key_edit)
+        self.models_api_key_label = QLabel(self.translator.get("settings_label_openai_api_key", "OpenAI API Key:"))
+        page_layout.addRow(self.models_api_key_label, self.key_edit)
 
-        self.timeout_spin = QSpinBox()  # Moved from General
+        self.timeout_spin = QSpinBox()
         self.timeout_spin.setRange(1, 300)
-        w.addRow("OpenAI Client Timeout (s)", self.timeout_spin)
+        self.models_timeout_label = QLabel(self.translator.get("settings_label_openai_timeout", "OpenAI Client Timeout (s):"))
+        page_layout.addRow(self.models_timeout_label, self.timeout_spin)
 
         self.embedding_model_combo = QComboBox()
-        self.embedding_model_combo.addItems([
-            "text-embedding-3-large", 
-            "text-embedding-3-small", 
-            "text-embedding-ada-002"
-        ])
-        w.addRow("Embedding Model", self.embedding_model_combo)
+        self.embedding_model_combo.addItems(["text-embedding-3-large", "text-embedding-3-small", "text-embedding-ada-002"])
+        self.models_embedding_label = QLabel(self.translator.get("settings_label_embedding_model", "Embedding Model:"))
+        page_layout.addRow(self.models_embedding_label, self.embedding_model_combo)
 
         self.llm_model_combo = QComboBox()
         self.llm_model_combo.addItems(["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"])
-        w.addRow("LLM Model", self.llm_model_combo)
+        self.models_llm_label = QLabel(self.translator.get("settings_label_llm_model", "LLM Model:"))
+        page_layout.addRow(self.models_llm_label, self.llm_model_combo)
         
         local_model_layout = QHBoxLayout()
         self.local_model_path_edit = QLineEdit()
         local_model_layout.addWidget(self.local_model_path_edit)
-        local_model_button = QPushButton("Browse...")
-        local_model_button.clicked.connect(self._browse_local_model_path)
-        local_model_layout.addWidget(local_model_button)
-        w.addRow("Local Model Path (Optional)", local_model_layout)
+        self.local_model_button = QPushButton(self.translator.get("settings_button_browse", "Browse..."))
+        self.local_model_button.clicked.connect(self._browse_local_model_path)
+        local_model_layout.addWidget(self.local_model_button)
+        self.models_local_path_label = QLabel(self.translator.get("settings_label_local_model_path", "Local Model Path (Optional):"))
+        page_layout.addRow(self.models_local_path_label, local_model_layout)
 
         container = QWidget()
-        container.setLayout(w)
+        container.setLayout(page_layout)
         return container
 
     def _build_retrieval_tab(self) -> QWidget:
-        w = QFormLayout()
+        page_layout = QFormLayout()
 
         self.top_k_proc_spin = QSpinBox()
         self.top_k_proc_spin.setRange(1, 25)
-        w.addRow("Top-K Procedure Matches", self.top_k_proc_spin)
+        self.retrieval_top_k_label = QLabel(self.translator.get("settings_label_top_k_proc", "Top-K Procedure Matches:"))
+        page_layout.addRow(self.retrieval_top_k_label, self.top_k_proc_spin)
 
         self.top_m_evid_spin = QSpinBox()
         self.top_m_evid_spin.setRange(1, 25)
-        w.addRow("Top-M Evidence Matches", self.top_m_evid_spin)
+        self.retrieval_top_m_label = QLabel(self.translator.get("settings_label_top_m_evid", "Top-M Evidence Matches:"))
+        page_layout.addRow(self.retrieval_top_m_label, self.top_m_evid_spin)
 
         self.score_thresh_spin = QDoubleSpinBox()
         self.score_thresh_spin.setDecimals(2)
         self.score_thresh_spin.setRange(0.0, 1.0)
         self.score_thresh_spin.setSingleStep(0.05)
-        w.addRow("Score Threshold (Match Filtering)", self.score_thresh_spin)
+        self.retrieval_score_thresh_label = QLabel(self.translator.get("settings_label_score_thresh", "Score Threshold (Match Filtering):"))
+        page_layout.addRow(self.retrieval_score_thresh_label, self.score_thresh_spin)
         
         container = QWidget()
-        container.setLayout(w)
+        container.setLayout(page_layout)
         return container
 
     def _build_output_tab(self) -> QWidget:
-        w = QFormLayout()
+        page_layout = QFormLayout()
 
         report_theme_layout = QHBoxLayout()
         self.report_theme_edit = QLineEdit()
         report_theme_layout.addWidget(self.report_theme_edit)
-        report_theme_button = QPushButton("Browse CSS...")
-        report_theme_button.clicked.connect(self._browse_report_theme)
-        report_theme_layout.addWidget(report_theme_button)
-        w.addRow("Report Theme CSS", report_theme_layout)
+        self.report_theme_button = QPushButton(self.translator.get("settings_button_browse_css", "Browse CSS..."))
+        self.report_theme_button.clicked.connect(self._browse_report_theme)
+        report_theme_layout.addWidget(self.report_theme_button)
+        self.output_report_theme_label = QLabel(self.translator.get("settings_label_report_theme_css", "Report Theme CSS:"))
+        page_layout.addRow(self.output_report_theme_label, report_theme_layout)
 
         self.language_combo = QComboBox()
-        self.language_combo.addItems(["en", "zh"])  # English, Chinese
-        w.addRow("Report Language", self.language_combo)
+        self.language_combo.addItems(["en", "zh"])
+        self.output_report_lang_label = QLabel(self.translator.get("settings_label_report_language", "Report Language:"))
+        page_layout.addRow(self.output_report_lang_label, self.language_combo)
         
         container = QWidget()
-        container.setLayout(w)
+        container.setLayout(page_layout)
         return container
         
     # --- File Dialog Helpers ---
@@ -160,11 +250,14 @@ class SettingsDialog(QDialog):
     # ---------------------------------------------------------------------
     def _load(self):
         s = self.settings
-        # General Tab
-        self.key_edit.setText(s.get("openai_api_key", ""))  # Changed key name to be more specific
-        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60)))  # Changed key name
 
-        # Models Tab
+        # General Tab
+        current_theme_value = s.get("theme", "system")
+        self.theme_combo.setCurrentText(current_theme_value.capitalize())
+
+        # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
+        self.key_edit.setText(s.get("openai_api_key", ""))
+        self.timeout_spin.setValue(int(s.get("openai_client_timeout", 60)))
         self.embedding_model_combo.setCurrentText(s.get("embedding_model", "text-embedding-3-large"))
         self.llm_model_combo.setCurrentText(s.get("llm_model", "gpt-4o"))
         self.local_model_path_edit.setText(s.get("local_model_path", ""))
@@ -180,11 +273,14 @@ class SettingsDialog(QDialog):
 
     def _save(self):
         s = self.settings
+
         # General Tab
+        selected_theme = self.theme_combo.currentText().lower()
+        s.set("theme", selected_theme)
+
+        # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
         s.set("openai_api_key", self.key_edit.text().strip())
         s.set("openai_client_timeout", self.timeout_spin.value())
-
-        # Models Tab
         s.set("embedding_model", self.embedding_model_combo.currentText())
         s.set("llm_model", self.llm_model_combo.currentText())
         s.set("local_model_path", self.local_model_path_edit.text().strip())
@@ -197,5 +293,11 @@ class SettingsDialog(QDialog):
         # Output Tab
         s.set("report_theme", self.report_theme_edit.text().strip())
         s.set("language", self.language_combo.currentText())
-        
+
+        new_lang = self.language_combo.currentText()
+        language_changed = self.translator.set_language(new_lang)
+        if language_changed:
+            logger.info(f"Translator language set to {new_lang}. MainWindow and its components will need UI refresh.")
+
+        self.settings_saved.emit()
         self.accept()
