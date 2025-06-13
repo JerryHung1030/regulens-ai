@@ -2,3 +2,11 @@
 base_url: "https://api.example.com"
 api_key: "YOUR_API_KEY"
 timeout: 30
+
+# Audit settings
+audit.retrieval_top_k: 5
+
+# LLM settings
+llm.model_need_check: "default_model_need_check"
+llm.model_audit_plan: "default_model_audit_plan"
+llm.model_judge: "default_model_judge"

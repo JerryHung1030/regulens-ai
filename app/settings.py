@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-
+from pydantic import BaseModel # Added import
 
 class Settings:
     """Simple settings manager that persists to JSON.
@@ -40,3 +40,8 @@ class Settings:
         """Set a setting value and save to disk."""
         self._data[key] = value
         self._save()
+
+# The PipelineSettings class definition has been moved to app.pipeline.__init__.py
+# to keep it co-located with the pipeline logic that uses it and to avoid circular dependencies.
+# It can be imported from there if needed elsewhere in the `app.settings` module,
+# though typically it's instantiated and used closer to the pipeline invocation.

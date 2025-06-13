@@ -1,12 +1,15 @@
 # ---------- Reference ProjectEditor (drop-in replacement) ----------
 from __future__ import annotations
 from pathlib import Path
-from PySide6.QtCore import Qt, Signal, QDir
+import json
+from PySide6.QtCore import Qt, Signal # QDir removed, QFileSystemModel removed from imports
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
     QToolButton, QFileDialog, QInputDialog, QMessageBox,
-    QStyle, QTreeView, QTextEdit, QTabWidget, QSplitter, QFileSystemModel, QSizePolicy
+    QStyle, QTextEdit, QTabWidget, QSplitter, QSizePolicy, # QTreeView removed (or only used if needed for specific previews)
+    QListView # QListView is used for procedures
 )
+from PySide6.QtGui import QStringListModel
 from app.models.project import CompareProject
 from app.logger import logger
 
@@ -29,18 +32,10 @@ class ProjectEditor(QWidget):
         # """
         # self.setStyleSheet(self._base_css) # Remove this line
 
-        # Initialize QFileSystemModels
-        self.controls_fs_model = QFileSystemModel()
-        self.controls_fs_model.setFilter(QDir.NoDotAndDotDot | QDir.AllEntries)
-        self.controls_fs_model.setRootPath(QDir.homePath())  # Placeholder
-
-        self.procedures_fs_model = QFileSystemModel()
-        self.procedures_fs_model.setFilter(QDir.NoDotAndDotDot | QDir.AllEntries)
-        self.procedures_fs_model.setRootPath(QDir.homePath())  # Placeholder
-
-        self.evidences_fs_model = QFileSystemModel()
-        self.evidences_fs_model.setFilter(QDir.NoDotAndDotDot | QDir.AllEntries)
-        self.evidences_fs_model.setRootPath(QDir.homePath())  # Placeholder
+        # QFileSystemModels are no longer used for controls/procedures previews directly
+        # self.controls_fs_model = QFileSystemModel() ... removed
+        # self.procedures_fs_model = QFileSystemModel() ... removed
+        # self.evidences_fs_model = QFileSystemModel() ... removed
 
         self._preview_is_visible = False  # For in-session state
 
@@ -81,7 +76,7 @@ class ProjectEditor(QWidget):
         folder_selection_layout.setContentsMargins(0, 0, 0, 0)
         folder_selection_layout.setSpacing(10)
 
-        self._ctrl_edit, self._proc_edit, self._evid_edit = [QLineEdit(readOnly=True) for _ in range(3)]
+        self._ctrl_edit, self._proc_edit = [QLineEdit(readOnly=True) for _ in range(2)] # _evid_edit removed
         
         # Remove the setStyleSheet call below this line
         # line_edit_stylesheet = """
@@ -100,62 +95,53 @@ class ProjectEditor(QWidget):
         #         border-color: #1a73e8; /* Google Blue focus */
         #     }
         # """
-        for edit_widget in [self._ctrl_edit, self._proc_edit, self._evid_edit]:
+        for edit_widget in [self._ctrl_edit, self._proc_edit]: # _evid_edit removed
             # Remove the setStyleSheet call below this line
             pass # Keep pass or other logic if needed after removing setStyleSheet
 
-        folder_configs = [
-            ("Controls Folder:", self._ctrl_edit, self._pick_ctrl),
-            ("Procedures Folder:", self._proc_edit, self._pick_proc),
-            ("Evidences Folder:", self._evid_edit, self._pick_evid),
-        ]
+        # Controls Row
+        controls_row_layout = QHBoxLayout()
+        controls_row_layout.setAlignment(Qt.AlignVCenter)
+        controls_label = QLabel("Controls JSON File:")
+        controls_label.setObjectName("controls_json_file_label")
+        controls_label.setFixedWidth(180)
+        controls_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        controls_row_layout.addWidget(controls_label)
 
-        for label_text, line_edit_widget, pick_slot in folder_configs:
-            row_layout = QHBoxLayout()
-            # Set vertical alignment for the row layout
-            row_layout.setAlignment(Qt.AlignVCenter)
-            label = QLabel(label_text)
-            label.setObjectName(f"{label_text.replace(' ', '_').lower()}_label")
-            # Set fixed width for the label to ensure alignment
-            label.setFixedWidth(180)  # 設定固定寬度
-            # Set fixed vertical size policy for QLabel
-            label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            row_layout.addWidget(label)
-            
-            browse_button = QPushButton("Browse…")
-            # Remove the setStyleSheet call below this line
-            # browse_button.setStyleSheet("""
-            #     QPushButton {
-            #         font-size: 14px;
-            #         padding: 8px 15px;
-            #         border-radius: 4px;
-            #         color: #1a73e8;
-            #         border: 1px solid #dadce0;
-            #         background-color: #ffffff;
-            #     }
-            #     QPushButton:hover {
-            #         background-color: #f1f8ff;
-            #         border-color: #1a73e8;
-            #     }
-            #     QPushButton:pressed {
-            #         background-color: #e8f0fe;
-            #     }
-            # """)
-            browse_button.setObjectName(f"{label_text.replace(' ', '_').lower()}_browse_button")
-            # Set fixed vertical size policy for QPushButton
-            browse_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-            browse_button.clicked.connect(pick_slot)
-            # Add browse_button before line_edit_widget for tab order
-            row_layout.addWidget(browse_button)
-            row_layout.addWidget(line_edit_widget)  # Add line_edit_widget after browse_button
-            folder_selection_layout.addLayout(row_layout)
+        browse_ctrl_button = QPushButton("Browse…")
+        browse_ctrl_button.setObjectName("controls_json_file_browse_button")
+        browse_ctrl_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        browse_ctrl_button.clicked.connect(self._pick_ctrl)
+        controls_row_layout.addWidget(browse_ctrl_button)
+        controls_row_layout.addWidget(self._ctrl_edit)
         
-        # Set explicit tab order between browse buttons and their line edits if needed,
-        # but the addWidget order change should handle it for within the row.
-        # Example for inter-row or more complex scenarios:
-        # QWidget.setTabOrder(self.controls_browse_button, self._ctrl_edit) 
-        # QWidget.setTabOrder(self._ctrl_edit, self.procedures_browse_button)
-        # For now, relying on addWidget order.
+        self.validate_json_button = QPushButton("Validate JSON")
+        self.validate_json_button.setObjectName("validate_json_button")
+        self.validate_json_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.validate_json_button.clicked.connect(self._validate_controls_json)
+        # Initially disable validate button until a file is chosen
+        self.validate_json_button.setEnabled(False)
+        controls_row_layout.addWidget(self.validate_json_button)
+        folder_selection_layout.addLayout(controls_row_layout)
+
+        # Procedures Row
+        procedures_row_layout = QHBoxLayout()
+        procedures_row_layout.setAlignment(Qt.AlignVCenter)
+        procedures_label = QLabel("Procedure PDF Files:")
+        procedures_label.setObjectName("procedure_pdf_files_label")
+        procedures_label.setFixedWidth(180)
+        procedures_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        procedures_row_layout.addWidget(procedures_label)
+
+        browse_proc_button = QPushButton("Browse…")
+        browse_proc_button.setObjectName("procedure_pdf_files_browse_button")
+        browse_proc_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        browse_proc_button.clicked.connect(self._pick_proc)
+        procedures_row_layout.addWidget(browse_proc_button)
+        procedures_row_layout.addWidget(self._proc_edit)
+        folder_selection_layout.addLayout(procedures_row_layout)
+
+        # Evidences row is removed.
 
         lay.addWidget(self.folder_selection_container)
 
@@ -178,67 +164,54 @@ class ProjectEditor(QWidget):
         self.preview_tab_widget.setObjectName("previewTabWidget")
         preview_content_layout.addWidget(self.preview_tab_widget)
 
-        # Create tabs
-        folder_types = {
-            "Controls": ("controls_tree_view", "controls_text_preview", "Controls Files"),
-            "Procedures": ("procedures_tree_view", "procedures_text_preview", "Procedures Files"),
-            "Evidences": ("evidences_tree_view", "evidences_text_preview", "Evidences Files"),
-        }
+        # Create tabs: Controls (JSON), Procedures (PDF List)
+        # Evidences tab is removed.
+        self.preview_tab_widget.clear() # Clear existing tabs if any during a refresh scenario (though _build_ui is usually once)
 
-        for key, (tree_attr, text_attr, tab_label) in folder_types.items():
-            tab_content_widget = QWidget()
-            tab_layout = QVBoxLayout(tab_content_widget)
-            tab_layout.setContentsMargins(0, 0, 0, 0)
+        # Controls Tab
+        controls_tab_content_widget = QWidget()
+        controls_tab_layout = QVBoxLayout(controls_tab_content_widget)
+        controls_tab_layout.setContentsMargins(0,0,0,0)
+        controls_splitter = QSplitter(Qt.Horizontal)
+        self.controls_json_preview = QTextEdit() # Displays formatted JSON
+        self.controls_json_preview.setReadOnly(True)
+        self.controls_json_preview.setObjectName("controlsJsonPreview")
+        controls_splitter.addWidget(self.controls_json_preview)
+        self.controls_text_preview = QTextEdit() # Displays validation messages or errors
+        self.controls_text_preview.setReadOnly(True)
+        self.controls_text_preview.setObjectName("controlsTextPreview")
+        controls_splitter.addWidget(self.controls_text_preview)
+        controls_splitter.setSizes([300, 200])
+        controls_tab_layout.addWidget(controls_splitter)
+        self.preview_tab_widget.addTab(controls_tab_content_widget, "Controls JSON")
 
-            splitter = QSplitter(Qt.Horizontal)
+        # Procedures Tab
+        procedures_tab_content_widget = QWidget()
+        procedures_tab_layout = QVBoxLayout(procedures_tab_content_widget)
+        procedures_tab_layout.setContentsMargins(0,0,0,0)
+        procedures_splitter = QSplitter(Qt.Horizontal)
+        self.procedures_list_view = QListView() # Lists selected PDF files
+        self.procedures_list_view.setObjectName("proceduresListView")
+        self.procedures_list_view.clicked.connect(self._on_procedure_pdf_selected)
+        procedures_splitter.addWidget(self.procedures_list_view)
+        self.procedures_text_preview = QTextEdit() # Displays path or basic info of selected PDF
+        self.procedures_text_preview.setReadOnly(True)
+        self.procedures_text_preview.setObjectName("proceduresTextPreview")
+        procedures_splitter.addWidget(self.procedures_text_preview)
+        procedures_splitter.setSizes([200, 300])
+        procedures_tab_layout.addWidget(procedures_splitter)
+        self.preview_tab_widget.addTab(procedures_tab_content_widget, "Procedure PDFs")
 
-            # Left side: Tree View
-            tree_view = QTreeView()
-            setattr(self, tree_attr, tree_view)  # e.g., self.controls_tree_view = tree_view
-            tree_view.setObjectName(tree_attr)  # e.g., self.controls_tree_view.setObjectName("controlsTreeView")
-            
-            current_model = None
+        # Evidences tab is no longer created.
 
-            if key == "Controls":
-                current_model = self.controls_fs_model
-            elif key == "Procedures":
-                current_model = self.procedures_fs_model
-            elif key == "Evidences":
-                current_model = self.evidences_fs_model
-            
-            if current_model:
-                tree_view.setModel(current_model)
-                tree_view.setHeaderHidden(True)
-                for i in range(1, current_model.columnCount()):
-                    tree_view.hideColumn(i)
-            
-            splitter.addWidget(tree_view)
+        lay.addWidget(self.preview_container) # This line was already there, just for context
+        # The loop for folder_types is replaced by explicit tab creation above.
+        # The old loop:
+        # for key, (tree_attr, text_attr, tab_label) in folder_types.items():
+            # ... old tab creation logic ...
+            # self.preview_tab_widget.addTab(tab_content_widget, tab_label)
 
-            # Right side: Text Preview
-            text_preview = QTextEdit()
-            text_preview.setReadOnly(True)
-            setattr(self, text_attr, text_preview)  # e.g., self.controls_text_preview = text_preview
-            text_preview.setObjectName(text_attr)  # e.g., self.controls_text_preview.setObjectName("controlsTextPreview")
-            splitter.addWidget(text_preview)
-            
-            # Connect selection changed signal
-            if key == "Controls":
-                tree_view.selectionModel().selectionChanged.connect(
-                    lambda s, d, model=self.controls_fs_model, tp=self.controls_text_preview: 
-                    self._handle_tree_selection(s, d, model, tp)
-                )
-            elif key == "Procedures":
-                tree_view.selectionModel().selectionChanged.connect(
-                    lambda s, d, model=self.procedures_fs_model, tp=self.procedures_text_preview: 
-                    self._handle_tree_selection(s, d, model, tp)
-                )
-            elif key == "Evidences":
-                tree_view.selectionModel().selectionChanged.connect(
-                    lambda s, d, model=self.evidences_fs_model, tp=self.evidences_text_preview: 
-                    self._handle_tree_selection(s, d, model, tp)
-                )
-
-            splitter.setSizes([150, 350])  # Initial sizes (30% tree, 70% text approx)
+        # lay.addWidget(self.preview_container) # This was the original position
             tab_layout.addWidget(splitter)
             self.preview_tab_widget.addTab(tab_content_widget, tab_label)
 
@@ -290,35 +263,8 @@ class ProjectEditor(QWidget):
         # Set initial state for preview area based on the instance variable
         self._update_preview_ui_state()
 
-    def _handle_tree_selection(self, selected, deselected, model: QFileSystemModel, text_preview: QTextEdit):
-        indexes = selected.indexes()
-        if indexes:
-            index = indexes[0]
-            file_path = model.filePath(index)
-            if model.fileInfo(index).isFile():
-                try:
-                    # Attempt to decode with UTF-8, then fallback to others if needed
-                    content = ""
-                    for encoding in ['utf-8', 'latin-1', 'cp1252']:  # Common encodings
-                        try:
-                            with open(file_path, 'r', encoding=encoding) as f:
-                                content = f.read()
-                            break  # Successfully read
-                        except UnicodeDecodeError:
-                            logger.warning(f"File {file_path} failed to decode with {encoding}")
-                            content = f"Error reading file: Could not decode with {encoding} or other tried encodings."
-                        except Exception as e_read:  # Catch other read errors like permission denied
-                            logger.error(f"Error reading file {file_path} with encoding {encoding}: {e_read}")
-                            content = f"Error reading file: {e_read}"
-                            break 
-                    text_preview.setText(content)
-                except Exception as e:  # General exception for file operations
-                    logger.error(f"Failed to open or read file {file_path}: {e}")
-                    text_preview.setText(f"Error opening or reading file: {e}")
-            else:  # It's a directory
-                text_preview.clear()
-        else:  # No selection
-            text_preview.clear()
+    # _handle_tree_selection is removed as QFileSystemModel is no longer the primary way to show file previews.
+    # Instead, _update_controls_preview and _on_procedure_pdf_selected handle content display.
 
     def _toggle_preview_visibility(self):
         self._preview_is_visible = not self._preview_is_visible
@@ -380,24 +326,147 @@ class ProjectEditor(QWidget):
         btn.clicked.connect(slot)
         return btn
 
-    # ---------- Folder pickers ----------
+    # ---------- File/Folder Pickers and Validation ----------
     def _pick_ctrl(self):
-        self._pick("controls_dir", self._ctrl_edit)
+        # Pick a single JSON file for controls
+        start_dir = str(self.project.controls_json_path.parent if self.project.controls_json_path and self.project.controls_json_path.exists() else Path.home())
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select Controls JSON File", start_dir, "JSON Files (*.json)")
+        if file_path:
+            self.project.controls_json_path = Path(file_path)
+            self.project.changed.emit() # Triggers _refresh
+            self._ctrl_edit.setFocus()
+            # _update_controls_preview() will be called by _refresh
 
-    def _pick_proc(self): 
-        self._pick("procedures_dir", self._proc_edit)
+    def _validate_controls_json(self):
+        if not self.project.controls_json_path or not self.project.controls_json_path.exists():
+            QMessageBox.warning(self, "Validation Error", "Controls JSON file not selected or does not exist.")
+            self.controls_text_preview.setText("Controls JSON file not selected or does not exist.")
+            return
 
-    def _pick_evid(self): 
-        self._pick("evidences_dir", self._evid_edit)
+        try:
+            with open(self.project.controls_json_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                data = json.loads(content)
+        except FileNotFoundError:
+            msg = f"File not found: {self.project.controls_json_path}"
+            QMessageBox.critical(self, "Validation Error", msg)
+            self.controls_text_preview.setText(msg)
+            return
+        except json.JSONDecodeError as e:
+            msg = f"Invalid JSON: {e}"
+            QMessageBox.critical(self, "Validation Error", msg)
+            self.controls_text_preview.setText(msg)
+            return
+        except Exception as e:
+            msg = f"Error reading file: {e}"
+            QMessageBox.critical(self, "Validation Error", msg)
+            self.controls_text_preview.setText(msg)
+            return
 
-    def _pick(self, attr, edit):
-        start = str(getattr(self.project, attr) or Path.home())
-        path = QFileDialog.getExistingDirectory(self, "Select folder", start)
-        if path:
-            setattr(self.project, attr, Path(path))
-            self.project.changed.emit()
-            if edit:  # 'edit' is the QLineEdit associated with this picker
-                edit.setFocus()  # Set focus to the line edit as a visual cue
+        # Schema validation
+        # ... (validation logic as defined in previous steps)
+        # Example simplified validation:
+        if not isinstance(data, dict) or "name" not in data or "clauses" not in data:
+             msg = "JSON must be an object with 'name' and 'clauses' keys."
+             QMessageBox.critical(self, "Validation Error", msg)
+             self.controls_text_preview.setText(msg)
+             return
+
+        # Recursive validation for clauses and subclauses
+        def validate_clause_structure(clause_item, path_prefix):
+            if not isinstance(clause_item, dict):
+                return f"Item at {path_prefix} is not a valid clause object."
+            required_keys = ["id", "title", "text"]
+            for key in required_keys:
+                if key not in clause_item:
+                    return f"Missing key '{key}' in clause at {path_prefix}."
+                if not isinstance(clause_item[key], str):
+                    return f"Key '{key}' in clause at {path_prefix} must be a string."
+            if "subclauses" in clause_item:
+                if not isinstance(clause_item["subclauses"], list):
+                    return f"'subclauses' at {path_prefix} must be an array."
+                for i, sub_item in enumerate(clause_item["subclauses"]):
+                    if isinstance(sub_item, str): # Simple string subclause
+                        continue
+                    err = validate_clause_structure(sub_item, f"{path_prefix}.subclauses[{i}]")
+                    if err:
+                        return err
+            return None
+
+        if not isinstance(data.get("clauses"), list):
+            msg = "'clauses' must be an array."
+            QMessageBox.critical(self, "Validation Error", msg)
+            self.controls_text_preview.setText(msg)
+            return
+
+        for i, clause in enumerate(data["clauses"]):
+            error = validate_clause_structure(clause, f"clauses[{i}]")
+            if error:
+                QMessageBox.critical(self, "Validation Error", error)
+                self.controls_text_preview.setText(error)
+                return
+
+        success_msg = "Controls JSON structure is valid."
+        QMessageBox.information(self, "Validation Successful", success_msg)
+        self.controls_text_preview.setText(success_msg)
+        # self._update_controls_preview() # Already called by _refresh after project.changed
+
+    def _pick_proc(self):
+        # Pick multiple PDF files for procedures
+        start_dir = str(Path.home())
+        if self.project.procedure_pdf_paths:
+            first_valid_path = next((p for p in self.project.procedure_pdf_paths if p.exists()), None)
+            if first_valid_path:
+                start_dir = str(first_valid_path.parent if first_valid_path.is_file() else first_valid_path)
+
+        file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Procedure PDF Files", start_dir, "PDF Files (*.pdf)")
+        if file_paths:
+            self.project.procedure_pdf_paths = [Path(fp) for fp in file_paths]
+            self.project.changed.emit() # Triggers _refresh
+            self._proc_edit.setFocus()
+            # _update_procedures_preview() will be called by _refresh
+
+    # _pick_evid and old _pick methods are removed.
+
+    # ---------- Preview Update Methods ----------
+    def _update_controls_preview(self):
+        if self.project.controls_json_path and self.project.controls_json_path.exists():
+            try:
+                with open(self.project.controls_json_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                parsed_json = json.loads(content)
+                formatted_json = json.dumps(parsed_json, indent=4)
+                self.controls_json_preview.setText(formatted_json)
+                # self.controls_text_preview might show validation status from _validate_controls_json
+            except Exception as e:
+                self.controls_json_preview.setText(f"Error loading JSON: {e}")
+                self.controls_text_preview.setText(f"Error loading JSON: {e}") # Also show error here
+        else:
+            self.controls_json_preview.clear()
+            self.controls_text_preview.clear() # Clear validation messages too
+
+    def _update_procedures_preview(self):
+        if self.project.procedure_pdf_paths:
+            model = QStringListModel([p.name for p in self.project.procedure_pdf_paths])
+            self.procedures_list_view.setModel(model)
+        else:
+            self.procedures_list_view.setModel(QStringListModel([]))
+        self.procedures_text_preview.clear() # Clear text preview when list reloads
+
+    def _on_procedure_pdf_selected(self, index):
+        # Display file path or basic info for the selected PDF
+        if not self.project.procedure_pdf_paths or not index.isValid():
+            self.procedures_text_preview.clear()
+            return
+
+        selected_path_index = index.row()
+        if 0 <= selected_path_index < len(self.project.procedure_pdf_paths):
+            pdf_path = self.project.procedure_pdf_paths[selected_path_index]
+            # Basic text extraction could be attempted here if desired (e.g. using PyMuPDF)
+            # For now, just display path and placeholder
+            self.procedures_text_preview.setText(f"Selected: {pdf_path}\n\n(PDF content preview not yet implemented)")
+        else:
+            self.procedures_text_preview.clear()
 
     # ---------- Project operations ----------
     def _rename(self):
@@ -414,38 +483,29 @@ class ProjectEditor(QWidget):
         self.lb_title.setText(f"<h2>{self.project.name}</h2>")
 
         # Update path edits
-        controls_path_str = str(self.project.controls_dir or "")
-        procedures_path_str = str(self.project.procedures_dir or "")
-        evidences_path_str = str(self.project.evidences_dir or "")
-
+        controls_path_str = str(self.project.controls_json_path or "")
         self._ctrl_edit.setText(controls_path_str)
-        self._proc_edit.setText(procedures_path_str)
-        self._evid_edit.setText(evidences_path_str)
+        self.validate_json_button.setEnabled(bool(self.project.controls_json_path and self.project.controls_json_path.exists()))
 
-        # Update FileSystemModels and TreeViews
-        self.controls_fs_model.setRootPath(controls_path_str if controls_path_str else QDir.homePath())
-        self.controls_tree_view.setRootIndex(self.controls_fs_model.index(controls_path_str))
-        self.controls_text_preview.clear()
+        if self.project.procedure_pdf_paths:
+            if len(self.project.procedure_pdf_paths) == 1:
+                procedures_display_str = str(self.project.procedure_pdf_paths[0])
+            else:
+                procedures_display_str = f"{len(self.project.procedure_pdf_paths)} PDF files selected"
+        else:
+            procedures_display_str = ""
+        self._proc_edit.setText(procedures_display_str)
 
-        self.procedures_fs_model.setRootPath(procedures_path_str if procedures_path_str else QDir.homePath())
-        self.procedures_tree_view.setRootIndex(self.procedures_fs_model.index(procedures_path_str))
-        self.procedures_text_preview.clear()
+        # evidences_path_str and self._evid_edit are removed.
 
-        self.evidences_fs_model.setRootPath(evidences_path_str if evidences_path_str else QDir.homePath())
-        self.evidences_tree_view.setRootIndex(self.evidences_fs_model.index(evidences_path_str))
-        self.evidences_text_preview.clear()
+        # Update Previews
+        self._update_controls_preview()
+        self._update_procedures_preview()
+        # Evidences preview is removed.
+
+        # QFileSystemModel logic is removed.
+        # Old loop for tree views is removed.
         
-        # For tree views, ensure columns are hidden after model reset if necessary
-        # This might be redundant if setModel doesn't reset column visibility, but safe to include.
-        for tv, model in [
-            (self.controls_tree_view, self.controls_fs_model),
-            (self.procedures_tree_view, self.procedures_fs_model),
-            (self.evidences_tree_view, self.evidences_fs_model)
-        ]:
-            tv.setHeaderHidden(True)  # Re-apply in case it was reset
-            for i in range(1, model.columnCount()):
-                tv.hideColumn(i)
-
         if self.project.is_sample:
             self.btn_compare.setText("Re-run sample")
             # For sample projects, we might want a slightly different overall card style

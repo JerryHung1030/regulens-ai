@@ -70,52 +70,61 @@ class ProgressPanel(QDialog):
         # Connections
         self.cancel_button.clicked.connect(self._handle_cancel)
 
-        self._total_stages = total_stages
+        # _total_stages is not explicitly passed at init anymore, but can be set by first update_progress call
         self._user_cancelled = False
+        self.pipeline_stage_names = [ # Define the new stage names
+            "Initializing Pipeline", # Corresponds to progress < 0.1 (or initial message)
+            "Need-Check",            # Progress 0.1 to < 0.3
+            "Audit-Plan Generation", # Progress 0.3 to < 0.6
+            "Evidence Search & Retrieval", # Progress 0.6 to < 0.8
+            "Compliance Judgment"    # Progress 0.8 to 1.0
+        ]
+        self._total_stages = len(self.pipeline_stage_names) # Now 5 stages including initialization
 
-    def update_progress(self, stage_idx: int, total_stages: int, stage_msg: str, percent: int):
+    def update_progress(self, progress: float, message: str): # Signature matches pipeline_v1_1 callback
         """
-        Updates the progress display.
-        - stage_idx: current stage number (1-based)
-        - total_stages: total number of stages
-        - stage_msg: description of the current stage
-        - percent: progress percentage (0-100). If < 0, set to indeterminate.
+        Updates the progress display based on float progress (0.0 to 1.0) and a message.
         """
-        logger.debug(f"Original stage_msg: {stage_msg} (Stage {stage_idx}/{total_stages})")
-        self._total_stages = total_stages
+        logger.debug(f"Progress update: {progress*100:.0f}% - Message: {message}")
 
-        # Elide stage_msg for the label
-        elided_label_msg = elide_long_id(
-            stage_msg, 
-            max_length=40,  # Character limit for label if no font
-            font=self.current_stage_label.font(), 
-            width_in_pixels=self.current_stage_label.width() - 20  # Approx width for label text
-        )
-        current_stage_display_text_for_label = f"Stage {stage_idx}/{total_stages}: {elided_label_msg}"
-        self.current_stage_label.setText(current_stage_display_text_for_label)
+        percent_complete = int(progress * 100)
 
-        # Update QProgressBar
-        if percent < 0:
-            self.progress_bar.setRange(0, 0)  # Indeterminate
-        else:
-            self.progress_bar.setRange(0, 100)
-            self.progress_bar.setValue(percent)
+        # Determine current stage name based on progress
+        stage_name = "Unknown Stage"
+        stage_idx = 0 # 0-based for list index
+        if progress < 0.01 : # Initializing often sends 0.0
+            stage_idx = 0
+        elif 0.01 <= progress < 0.3: # Step 1: Need-Check (0.1 to 0.3 in pipeline, but callback sends overall progress)
+            stage_idx = 1
+        elif 0.3 <= progress < 0.6: # Step 2: Audit-Plan
+            stage_idx = 2
+        elif 0.6 <= progress < 0.8: # Step 3: Search
+            stage_idx = 3
+        elif 0.8 <= progress < 1.0: # Step 4: Judge
+            stage_idx = 4
+        elif progress >= 1.0:
+            stage_idx = self._total_stages -1 # Last stage if progress is 1.0 or more
+            percent_complete = 100 # Cap at 100
 
-        # Elide stage_msg for the details view (can be longer)
-        # For details, we might want a different max_length or rely more on font metrics if available
+        if 0 <= stage_idx < self._total_stages:
+            stage_name = self.pipeline_stage_names[stage_idx]
+
+        current_stage_label_text = f"Current Stage: {stage_name} ({percent_complete}%)"
+        self.current_stage_label.setText(current_stage_label_text)
+
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(percent_complete)
+
+        # Use the detailed message from the pipeline for the text edit
+        # Elide if necessary for display, though QTextEdit handles long lines with scrolling
         elided_details_msg = elide_long_id(
-            stage_msg, 
-            max_length=60,  # Character limit for details if no font
+            message,
+            max_length=120, # Allow longer messages in details
             font=self.details_text_edit.font(),
-            # Use a fixed width or text edit's viewport width for eliding in details
-            # Using a fixed large value or relying on character length might be simpler here
-            # as details_text_edit width can change.
-            # For now, let's use a generous character length and the font if available.
-            # If using font metrics, consider self.details_text_edit.viewport().width()
-            width_in_pixels=350  # A reference width, adjust as needed
+            width_in_pixels=self.details_text_edit.viewport().width() - 20 # Use viewport width
         )
-        current_stage_display_text_for_details = f"Stage {stage_idx}/{total_stages}: {elided_details_msg}"
-        self.details_text_edit.append(current_stage_display_text_for_details)
+        self.details_text_edit.append(f"[{percent_complete}%] {elided_details_msg}")
+
 
     def _handle_cancel(self):
         self._user_cancelled = True

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-import re
-import shutil
+import csv # For CSV export
+# import shutil # shutil.copyfile was for old report export, not needed for CSV from data.
 from pathlib import Path
+from typing import Optional # For type hinting
+import re # Keep re for now, might be useful for _get_display_name if that's kept/adapted
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QTabWidget,
+    # QTabWidget, # Removed
     QStyle,
     QFileDialog,
     QMessageBox,
@@ -17,20 +20,21 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QDialog,
-    QPlainTextEdit
+    QPlainTextEdit,
+    QSizePolicy
 )
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QTextOption  # For future use with opening files perhaps, Added QTextOption for text wrapping
-# from PySide6.QtCore import QUrl # Duplicate import removed
-
-import functools  # For partial function application
+from PySide6.QtGui import QTextOption
 
 from app.models.project import CompareProject
-from app.models.assessments import PairAssessment, TripleAssessment  # Added TripleAssessment
+# Models from assessments and old pipeline structure are no longer directly used here
+# from app.models.assessments import PairAssessment, TripleAssessment # Removed
+from app.models.docs import ControlClause, AuditTask # For type hinting in new dialog
+from app.pipeline.pipeline_v1_1 import ProjectRunData, _load_run_json # For loading results
 from app.logger import logger
 
 
-# Helper function for eliding text if it becomes necessary (simplified version)
+# Helper function for eliding text
 def elide_text(text: str | None, max_length: int = 50) -> str:
     if text is None:
         return "N/A"
@@ -39,7 +43,102 @@ def elide_text(text: str | None, max_length: int = 50) -> str:
     return text
 
 
-class EvidenceDetailsDialog(QDialog):
+class RunEvidenceDetailsDialog(QDialog):
+    """
+    New dialog to display details from ProjectRunData:
+    ControlClause text, AuditTask sentence, top_k evidence, and judge reasoning.
+    """
+    def __init__(self, clause: ControlClause, task: Optional[AuditTask], parent: QWidget | None = None):
+        super().__init__(parent)
+        self.clause = clause
+        self.task = task
+
+        clause_title_display = clause.metadata.get('title', clause.id)
+        dialog_title = f"Details: {clause_title_display}"
+        if task:
+            dialog_title += f" / Task: {task.id}"
+        self.setWindowTitle(self.tr("run_evidence_details_title", dialog_title))
+        self.setAttribute(Qt.WA_DeleteOnClose)
+
+        layout = QVBoxLayout(self)
+
+        # Control Clause Text
+        clause_label = QLabel(f"<b>{self.tr('control_clause_heading', 'Control Clause:')} {clause.id} - {clause_title_display}</b>")
+        layout.addWidget(clause_label)
+        clause_text_edit = QPlainTextEdit(clause.text)
+        clause_text_edit.setReadOnly(True)
+        clause_text_edit.setFixedHeight(100) # Adjust as needed
+        layout.addWidget(clause_text_edit)
+
+        if self.task:
+            task_label = QLabel(f"<b>{self.tr('audit_task_heading', 'Audit Task:')} {self.task.id}</b>")
+            layout.addWidget(task_label)
+            task_sentence_edit = QPlainTextEdit(self.task.sentence)
+            task_sentence_edit.setReadOnly(True)
+            task_sentence_edit.setFixedHeight(80) # Adjust as needed
+            layout.addWidget(task_sentence_edit)
+
+            # Display Top K Evidence
+            if self.task.top_k:
+                evidence_heading_label = QLabel(f"<b>{self.tr('retrieved_evidence_heading', 'Retrieved Evidence (Top K):')}</b>")
+                layout.addWidget(evidence_heading_label)
+
+                evidence_text_parts = []
+                for i, ev_item in enumerate(self.task.top_k):
+                    score_val = ev_item.get('score', 0.0)
+                    score_str = f"{score_val:.4f}" if isinstance(score_val, float) else str(score_val)
+
+                    source_pdf = elide_text(ev_item.get('source_pdf', 'N/A'), 30)
+                    page_no = ev_item.get('page_no', 'N/A')
+                    excerpt = elide_text(ev_item.get('excerpt', 'N/A'), 200) # Longer excerpt for dialog
+
+                    evidence_item_html = (
+                        f"<b>{self.tr('evidence_item_label', 'Evidence')} {i+1}:</b> "
+                        f"{self.tr('score_label', 'Score')}: {score_str}<br>"
+                        f"&nbsp;&nbsp;{self.tr('source_label', 'Source')}: {source_pdf} ({self.tr('page_label', 'Page')}: {page_no})<br>"
+                        f"&nbsp;&nbsp;{self.tr('excerpt_label', 'Excerpt')}: \"<i>{excerpt}</i>\""
+                    )
+                    evidence_text_parts.append(evidence_item_html)
+
+                evidence_display_label = QLabel("<br><br>".join(evidence_text_parts))
+                evidence_display_label.setTextFormat(Qt.RichText) # Enable HTML rendering
+                evidence_display_label.setWordWrap(True)
+                evidence_display_label.setAlignment(Qt.AlignTop)
+                # Potentially add QScrollArea if evidence can be very long
+                layout.addWidget(evidence_display_label)
+            else:
+                no_evidence_label = QLabel(f"<i>{self.tr('no_evidence_found_message', 'No evidence found for this task.')}</i>")
+                no_evidence_label.setTextFormat(Qt.RichText)
+                layout.addWidget(no_evidence_label)
+
+            # Display Judge Reasoning
+            reasoning = self.task.metadata.get('judge_reasoning', self.tr('reasoning_not_available', 'N/A'))
+            compliant_status_text = "N/A"
+            if self.task.compliant is True: compliant_status_text = self.tr("compliant_true_status", "Compliant")
+            elif self.task.compliant is False: compliant_status_text = self.tr("compliant_false_status", "Non-Compliant")
+            else: compliant_status_text = self.tr("compliant_pending_status", "Pending")
+
+            reasoning_label = QLabel(f"<b>{self.tr('compliance_status_heading', 'Compliance Status:')}</b> {compliant_status_text}<br>"
+                                     f"<b>{self.tr('llm_reasoning_heading', 'LLM Reasoning:')}</b><br><i>{reasoning}</i>")
+            reasoning_label.setTextFormat(Qt.RichText)
+            reasoning_label.setWordWrap(True)
+            reasoning_label.setAlignment(Qt.AlignTop)
+            layout.addWidget(reasoning_label)
+
+        layout.addStretch() # Push elements to top
+
+        ok_button = QPushButton(self.tr("ok_button_text", "OK"))
+        ok_button.clicked.connect(self.accept)
+
+        btn_h_layout = QHBoxLayout()
+        btn_h_layout.addStretch()
+        btn_h_layout.addWidget(ok_button)
+        layout.addLayout(btn_h_layout)
+
+        self.resize(700, 600)
+
+
+class EvidenceDetailsDialog(QDialog): # Old dialog, kept for now
     def __init__(self, evidence_data: dict, parent: QWidget | None = None):
         super().__init__(parent)
         self.evidence_data = evidence_data
@@ -70,7 +169,7 @@ class EvidenceDetailsDialog(QDialog):
         txt_suggestion = QPlainTextEdit()
         txt_suggestion.setPlainText(self.evidence_data.get('suggestion', 'N/A'))
         txt_suggestion.setReadOnly(True)
-        txt_suggestion.setWordWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)  # Fixed word wrap mode
+        txt_suggestion_text.setWordWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)  # Fixed word wrap mode
         layout.addWidget(txt_suggestion)
 
         # OK Button
@@ -89,338 +188,310 @@ class EvidenceDetailsDialog(QDialog):
 
 class ResultsViewer(QWidget):
     edit_requested = Signal(CompareProject)
-
-    STATUS_COLOR_MAP = {
-        "Pass": "#2e7d32",     # Green
-        "Partial": "#f9a825",  # Yellow/Orange
-        "Fail": "#c62828",     # Red
-        "N/A": "#546e7a",      # Gray
-        "Unknown": "#546e7a"   # Default/fallback if status is unexpected
-    }
-    # Text color for badges, chosen for contrast with most badge colors
-    STATUS_TEXT_COLOR = "white" 
+    # STATUS_COLOR_MAP and STATUS_TEXT_COLOR removed
 
     def __init__(self, project: CompareProject, parent: QWidget | None = None):
         super().__init__(parent)
         logger.info(f"Initializing ResultsViewer for project: {project.name}")
         self.project = project
-        self._build_ui()
+        # self.project.project_run_data will be loaded/set in _refresh or by MainWindow
+        self._build_ui() # This will now build the table structure
         self.project.changed.connect(self._refresh)
-        # Connect to updated signal if norm_map population should trigger refresh
-        # self.project.updated.connect(self._refresh) # Example if needed
         logger.debug("ResultsViewer initialization completed")
 
-    def _display_name(self, norm_id: str) -> str:
-        """
-        Gets the display name for a norm_id.
-        Prefers original_filename from metadata, otherwise truncates norm_id.
-        """
-        if not norm_id:
-            return "N/A"
+    # _display_name and _get_display_name methods are removed for now.
+    # They might be reintroduced or adapted if needed for specific data display like clause titles.
+    # _build_tab_for_proc method is removed.
 
-        if not self.project:
-            # Fallback if project is not available, though this shouldn't happen in normal use
-            return f"{norm_id[:10]}..." if len(norm_id) > 10 else norm_id
-
-        metadata = self.project.get_norm_metadata(norm_id)
-        if metadata:
-            original_filename = metadata.get("original_filename")
-            if original_filename and original_filename.strip():
-                return original_filename
+    def _show_evidence_details_dialog(self, clause_id: str, task_id: Optional[str]):
+        """Shows a dialog with details for the selected clause/task using RunEvidenceDetailsDialog."""
+        logger.debug(f"Showing details for Control Clause ID: {clause_id}, Task ID: {task_id}")
         
-        # Fallback to truncated norm_id
-        if len(norm_id) > 10:
-            return f"{norm_id[:10]}..."
-        return norm_id
+        if not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
+            QMessageBox.warning(self, "Data Error", "Project run data not loaded.")
+            return
 
-    def _get_display_name(self, norm_id: str, default_prefix: str = "ID") -> str:
-        """Helper to get original_filename or fallback to norm_id."""
-        if not self.project or not norm_id:
-            return f"{default_prefix}: N/A"
-        metadata = self.project.get_norm_metadata(norm_id)
-        filename = metadata.get("original_filename")
-        if filename:
-            return elide_text(filename, 70)  # Elide long filenames
-        # Apply existing regex for shortening if it's a norm_id without filename
-        short_id = re.sub(r'(norm_|procedure_|control_|evidence_|embed_set_|raw_doc_|chunk_text_|doc_)([0-9a-fA-F]{4})[0-9a-fA-F]{4,}', 
-                          r'\1\2...', 
-                          norm_id)
-        return short_id if short_id != norm_id else norm_id
-
-    def _build_tab_for_proc(self, proc_id: str) -> QWidget:
-        logger.debug(f"Building tab for procedure ID: {proc_id}")
+        target_clause: Optional[ControlClause] = None
+        for c_idx, c_val in enumerate(self.project.project_run_data.control_clauses):
+            if c_val.id == clause_id:
+                target_clause = c_val
+                break
         
-        container_widget = QWidget()
-        layout = QVBoxLayout(container_widget)
-        layout.setContentsMargins(10, 10, 10, 10)  # Smaller margins for tab content
-        layout.setSpacing(8)
+        if not target_clause:
+            QMessageBox.warning(self, "Data Error", f"Control Clause {clause_id} not found.")
+            return
 
-        pair_assessments_for_proc: list[PairAssessment] = []
-        if self.project:
-            pair_assessments_for_proc = [
-                pa for pa in self.project.get_results() if pa.procedure_doc_id == proc_id
-            ]
-
-        if not pair_assessments_for_proc:
-            logger.warning(f"No assessment data found for procedure ID: {proc_id}")
-            # TODO: Use i18n for "No assessment data..."
-            no_data_label = QLabel(f"No assessment data found for procedure: {self._display_name(proc_id)}")
-            no_data_label.setAlignment(Qt.AlignCenter)
-            layout.addWidget(no_data_label)
-            container_widget.setLayout(layout)
-            return container_widget
-
-        # For now, using the first PairAssessment for the summary header.
-        # Future: Could aggregate or allow selecting if multiple controls map to this one procedure.
-        pa = pair_assessments_for_proc[0]
-
-        # Summary Section
-        # TODO: Use i18n for labels like "Procedure:", "Control:", "Score:", "Overall Status:"
+        target_task: Optional[AuditTask] = None
+        if task_id:
+            for t_idx, t_val in enumerate(target_clause.tasks):
+                if t_val.id == task_id:
+                    target_task = t_val
+                    break
+            if not target_task:
+                 QMessageBox.warning(self, "Data Error", f"Audit Task {task_id} not found in clause {clause_id}.")
+                 return
         
-        # Procedure: <Name> [Overall Status]
-        # TODO: Use self.tr for "Procedure:" prefix
-        procedure_base_text = f"{self.tr('procedure_label', 'Procedure')}: {self._display_name(pa.procedure_doc_id)}"
-        
-        lbl_procedure = QLabel()
-        lbl_procedure.setTextFormat(Qt.RichText)  # Allow HTML for status badge
-        
-        if pa.aggregated_status:
-            raw_status = str(pa.aggregated_status)
-            # TODO: Ensure pa.aggregated_status aligns with keys in STATUS_COLOR_MAP or handle translation if it's already translated.
-            # Assuming pa.aggregated_status is one of "Pass", "Fail", etc.
-            color = self.STATUS_COLOR_MAP.get(raw_status, self.STATUS_COLOR_MAP["Unknown"])
-            # TODO: Use i18n for status text: self.tr(f"{raw_status.lower()}_status", raw_status)
-            translated_status = self.tr(f"{raw_status.lower()}_status", raw_status)
-            
-            status_badge_html = (
-                f"<span style=\"color: {self.STATUS_TEXT_COLOR}; background-color: {color}; "
-                f"padding: 2px 5px; border-radius: 3px;\">{translated_status}</span>"
-            )
-            lbl_procedure.setText(f"{procedure_base_text} {status_badge_html}")
-        else:
-            lbl_procedure.setText(procedure_base_text)
-            
-        lbl_procedure.setStyleSheet("font-weight: bold; font-size: 14px;")  # TODO: Refine styles
-        layout.addWidget(lbl_procedure)
+        # Use the new RunEvidenceDetailsDialog
+        dialog = RunEvidenceDetailsDialog(clause=target_clause, task=target_task, parent=self)
+        dialog.exec_() # Modal dialog
 
-        # TODO: Use self.tr for "Control:" prefix
-        lbl_control = QLabel(f"{self.tr('control_label', 'Control')}: {self._display_name(pa.control_doc_id)}")
-        layout.addWidget(lbl_control)
-        
-        score_str = f"{pa.overall_score:.2f}" if pa.overall_score is not None else "N/A"
-        lbl_score = QLabel(f"Overall Score: {score_str}")
-        layout.addWidget(lbl_score)
-
-        # The aggregated status is already appended to the procedure label.
-        # If a separate "Overall: <Status>" is needed:
-        # lbl_overall_status = QLabel(f"Overall Status: {pa.aggregated_status}")
-        # layout.addWidget(lbl_overall_status)
-
-        # --- Evidence Table ---
-        all_triple_assessments: list[TripleAssessment] = []
-        for p_assess in pair_assessments_for_proc:
-            if p_assess.evidence_assessments:
-                all_triple_assessments.extend(p_assess.evidence_assessments)
-        
-        if not all_triple_assessments:
-            # TODO: Use i18n
-            no_evidence_label = QLabel("No evidence items for this procedure.")
-            no_evidence_label.setAlignment(Qt.AlignCenter)
-            no_evidence_label.setStyleSheet("font-style: italic; color: grey; padding: 10px;")
-            layout.addWidget(no_evidence_label)
-        else:
-            table = QTableWidget()
-            # TODO: Use i18n for headers: self.tr("file"), self.tr("status_header"), self.tr("score"), self.tr("details")
-            headers = ["File", "Status", "Score", "Details"]
-            table.setColumnCount(len(headers))
-            table.setHorizontalHeaderLabels(headers)
-            table.setEditTriggers(QTableWidget.NoEditTriggers)  # Non-editable
-
-            for row, ta in enumerate(all_triple_assessments):
-                table.insertRow(row)
-                
-                # File
-                file_item = QTableWidgetItem(self._display_name(ta.evidence_doc_id))
-                table.setItem(row, 0, file_item)
-                
-                # Status
-                raw_status = str(ta.status)  # e.g., "Pass", "Fail"
-                color = self.STATUS_COLOR_MAP.get(raw_status, self.STATUS_COLOR_MAP["Unknown"])
-                # TODO: Use i18n for status text: self.tr(f"{raw_status.lower()}_status", raw_status)
-                translated_status_text = self.tr(f"{raw_status.lower()}_status", raw_status)
-
-                status_html = (
-                    f"<span style=\"color: {self.STATUS_TEXT_COLOR}; background-color: {color}; "
-                    f"padding: 2px 5px; border-radius: 3px;\">{translated_status_text}</span>"
-                )
-                # status_item = QTableWidgetItem()
-                # We need to set this on a QLabel inside a cell to render HTML, or use a delegate.
-                # For simplicity, QTableWidgetItem doesn't directly render rich HTML like a QLabel.
-                # A common workaround is to use a QLabel as the cell widget.
-                # However, for simple HTML like this, setting it on a QLabel and then painting that
-                # label onto the cell is overkill. Let's try setting a QLabel as cell widget.
-                # This might have performance implications for very large tables.
-                # A more performant way for rich text in cells is QStyledItemDelegate.
-                
-                # Fallback: If QLabel as cell widget is too complex for this step or has issues,
-                # we might just store color data and expect styling via QPalette or delegate later.
-                # For now, let's try with a simple QLabel as cell widget for the badge.
-                
-                status_label_for_cell = QLabel(status_html)
-                status_label_for_cell.setAlignment(Qt.AlignCenter)
-                status_label_for_cell.setStyleSheet("background-color: transparent;")  # Ensure label bg is transparent
-                table.setCellWidget(row, 1, status_label_for_cell)
-                # status_item.setTextAlignment(Qt.AlignCenter) # Alignment is on the label now
-                
-                # Score
-                score_val = f"{ta.score:.2f}" if ta.score is not None else "N/A"
-                score_item = QTableWidgetItem(score_val)
-                score_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                table.setItem(row, 2, score_item)
-                
-                # Details Button
-                # TODO: Use i18n for button text "🔍" or self.tr("details_button", "🔍")
-                btn_details = QPushButton(self.tr("details_button", "🔍"))
-                # TODO: Use i18n for tooltip: self.tr("view_evidence_details_tooltip", "View Analysis and Suggestion")
-                btn_details.setToolTip(self.tr("view_evidence_details_tooltip", "View Analysis and Suggestion"))
-                
-                evidence_data_for_dialog = {
-                    "evidence_doc_id": ta.evidence_doc_id,
-                    "evidence_display_name": self._display_name(ta.evidence_doc_id),
-                    "analysis": ta.analysis,
-                    "suggestion": ta.improvement_suggestion,
-                    "status": str(ta.status),
-                    "score": score_val
-                }
-                # Use functools.partial to pass current `ta` data to the slot
-                btn_details.clicked.connect(
-                    functools.partial(self._show_evidence_details, evidence_data_for_dialog)
-                )
-                table.setCellWidget(row, 3, btn_details)
-
-            table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)  # File column
-            table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Status
-            table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Score
-            table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Details
-            table.verticalHeader().setVisible(False)  # Hide row numbers
-            table.setMinimumHeight(150)  # Ensure table has some initial height
-
-            layout.addWidget(table)
-
-        layout.addStretch(1)  # Push content to the top
-        container_widget.setLayout(layout)
-        logger.debug(f"Successfully built tab for procedure ID: {proc_id}")
-        return container_widget
-
-    def _show_evidence_details(self, evidence_data: dict):
-        logger.debug(f"Showing details for evidence: {evidence_data.get('evidence_doc_id')}")
-        
-        # Ensure `evidence_display_name` is present, if not already handled upstream
-        if 'evidence_display_name' not in evidence_data and 'evidence_doc_id' in evidence_data:
-            evidence_data['evidence_display_name'] = self._display_name(evidence_data['evidence_doc_id'])
-
-        dialog = EvidenceDetailsDialog(evidence_data, self)
-        # dialog.exec() # For modal dialog
-        dialog.show()  # For modeless dialog
 
     def _build_ui(self):
-        logger.debug("Building UI for ResultsViewer")
+        logger.debug("Building ResultsViewer UI (Table Layout)")
         layout = self.layout()
-        if layout:
-            logger.debug("Clearing existing layout")
+        if layout: # Clear existing layout
             while layout.count():
                 item = layout.takeAt(0)
                 widget = item.widget()
-                if widget:
-                    widget.deleteLater()
+                if widget: widget.deleteLater()
         
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(20, 20, 20, 20)
-        lay.setSpacing(16)
+        lay.setContentsMargins(15, 15, 15, 15) # Adjusted margins
+        lay.setSpacing(10) # Adjusted spacing
 
         title_row = QHBoxLayout()
-        # TODO: Hook up self.tr properly if not already available through QObject inheritance
-        title_suffix = self.tr("Comparison Results", " - Comparison Results")
-        self._title = QLabel(f"<h2>{title_suffix}</h2>")
+        self._title = QLabel(f"<h2>{self.tr('analysis_results_title', 'Analysis Results')}</h2>")
         title_row.addWidget(self._title)
         title_row.addStretch(1)
 
-        btn_export = QPushButton(self.tr("export_report", "Export Report..."))
-        btn_export.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
-        btn_export.clicked.connect(self._export_report)
-        title_row.addWidget(btn_export)
+        self.btn_export_csv = QPushButton(self.tr("export_csv_button", "Export Result CSV..."))
+        self.btn_export_csv.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
+        # Connect to _export_result_csv later when it's defined
+        # For now, connect to a placeholder or the old method to avoid startup error
+        self.btn_export_csv.clicked.connect(self._export_result_csv) # Connect to the actual export method
+        title_row.addWidget(self.btn_export_csv)
 
-        btn_back = QPushButton(self.tr("back_to_edit", "Back to Edit"))
+        btn_back = QPushButton(self.tr("back_to_edit_button", "Back to Edit"))
         btn_back.setIcon(self.style().standardIcon(QStyle.SP_ArrowBack))
         btn_back.clicked.connect(self._go_back)
         title_row.addWidget(btn_back)
         lay.addLayout(title_row)
 
-        self.tabs = QTabWidget()
-        lay.addWidget(self.tabs)
-        logger.debug("UI building completed, calling initial refresh")
+        self.table_widget = QTableWidget()
+        self.table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table_widget.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table_widget.setAlternatingRowColors(True)
+        self.table_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.column_headers = [
+            self.tr("col_clause_id", "Control Clause ID"),
+            self.tr("col_clause_title", "Control Clause Title"),
+            self.tr("col_requires_proc", "Requires Procedure?"),
+            self.tr("col_task_id", "Audit Task ID"),
+            self.tr("col_task_sentence", "Audit Task Sentence"),
+            self.tr("col_compliant", "Compliant?")
+        ]
+        self.table_widget.setColumnCount(len(self.column_headers))
+        self.table_widget.setHorizontalHeaderLabels(self.column_headers)
+
+        self.table_widget.doubleClicked.connect(self._handle_table_double_click) # Connect double click
+        lay.addWidget(self.table_widget)
+
+        self.setLayout(lay)
+        logger.debug("ResultsViewer UI building completed. Calling initial _refresh.")
         self._refresh()
+
+    def _handle_table_double_click(self, model_index):
+        if not model_index.isValid(): return
+        row = model_index.row()
+        # Placeholder: Actual data retrieval from UserRole will be in _refresh's population part
+        clause_id_item = self.table_widget.item(row, 0)
+        task_id_item = self.table_widget.item(row, 3)
+
+        clause_id = clause_id_item.text() if clause_id_item else "N/A" # Temporary
+        task_id = task_id_item.text() if task_id_item and task_id_item.text() != "N/A" else None # Temporary
+
+        self._show_evidence_details_dialog(clause_id, task_id)
+
 
     def _go_back(self):
         logger.info("Back button clicked, emitting edit_requested signal")
         self.edit_requested.emit(self.project)
 
     def _refresh(self):
-        logger.info("Starting UI refresh for ResultsViewer")
+        logger.info("Refreshing ResultsViewer (Table Display)")
+        if self.project:
+            self._title.setText(f"<h2>{self.tr('analysis_results_title', 'Analysis Results')} for: {self.project.name}</h2>")
+        else:
+            self._title.setText(f"<h2>{self.tr('analysis_results_title', 'Analysis Results')}</h2>")
+
+        self.table_widget.setRowCount(0) # Clear the table
+
+        # Data loading and table population will be implemented in the next step.
+        # For now, it just shows an empty table or a message.
+        if not self.project or not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
+             logger.info("No project_run_data to display yet.")
+             # Optionally, display a "No data" message in the table
+             self.table_widget.setRowCount(1)
+             item = QTableWidgetItem(self.tr("no_data_available", "No analysis data available. Please run the pipeline."))
+             item.setTextAlignment(Qt.AlignCenter)
+             self.table_widget.setItem(0, 0, item)
+             self.table_widget.setSpan(0, 0, 1, len(self.column_headers))
++            return # Stop further processing in _refresh if no data
++
++        current_row = 0
++        for clause in self.project.project_run_data.control_clauses:
++            clause_title = clause.metadata.get("title", clause.id) # Use ID if title not in metadata
++
++            requires_proc_text = "N/A"
++            if clause.need_procedure is True: requires_proc_text = self.tr("yes", "Yes")
++            elif clause.need_procedure is False: requires_proc_text = self.tr("no", "No")
++
++            if not clause.tasks:
++                self.table_widget.insertRow(current_row)
++
++                item_clause_id = QTableWidgetItem(clause.id)
++                item_clause_id.setData(Qt.UserRole, clause.id)
++                self.table_widget.setItem(current_row, 0, item_clause_id)
++
++                self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
++                self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
++
++                item_task_id_na = QTableWidgetItem("N/A") # Task ID
++                item_task_id_na.setData(Qt.UserRole, None) # No task ID
++                self.table_widget.setItem(current_row, 3, item_task_id_na)
++                self.table_widget.setItem(current_row, 4, QTableWidgetItem("N/A")) # Task Sentence
++                self.table_widget.setItem(current_row, 5, QTableWidgetItem("N/A")) # Compliant
++                current_row += 1
++            else:
++                for i, task in enumerate(clause.tasks):
++                    self.table_widget.insertRow(current_row)
++
++                    item_clause_id = QTableWidgetItem(clause.id)
++                    item_clause_id.setData(Qt.UserRole, clause.id)
++                    self.table_widget.setItem(current_row, 0, item_clause_id)
++
++                    self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
++                    self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
++
++                    item_task_id = QTableWidgetItem(task.id)
++                    item_task_id.setData(Qt.UserRole, task.id)
++                    self.table_widget.setItem(current_row, 3, item_task_id)
++
++                    self.table_widget.setItem(current_row, 4, QTableWidgetItem(elide_text(task.sentence, 100)))
++
++                    compliant_text = "N/A"
++                    if task.compliant is True: compliant_text = self.tr("compliant_true", "Compliant")
++                    elif task.compliant is False: compliant_text = self.tr("compliant_false", "Non-Compliant")
++                    else: compliant_text = self.tr("compliant_pending", "Pending")
++                    self.table_widget.setItem(current_row, 5, QTableWidgetItem(compliant_text))
++                    current_row += 1
++
++        self.table_widget.resizeColumnsToContents()
++        if self.table_widget.columnCount() > 1: # Ensure columns exist
++            self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch) # Clause Title
++        if self.table_widget.columnCount() > 4:
++            self.table_widget.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch) # Task Sentence
++        logger.info(f"ResultsViewer table populated with {current_row} rows.")
+
+
+    def _export_result_csv(self):
+        if not self.project or not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
+            QMessageBox.warning(self,
+                                self.tr("no_data_to_export_title", "No Data to Export"),
+                                self.tr("no_data_to_export_message", "Project run data is not loaded or available. Cannot export CSV."))
+            return
+
+        project_name_safe = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in self.project.name)
+        if not project_name_safe.strip():
+            project_name_safe = "Untitled_Project"
+
+        # Attempt to get a run datetime from metadata if it exists on ProjectRunData
+        run_datetime_str = "latest" # Default if not found
+        # Assuming project_run_data might have a 'metadata' attribute that is a dict
+        # And that dict might have 'run_start_time' or similar. This is speculative.
+        # For now, let's assume ProjectRunData itself doesn't store this directly yet.
+        # We can add a timestamp to ProjectRunData later if needed.
+        # if hasattr(self.project.project_run_data, 'metadata_custom') and self.project.project_run_data.metadata_custom:
+        #     run_datetime_str = self.project.project_run_data.metadata_custom.get("run_datetime", "latest")
+
+        suggested_filename = f"{project_name_safe}_audit_results_{run_datetime_str}.csv"
+
+        target_file_path_str, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            self.tr("save_csv_dialog_title", "Save Result CSV As..."),
+            str(Path.home() / suggested_filename),
+            self.tr("save_csv_dialog_filter", "CSV Files (*.csv);;All Files (*.*)")
+        )
+
+        if not target_file_path_str:
+            return # User cancelled
+
+        target_file_path = Path(target_file_path_str)
+
+        headers = [
+            "project_name", #"run_datetime", # Add if available
+            "control_clause_id", "control_clause_title", "control_clause_text",
+            "requires_procedure",
+            "audit_task_id", "audit_task_sentence",
+            "compliant", "judge_reasoning",
+            "evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"
+        ]
+
         try:
-            title_suffix = self.tr("Comparison Results", " - Comparison Results")
-            if self.project:
-                self._title.setText(f"<h2>{title_suffix}</h2>")
-            else:
-                # TODO: self.tr for "Comparison Results"
-                self._title.setText(f"<h2>{self.tr('comparison_results_title', 'Comparison Results')}</h2>")
+            with open(target_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=headers, quoting=csv.QUOTE_ALL)
+                writer.writeheader()
 
-            new_proc_ids = set()
-            if self.project:
-                new_proc_ids = {pa.procedure_doc_id for pa in self.project.get_results()}
-            
-            logger.info(f"Rebuilding tabs for {len(new_proc_ids)} procedures.")
-            while self.tabs.count() > 0:
-                widget = self.tabs.widget(0)
-                if widget:
-                    self.tabs.removeTab(0)
-                    widget.deleteLater()
-
-            if not new_proc_ids:
-                logger.info("No results to display, showing placeholder")
-                no_results_text = self.tr("no_results_to_display", "No results to display. Please run the comparison first.")
-                no_results_label = QLabel(no_results_text)
-                no_results_label.setAlignment(Qt.AlignCenter)
-                self.tabs.addTab(no_results_label, "-")  # Tab title "-" is fine for a single placeholder
-                return
-
-            sorted_pids = sorted(list(new_proc_ids))
-
-            for pid in sorted_pids:
-                try:
-                    tab_content_widget = self._build_tab_for_proc(pid)
+                for clause in self.project.project_run_data.control_clauses:
+                    clause_title = clause.metadata.get("title", "")
+                    requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
                     
-                    procedure_display_name = self._display_name(pid)
-                    # Use elide_text for the name part of the title to keep tabs from becoming too wide
-                    tab_title_text = self.tr("procedure_tab_title", "Procedure: {procedure_name}").format(
-                        procedure_name=elide_text(procedure_display_name, 30)  # Elide if name is too long
-                    )
-                    
-                    self.tabs.addTab(tab_content_widget, tab_title_text)
-                    logger.debug(f"Successfully created tab for procedure ID: {pid} with title {tab_title_text}")
-                except Exception as e:
-                    logger.error(f"Error creating tab for procedure {pid}: {str(e)}")
-                    # Add a placeholder tab on error to maintain tab count if necessary
-                    error_label = QLabel(f"Error loading procedure {pid}:\n{str(e)}")
-                    error_label.setAlignment(Qt.AlignCenter)
-                    self.tabs.addTab(error_label, f"Error: {elide_text(pid, 15)}")
+                    base_row_data = {
+                        "project_name": self.project.name,
+                        # "run_datetime": run_datetime_str,
+                        "control_clause_id": clause.id,
+                        "control_clause_title": clause_title,
+                        "control_clause_text": clause.text,
+                        "requires_procedure": requires_procedure,
+                    }
 
-            logger.info("ResultsViewer UI refresh completed successfully")
+                    if not clause.tasks:
+                        row_data = base_row_data.copy()
+                        for key in headers: # Ensure all headers present
+                            if key not in row_data: row_data[key] = ""
+                        writer.writerow(row_data)
+                    else:
+                        for task in clause.tasks:
+                            task_row_data = base_row_data.copy()
+                            task_row_data.update({
+                                "audit_task_id": task.id,
+                                "audit_task_sentence": task.sentence,
+                                "compliant": str(task.compliant) if task.compliant is not None else "",
+                                "judge_reasoning": task.metadata.get("judge_reasoning", ""),
+                            })
+
+                            if not task.top_k: # Task has no top_k evidence
+                                for key_ev in ["evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"]:
+                                    task_row_data[key_ev] = ""
+                                writer.writerow(task_row_data)
+                            else:
+                                for evidence_item in task.top_k: # Create a row for each piece of evidence
+                                    evidence_row_data = task_row_data.copy()
+                                    evidence_row_data.update({
+                                        "evidence_source_pdf": evidence_item.get("source_pdf", ""),
+                                        "evidence_excerpt": evidence_item.get("excerpt", ""),
+                                        "evidence_page_number": str(evidence_item.get("page_no", "")),
+                                        "evidence_score": f"{evidence_item.get('score', ''):.4f}" if isinstance(evidence_item.get('score'), float) else str(evidence_item.get('score', ''))
+                                    })
+                                    writer.writerow(evidence_row_data)
+
+            QMessageBox.information(self,
+                                    self.tr("csv_exported_dialog_title", "CSV Exported"),
+                                    self.tr("csv_exported_dialog_message", "Results successfully exported to: {filepath}").format(filepath=target_file_path))
+        except IOError as e:
+            logger.error(f"IOError exporting CSV for project {self.project.name} to {target_file_path}: {e}", exc_info=True)
+            QMessageBox.critical(self,
+                                 self.tr("export_error_dialog_title", "Export Error"),
+                                 self.tr("export_error_dialog_message_csv", "Could not write CSV file: {error}").format(error=e))
         except Exception as e:
-            logger.error(f"Error during ResultsViewer UI refresh: {str(e)}", exc_info=True)
-            # raise # Re-raising might crash the app; consider logging and showing error in UI
+            logger.error(f"Unexpected error during CSV export for project {self.project.name}: {e}", exc_info=True)
+            QMessageBox.critical(self,
+                                 self.tr("export_error_dialog_title", "Export Error"),
+                                 self.tr("unexpected_export_error_dialog_message", "An unexpected error occurred during CSV export: {error}").format(error=e))
 
-    def _export_report(self):
+    # Old _export_report method, to be replaced by _export_result_csv
+    # def _export_report(self):
         if not self.project or not self.project.report_path:
             QMessageBox.warning(self, 
                                 self.tr("no_report_dialog_title", "No Report"), 

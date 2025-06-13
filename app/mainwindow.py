@@ -15,13 +15,15 @@ from PySide6.QtWidgets import (
 )
 
 # Local imports
-from .widgets.progress_panel import ProgressPanel  # Added
+from .widgets.progress_panel import ProgressPanel
 from .logger import logger
 from .settings import Settings
 from .translator import Translator
 from .settings_dialog import SettingsDialog
 from .models.project import CompareProject
-from .pipeline import run_pipeline, PipelineSettings  # Added
+from .pipeline import run_pipeline # PipelineSettings is now instantiated within run_pipeline or its callees
+# Import for _compare_done to load ProjectRunData
+from .pipeline.pipeline_v1_1 import _load_run_json, ProjectRunData
 # from app.widgets.project_editor import ProjectEditor
 # from app.widgets.results_viewer import ResultsViewer
 from .widgets.intro_page import IntroPage
@@ -36,7 +38,7 @@ from .stores.project_store import ProjectStore
 class _Signals(QObject):
     finished = Signal(object)
     error = Signal(Exception)
-    progress_updated = Signal(int, int, str, int)  # Added for thread-safe progress updates
+    progress_updated = Signal(float, str) # Signature changed: progress_float (0.0-1.0), message_str
 
 
 class _Worker(QRunnable):
@@ -180,7 +182,27 @@ class MainWindow(QMainWindow):
             logger.error(f"Error applying theme '{theme_setting}': {e}", exc_info=True)
 
     def _ensure_settings_configured(self) -> bool:
-        required_fields = ["openai_api_key", "embedding_model", "llm_model"]
+        required_fields = [
+            "openai_api_key",
+            "embedding_model",
+            # New specific model settings:
+            "llm.model_need_check",
+            "llm.model_audit_plan",
+            "llm.model_judge",
+            # audit.retrieval_top_k is not listed as it has a default in PipelineSettings.
+        ]
+        # If specific models are not set, the general "llm_model" might be used as a fallback.
+        # Check if all specific new LLM models are configured.
+        specific_models_set = all(
+            self.settings.get("llm.model_need_check"),
+            self.settings.get("llm.model_audit_plan"),
+            self.settings.get("llm.model_judge")
+        )
+        if not specific_models_set:
+            # If specific ones aren't fully set, ensure 'llm_model' (general fallback) is checked.
+            if not self.settings.get("llm_model") and "llm_model" not in required_fields:
+                 required_fields.append("llm_model")
+
         missing_fields = [field for field in required_fields if not self.settings.get(field)]
 
         if missing_fields:
@@ -223,38 +245,38 @@ class MainWindow(QMainWindow):
         self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)
         self._progress_panel.show()
 
-        def task_wrapper(worker_signals: _Signals):  # Renamed to avoid conflict, pass signals
+        def task_wrapper(worker_signals: _Signals):
             try:
                 logger.info(f"Starting pipeline for project: {proj.name}")
-                current_pipeline_settings = PipelineSettings.from_settings(self.settings)
+                # PipelineSettings instance is now created inside run_pipeline from self.settings
 
-                # Define the progress callback for run_pipeline
-                def progress_handler(stage_idx: int, total_stages: int, message: str, percent_complete: int):
-                    # This is called from the worker thread, emit signal for main thread update
-                    worker_signals.progress_updated.emit(stage_idx, total_stages, message, percent_complete)
+                # Define the progress callback for run_pipeline (float, str)
+                def progress_handler(progress_float: float, message_str: str):
+                    worker_signals.progress_updated.emit(progress_float, message_str)
 
-                run_pipeline(
+                run_pipeline( # run_pipeline now expects the global self.settings
                     proj,
-                    current_pipeline_settings,
-                    progress_callback=progress_handler,  # Pass the new handler
-                    cancel_cb=self._is_pipeline_cancelled  # Pass cancellation check
+                    self.settings,
+                    progress_callback=progress_handler,
+                    cancel_cb=self._is_pipeline_cancelled
                 )
-                logger.info(f"Pipeline finished for {proj.name}. Report: {proj.report_path}")
+                # For v1.1, primary output is run.json, not a single report_path from the pipeline function.
+                logger.info(f"Pipeline task finished for {proj.name}. Results are in {proj.run_json_path}")
             except Exception as e:
                 logger.error(f"Pipeline execution failed for {proj.name}: {e}", exc_info=True)
-                raise  # Re-raise to be caught by _Worker's error handling
+                raise
             return proj
 
-        worker = _Worker(lambda: task_wrapper(worker.signals))  # Pass worker's signals to task_wrapper
-        worker.signals.error.connect(self._compare_error)  # Pass self._progress_panel implicitly
-        worker.signals.finished.connect(self._compare_done)  # Pass self._progress_panel implicitly
-        worker.signals.progress_updated.connect(self._update_progress_panel_on_signal)  # Connect new signal
+        worker = _Worker(lambda: task_wrapper(worker.signals))
+        worker.signals.error.connect(self._compare_error)
+        worker.signals.finished.connect(self._compare_done)
+        worker.signals.progress_updated.connect(self._update_progress_panel_on_signal)
         self.threadpool.start(worker)
 
-    def _update_progress_panel_on_signal(self, stage_idx: int, total_stages: int, message: str, percent: int):
+    def _update_progress_panel_on_signal(self, progress_float: float, message: str): # Signature updated
         """Slot to update ProgressPanel from worker thread signal."""
         if self._progress_panel:
-            self._progress_panel.update_progress(stage_idx, total_stages, message, percent)
+            self._progress_panel.update_progress(progress_float, message) # Pass new signature
 
     def _is_pipeline_cancelled(self) -> bool:
         """Used by run_pipeline to check for cancellation."""
@@ -285,19 +307,46 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.critical(self, "比較失敗", str(err))  # Comparison Failed
 
-    def _compare_done(self, proj: CompareProject):  # dlg parameter removed
+    def _compare_done(self, proj: CompareProject):
         if self._progress_panel:
             try:
                 self._progress_panel.cancelled.disconnect(self._handle_pipeline_cancellation)
             except RuntimeError:
                 logger.debug("Error disconnecting ProgressPanel.cancelled in _compare_done, possibly already disconnected.")
-            self._progress_panel.accept()  # Close the panel
+            self._progress_panel.accept()
             self._progress_panel = None
-        self._cancelled = False  # Reset for the next run
+        self._cancelled = False
 
-        logger.info("comparison finished for %s", proj.name)
-        proj.changed.emit()
-        self.comparison_finished.emit(proj)
+        logger.info("Pipeline UI interaction finished for project %s", proj.name)
+
+        # Load results from run.json into project.project_run_data
+        if proj.run_json_path and proj.run_json_path.exists():
+            logger.info(f"Loading results from {proj.run_json_path} into project.project_run_data for UI display.")
+            try:
+                # _load_run_json is imported from app.pipeline.pipeline_v1_1
+                loaded_run_data = _load_run_json(proj.run_json_path)
+                if loaded_run_data:
+                    proj.project_run_data = loaded_run_data
+                    logger.info(f"Successfully loaded run.json into project_run_data for {proj.name}")
+                else:
+                    # _load_run_json logs errors, but we can add a specific message here too
+                    logger.error(f"Failed to parse run.json for {proj.name}, project_run_data will be empty or stale.")
+                    proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[]) # Ensure it's not None
+                    QMessageBox.warning(self, "Result Loading Error",
+                                        f"Could not load or parse results from {proj.run_json_path}. Display may be empty or outdated.")
+            except Exception as e: # Catch any other unexpected error during load
+                logger.error(f"Unexpected error loading run.json for project {proj.name}: {e}", exc_info=True)
+                proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[])
+                QMessageBox.critical(self, "Result Loading Error",
+                                     f"An unexpected error occurred while loading results: {e}")
+        else:
+            logger.warning(f"No run.json path found for project {proj.name} at {proj.run_json_path}, or file does not exist. Cannot load results into UI.")
+            proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[]) # Ensure it's not None and empty
+            QMessageBox.warning(self, "Result File Missing",
+                                f"Result file (run.json) not found for project {proj.name}. Display may be empty.")
+
+        proj.changed.emit() # Notify that project data (potentially project_run_data) has changed
+        self.comparison_finished.emit(proj) # Notify workspace to update its view
 
     # ------------------------------------------------------------------
     # closeEvent is removed as Workspace handles its own splitter state.

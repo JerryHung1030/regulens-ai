@@ -1,0 +1,71 @@
+{
+  "name": "資通安全情資分享辦法 (Demo)",
+  "clauses": [
+    {
+      "id": "C001",
+      "title": "第一條 目的",
+      "text": "為加強資通安全情資之分享，提升我國整體資通安全防護能力，特訂定本辦法。",
+      "subclauses": []
+    },
+    {
+      "id": "C002",
+      "title": "第二條 適用範圍",
+      "text": "本辦法適用於政府機關（構）及關鍵基礎設施提供者。",
+      "subclauses": []
+    },
+    {
+      "id": "C003",
+      "title": "第三條 Placeholder",
+      "text": "Placeholder text for C003.",
+      "subclauses": []
+    },
+    {
+      "id": "C004",
+      "title": "第四條 Placeholder",
+      "text": "Placeholder text for C004.",
+      "subclauses": []
+    },
+    {
+      "id": "C005",
+      "title": "第五條 Placeholder",
+      "text": "Placeholder text for C005.",
+      "subclauses": []
+    },
+    {
+      "id": "C006",
+      "title": "第六條 Placeholder",
+      "text": "Placeholder text for C006.",
+      "subclauses": []
+    },
+    {
+      "id": "C007",
+      "title": "第七條 Placeholder",
+      "text": "Placeholder text for C007.",
+      "subclauses": []
+    },
+    {
+      "id": "C008",
+      "title": "第八條 Placeholder",
+      "text": "Placeholder text for C008.",
+      "subclauses": []
+    },
+    {
+      "id": "C009",
+      "title": "第九條 Placeholder",
+      "text": "Placeholder text for C009.",
+      "subclauses": []
+    },
+    {
+      "id": "C010",
+      "title": "第十條 Placeholder",
+      "text": "Placeholder text for C010.",
+      "subclauses": []
+    },
+    {
+      "id": "C011",
+      "title": "第十一條 Placeholder",
+      "text": "Placeholder text for C011.",
+      "subclauses": []
+    }
+  ]
+}
