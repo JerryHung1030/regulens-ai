@@ -320,69 +320,69 @@ class ResultsViewer(QWidget):
         # Data loading and table population will be implemented in the next step.
         # For now, it just shows an empty table or a message.
         if not self.project or not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
-             logger.info("No project_run_data to display yet.")
-             # Optionally, display a "No data" message in the table
-             self.table_widget.setRowCount(1)
-             item = QTableWidgetItem(self.tr("no_data_available", "No analysis data available. Please run the pipeline."))
-             item.setTextAlignment(Qt.AlignCenter)
-             self.table_widget.setItem(0, 0, item)
-             self.table_widget.setSpan(0, 0, 1, len(self.column_headers))
-+            return # Stop further processing in _refresh if no data
-+
-+        current_row = 0
-+        for clause in self.project.project_run_data.control_clauses:
-+            clause_title = clause.metadata.get("title", clause.id) # Use ID if title not in metadata
-+
-+            requires_proc_text = "N/A"
-+            if clause.need_procedure is True: requires_proc_text = self.tr("yes", "Yes")
-+            elif clause.need_procedure is False: requires_proc_text = self.tr("no", "No")
-+
-+            if not clause.tasks:
-+                self.table_widget.insertRow(current_row)
-+
-+                item_clause_id = QTableWidgetItem(clause.id)
-+                item_clause_id.setData(Qt.UserRole, clause.id)
-+                self.table_widget.setItem(current_row, 0, item_clause_id)
-+
-+                self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
-+                self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
-+
-+                item_task_id_na = QTableWidgetItem("N/A") # Task ID
-+                item_task_id_na.setData(Qt.UserRole, None) # No task ID
-+                self.table_widget.setItem(current_row, 3, item_task_id_na)
-+                self.table_widget.setItem(current_row, 4, QTableWidgetItem("N/A")) # Task Sentence
-+                self.table_widget.setItem(current_row, 5, QTableWidgetItem("N/A")) # Compliant
-+                current_row += 1
-+            else:
-+                for i, task in enumerate(clause.tasks):
-+                    self.table_widget.insertRow(current_row)
-+
-+                    item_clause_id = QTableWidgetItem(clause.id)
-+                    item_clause_id.setData(Qt.UserRole, clause.id)
-+                    self.table_widget.setItem(current_row, 0, item_clause_id)
-+
-+                    self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
-+                    self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
-+
-+                    item_task_id = QTableWidgetItem(task.id)
-+                    item_task_id.setData(Qt.UserRole, task.id)
-+                    self.table_widget.setItem(current_row, 3, item_task_id)
-+
-+                    self.table_widget.setItem(current_row, 4, QTableWidgetItem(elide_text(task.sentence, 100)))
-+
-+                    compliant_text = "N/A"
-+                    if task.compliant is True: compliant_text = self.tr("compliant_true", "Compliant")
-+                    elif task.compliant is False: compliant_text = self.tr("compliant_false", "Non-Compliant")
-+                    else: compliant_text = self.tr("compliant_pending", "Pending")
-+                    self.table_widget.setItem(current_row, 5, QTableWidgetItem(compliant_text))
-+                    current_row += 1
-+
-+        self.table_widget.resizeColumnsToContents()
-+        if self.table_widget.columnCount() > 1: # Ensure columns exist
-+            self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch) # Clause Title
-+        if self.table_widget.columnCount() > 4:
-+            self.table_widget.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch) # Task Sentence
-+        logger.info(f"ResultsViewer table populated with {current_row} rows.")
+            logger.info("No project_run_data to display yet.")
+            # Optionally, display a "No data" message in the table
+            self.table_widget.setRowCount(1)
+            item = QTableWidgetItem(self.tr("no_data_available", "No analysis data available. Please run the pipeline."))
+            item.setTextAlignment(Qt.AlignCenter)
+            self.table_widget.setItem(0, 0, item)
+            self.table_widget.setSpan(0, 0, 1, len(self.column_headers))
+            return  # Stop further processing in _refresh if no data
+
+        current_row = 0
+        for clause in self.project.project_run_data.control_clauses:
+            clause_title = clause.metadata.get("title", clause.id)  # Use ID if title not in metadata
+
+            requires_proc_text = "N/A"
+            if clause.need_procedure is True: requires_proc_text = self.tr("yes", "Yes")
+            elif clause.need_procedure is False: requires_proc_text = self.tr("no", "No")
+
+            if not clause.tasks:
+                self.table_widget.insertRow(current_row)
+
+                item_clause_id = QTableWidgetItem(clause.id)
+                item_clause_id.setData(Qt.UserRole, clause.id)
+                self.table_widget.setItem(current_row, 0, item_clause_id)
+
+                self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
+                self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
+
+                item_task_id_na = QTableWidgetItem("N/A") # Task ID
+                item_task_id_na.setData(Qt.UserRole, None) # No task ID
+                self.table_widget.setItem(current_row, 3, item_task_id_na)
+                self.table_widget.setItem(current_row, 4, QTableWidgetItem("N/A")) # Task Sentence
+                self.table_widget.setItem(current_row, 5, QTableWidgetItem("N/A")) # Compliant
+                current_row += 1
+            else:
+                for i, task in enumerate(clause.tasks):
+                    self.table_widget.insertRow(current_row)
+
+                    item_clause_id = QTableWidgetItem(clause.id)
+                    item_clause_id.setData(Qt.UserRole, clause.id)
+                    self.table_widget.setItem(current_row, 0, item_clause_id)
+
+                    self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
+                    self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
+
+                    item_task_id = QTableWidgetItem(task.id)
+                    item_task_id.setData(Qt.UserRole, task.id)
+                    self.table_widget.setItem(current_row, 3, item_task_id)
+
+                    self.table_widget.setItem(current_row, 4, QTableWidgetItem(elide_text(task.sentence, 100)))
+
+                    compliant_text = "N/A"
+                    if task.compliant is True: compliant_text = self.tr("compliant_true", "Compliant")
+                    elif task.compliant is False: compliant_text = self.tr("compliant_false", "Non-Compliant")
+                    else: compliant_text = self.tr("compliant_pending", "Pending")
+                    self.table_widget.setItem(current_row, 5, QTableWidgetItem(compliant_text))
+                    current_row += 1
+
+        self.table_widget.resizeColumnsToContents()
+        if self.table_widget.columnCount() > 1: # Ensure columns exist
+            self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch) # Clause Title
+        if self.table_widget.columnCount() > 4:
+            self.table_widget.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch) # Task Sentence
+        logger.info(f"ResultsViewer table populated with {current_row} rows.")
 
 
     def _export_result_csv(self):

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QStyle, QTextEdit, QTabWidget, QSplitter, QSizePolicy, # QTreeView removed (or only used if needed for specific previews)
     QListView # QListView is used for procedures
 )
-from PySide6.QtGui import QStringListModel
+from PySide6.QtCore import QStringListModel
 from app.models.project import CompareProject
 from app.logger import logger
 
@@ -203,17 +203,6 @@ class ProjectEditor(QWidget):
         self.preview_tab_widget.addTab(procedures_tab_content_widget, "Procedure PDFs")
 
         # Evidences tab is no longer created.
-
-        lay.addWidget(self.preview_container) # This line was already there, just for context
-        # The loop for folder_types is replaced by explicit tab creation above.
-        # The old loop:
-        # for key, (tree_attr, text_attr, tab_label) in folder_types.items():
-            # ... old tab creation logic ...
-            # self.preview_tab_widget.addTab(tab_content_widget, tab_label)
-
-        # lay.addWidget(self.preview_container) # This was the original position
-            tab_layout.addWidget(splitter)
-            self.preview_tab_widget.addTab(tab_content_widget, tab_label)
 
         lay.addWidget(self.preview_container)
 

@@ -32,37 +32,33 @@ def _calculate_file_hash(file_path: Path) -> str:
         return ""  # Return empty string or raise error
 
 
-def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[RawDoc]: # Changed signature
+def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[RawDoc]:
     raw_docs: List[RawDoc] = []
-    # Supported extensions check is simplified as we now only expect PDFs for procedures.
-    # Control ingestion is handled elsewhere.
 
     if not procedure_pdf_paths:
         print("No procedure PDF paths provided.")
         return raw_docs
 
-    for file_path in procedure_pdf_paths: # Iterate over the provided list of paths
-        # Ensure it's a PDF file and exists
+    for file_path in procedure_pdf_paths:
         if not file_path.is_file() or file_path.suffix.lower() != ".pdf":
             print(f"Skipping non-PDF or non-existent file: {file_path}")
             continue
 
         file_hash = _calculate_file_hash(file_path)
-        if not file_hash:  # Skip if hashing failed
+        if not file_hash:
             print(f"Skipping file due to hashing error: {file_path}")
             continue
 
         content = ""
         metadata: Dict[str, Any] = {
             "original_filename": file_path.name,
-            "file_type": file_path.suffix.lower(), # Should always be '.pdf'
+            "file_type": file_path.suffix.lower(),
             "errors": []
         }
 
         try:
             abs_file_path = file_path.resolve()
 
-            # Simplified to only handle PDF, as this function is now specific to procedure PDFs
             try:
                 reader = PdfReader(file_path)
                 text_by_page = [page.extract_text() or "" for page in reader.pages]
@@ -71,50 +67,41 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
             except Exception as e:
                 print(f"Error processing PDF {file_path}: {e}")
                 metadata["errors"].append(f"PDF processing error: {str(e)}")
-                content = "" # Ensure content is empty if PDF parsing fails
+                content = ""
 
-            # Removed .txt and .csv handling logic as this function is now for procedure PDFs.
+            raw_doc_instance = RawDoc(
+                id=file_hash,
+                source_path=abs_file_path,
+                content=content,
+                metadata=metadata.copy(),
+                doc_type=doc_type
+            )
+            raw_docs.append(raw_doc_instance)
 
-            # Only add RawDoc if content was successfully extracted or partially extracted
-            # (even with errors, some content might be there)
-                raw_doc_instance = RawDoc(
-                    id=file_hash,
-                    source_path=abs_file_path,
-                    content=content,
-                    metadata=metadata.copy(),  # Use a copy for RawDoc
-                    doc_type=doc_type
-                )
-                raw_docs.append(raw_doc_instance)
+            meta_json_path = file_path.parent / f"{file_path.name}.meta.json"
+            meta_json_content = {
+                "file_sha256": file_hash,
+                "source_path": str(abs_file_path),
+                "original_filename": file_path.name,
+                "doc_type": doc_type,
+                "num_pages": metadata.get("num_pages"),
+                "num_rows": metadata.get("num_rows"),
+                "num_cols": metadata.get("num_cols"),
+                "headers": metadata.get("headers"),
+                "errors": metadata.get("errors")
+            }
+            meta_json_content = {k: v for k, v in meta_json_content.items() if v is not None}
+            
+            try:
+                with open(meta_json_path, 'w', encoding='utf-8') as meta_f:
+                    json.dump(meta_json_content, meta_f, indent=4)
+            except IOError as e:
+                print(f"Error writing .meta.json for {file_path}: {e}")
 
-                # Create .meta.json file
-                meta_json_path = file_path.parent / f"{file_path.name}.meta.json"
-                meta_json_content = {
-                    "file_sha256": file_hash,
-                    "source_path": str(abs_file_path),
-                    "original_filename": file_path.name,
-                    "doc_type": doc_type,
-                    "num_pages": metadata.get("num_pages"),  # Specific for PDF
-                    "num_rows": metadata.get("num_rows"),   # Specific for CSV
-                    "num_cols": metadata.get("num_cols"),   # Specific for CSV
-                    "headers": metadata.get("headers"),     # Specific for CSV
-                    "errors": metadata.get("errors")
-                }
-                # Remove None values for cleaner JSON
-                meta_json_content = {k: v for k, v in meta_json_content.items() if v is not None}
-                
-                try:
-                    with open(meta_json_path, 'w', encoding='utf-8') as meta_f:
-                        json.dump(meta_json_content, meta_f, indent=4)
-                except IOError as e:
-                    print(f"Error writing .meta.json for {file_path}: {e}")
-                    # This error doesn't stop the RawDoc from being created and returned
+        except Exception as e:
+            print(f"Unhandled exception processing file {file_path}: {e}")
+            continue
 
-            except Exception as e:
-                print(f"Unhandled exception processing file {file_path}: {e}")
-                # Optionally create a RawDoc with error info even if content extraction fails catastrophically
-                # For now, we skip if a major unhandled error occurs before RawDoc creation
-                continue
-                
     return raw_docs
 
 

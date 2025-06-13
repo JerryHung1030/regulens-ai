@@ -9,8 +9,8 @@ from PySide6.QtCore import QObject, Signal
 
 from app.models.assessments import PairAssessment # Old results structure
 from .docs import NormDoc
-# Import ProjectRunData for the new results structure
-from app.pipeline.pipeline_v1_1 import ProjectRunData
+# Import ProjectRunData from the new module
+from .run_data import ProjectRunData
 
 
 class CompareProject(QObject):

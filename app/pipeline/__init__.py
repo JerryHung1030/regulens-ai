@@ -10,74 +10,32 @@ import faiss  # type: ignore
 
 # Project-specific Imports
 # Models
-from app.settings import Settings  # For PipelineSettings.from_settings
-from pydantic import BaseModel, Field  # For PipelineSettings definition
+from app.settings import Settings # Used by PipelineSettings.from_settings
+# PipelineSettings is now in its own file
+from ..pipeline_settings import PipelineSettings 
+# Import CompareProject directly since we need it for type hints
+from app.models.project import CompareProject
+# Remove pydantic imports if no longer directly used here for model definition
+# from pydantic import BaseModel, Field 
 
-try:
-    from app.models.project import CompareProject
-    from app.models.docs import RawDoc, NormDoc, EmbedSet
-    from app.models.assessments import TripleAssessment, PairAssessment, MatchSet
-except ImportError:  # Fallback for potential execution context issues
-    import sys
-    sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-    from app.models.project import CompareProject  # type: ignore
-    from app.models.docs import RawDoc, NormDoc, EmbedSet  # type: ignore
-    from app.models.assessments import TripleAssessment, PairAssessment, MatchSet  # type: ignore
-
-
-class PipelineSettings(BaseModel):
-    openai_api_key: str = Field(default="")
-    embedding_model: str = Field(default="default_embedding_model")
-    llm_model: str = Field(default="default_llm_model") # General LLM model, might be repurposed or removed if specific ones cover all cases
-    local_model_path: Optional[Path] = Field(default=None)
-    top_k_procedure: int = Field(default=5) # Used in old pipeline logic
-    top_m_evidence: int = Field(default=5) # Used in old pipeline logic
-    score_threshold: float = Field(default=0.7) # Used in old pipeline logic
-    report_theme: str = Field(default="default.css")
-    language: str = Field(default="en")
-
-    # New fields for pipeline_v1_1
-    llm_model_need_check: str = Field(default="default_model_need_check")
-    llm_model_audit_plan: str = Field(default="default_model_audit_plan")
-    llm_model_judge: str = Field(default="default_model_judge") # For future Step 4 of v1.1
-    audit_retrieval_top_k: int = Field(default=5)
+# For additional type hinting if needed
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    # These might not be strictly needed here anymore if run_pipeline is the main export
+    # from app.models.docs import RawDoc, NormDoc, EmbedSet 
+    # from app.models.assessments import TripleAssessment, PairAssessment, MatchSet
+    pass
 
 
-    @classmethod
-    def from_settings(cls, settings: Settings) -> "PipelineSettings":
-        # Assuming settings.get can fetch flat keys or we adjust here
-        # For keys like "llm.model_need_check" from config_default.yaml,
-        # the global Settings class would need to handle the dot notation
-        # or we fetch them individually.
-        return cls(
-            openai_api_key=settings.get("openai_api_key", ""),
-            embedding_model=settings.get("embedding_model") or "default_embedding_model",
-            llm_model=settings.get("llm_model") or "default_llm_model", # General model
-            local_model_path=Path(settings.get("local_model_path")) if settings.get("local_model_path") else None,
-            top_k_procedure=int(settings.get("top_k_procedure", 5)),
-            top_m_evidence=int(settings.get("top_m_evidence", 5)),
-            score_threshold=float(settings.get("score_threshold", 0.7)),
-            report_theme=settings.get("report_theme", "default.css"),
-            language=settings.get("language", "en"),
-
-            # New settings for v1.1 pipeline
-            # The keys used in settings.get() should match what's in config_default.yaml or user's .regulens-ai.json
-            llm_model_need_check=settings.get("llm.model_need_check", "default_model_need_check"),
-            llm_model_audit_plan=settings.get("llm.model_audit_plan", "default_model_audit_plan"),
-            llm_model_judge=settings.get("llm.model_judge", "default_model_judge"),
-            audit_retrieval_top_k=int(settings.get("audit.retrieval_top_k", 5))
-        )
-
-
-# Pipeline Modules
-from .ingestion import ingest_documents # Still used by old pipeline logic if retained
+# Pipeline Modules (These are fine as they are submodules)
+from .ingestion import ingest_documents 
 from .normalize import normalize_document # Still used by old pipeline logic if retained
 from .embed import generate_embeddings # Still used by old pipeline logic
 from .index import create_or_load_index # Still used by old pipeline logic
 from .retrieve import retrieve_similar_chunks # Still used by old pipeline logic
 from .judge_llm import assess_triplet_with_llm # Old assessment logic
-from .aggregate import aggregate_assessments_for_pair # Old aggregation
-from .report import generate_report # Old report generation
+# from .aggregate import aggregate_assessments_for_pair # Removed
+# from .report import generate_report # Removed
 from .cache import CacheService # Still potentially useful
 
 # Import the new pipeline orchestrator
@@ -88,7 +46,7 @@ from .pipeline_v1_1 import run_project_pipeline_v1_1
 def run_pipeline(
     project: CompareProject,
     # The 'settings' parameter here is the global Settings object, not PipelineSettings
-    global_app_settings: Settings,
+    global_app_settings: Settings, 
     progress_callback: Optional[Callable[[float, str], None]] = None, # Changed signature for v1.1
     cancel_cb: Optional[Callable[[], bool]] = None
 ) -> Optional[Path]: # Return type might change depending on what v1.1 returns (e.g., path to run.json or report)
@@ -123,7 +81,7 @@ def run_pipeline(
         # pipeline_v1_1 manages its own run.json and doesn't return a report path directly in the same way.
         # The 'report_path' on the project might be set by other means or a future step in v1.1.
         # For now, returning the run_json_path as an indicator of completion.
-        return project.run_json_path
+        return project.run_json_path 
     else:
         # Fallback to old pipeline logic (commented out for now as requested)
         logger.info(f"Falling back to legacy pipeline for project: {project.name}")

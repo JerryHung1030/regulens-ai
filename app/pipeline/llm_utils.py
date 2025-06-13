@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, Any, Optional, Union # Added Union
-from app.settings import PipelineSettings # Assuming this will hold API keys/endpoints if needed
+from typing import Dict, Any, Optional, Union 
+from app.pipeline_settings import PipelineSettings # Corrected import
 from app.logger import logger
 
 # Placeholder for actual LLM client libraries (e.g., OpenAI, Anthropic, Gemini)
 # from openai import OpenAI
 
 def call_llm_api(
-    prompt: str,
+    prompt: str, 
     model_name: str,
     # settings: PipelineSettings, # If API keys/endpoints are part of settings
     expected_response_type: str = "boolean" # "boolean", "json_list", "json_object"
@@ -21,7 +21,7 @@ def call_llm_api(
     Args:
         prompt: The prompt to send to the LLM.
         model_name: The specific LLM model to use.
-        expected_response_type: "boolean" for Yes/No, "json_list" for list of task dicts,
+        expected_response_type: "boolean" for Yes/No, "json_list" for list of task dicts, 
                                 "json_object" for a generic JSON object (e.g. compliance judgment),
                                 "text" for raw text.
 
@@ -49,7 +49,7 @@ def call_llm_api(
              mock_response_content = json.dumps({"requires_procedure": False}) # Example: sub-clauses might not directly need own procedures
         else:
             mock_response_content = json.dumps({"requires_procedure": False})
-
+            
     elif model_name == "mock_audit_plan_model": # Corresponds to settings.llm_model_audit_plan
         if "Systems must have access control mechanisms" in prompt:
             mock_response_content = json.dumps({
@@ -74,7 +74,7 @@ def call_llm_api(
             })
         else:
             mock_response_content = json.dumps({"audit_tasks": []}) # Default empty list
-
+            
     elif model_name == "mock_judge_model": # Corresponds to settings.llm_model_judge
         # Mock responses for compliance judgment
         if "Verify that a documented access control policy exists" in prompt and "Evidence: Access control policy document found" in prompt:
@@ -94,7 +94,7 @@ def call_llm_api(
     try:
         if not mock_response_content:
             raise ValueError("Mock response content is empty.")
-
+            
         parsed_response = json.loads(mock_response_content)
 
         if expected_response_type == "boolean":
@@ -167,12 +167,12 @@ if __name__ == '__main__':
     judge_result_compliant = call_llm_api(prompt_judge_compliant, "mock_judge_model", expected_response_type="json_object")
     print(f"Judge for '{prompt_judge_compliant[:30]}...': {judge_result_compliant} (Expected: compliant=True)")
     assert isinstance(judge_result_compliant, dict) and judge_result_compliant.get("compliant") is True
-
+    
     prompt_judge_non_compliant = "Control: Backups. Task: Inspect logs. Evidence: Backup logs are missing for the last quarter."
     judge_result_non_compliant = call_llm_api(prompt_judge_non_compliant, "mock_judge_model", expected_response_type="json_object")
     print(f"Judge for '{prompt_judge_non_compliant[:30]}...': {judge_result_non_compliant} (Expected: compliant=False)")
     assert isinstance(judge_result_non_compliant, dict) and judge_result_non_compliant.get("compliant") is False
-
+    
     print("LLM Utils tests completed.")
 
 # print("app.pipeline.llm_utils.py created.") # Already exists, so this line is not accurate if re-running.

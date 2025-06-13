@@ -8,7 +8,8 @@ import shutil # For cleaning up temp directories
 
 from app.models.project import CompareProject
 from app.models.docs import ControlClause, AuditTask, RawDoc, NormDoc, EmbedSet # Added RawDoc, NormDoc, EmbedSet
-from app.settings import PipelineSettings # This should be from app.pipeline import PipelineSettings if consolidated
+from app.models.run_data import ProjectRunData # Import from new module
+from app.pipeline_settings import PipelineSettings # Corrected import to app.pipeline_settings
 from app.logger import logger
 from app.pipeline.llm_utils import call_llm_api
 
@@ -19,25 +20,6 @@ from app.pipeline.embed import generate_embeddings
 from app.pipeline.index import create_or_load_index, IndexMeta # Added IndexMeta
 from app.pipeline.retrieve import retrieve_similar_chunks, MatchSet # Added MatchSet
 from app.pipeline.cache import CacheService # For embedding caching if generate_embeddings uses it
-
-# Define a structure for run.json, can be more sophisticated later
-class ProjectRunData:
-    def __init__(self, project_name: str, control_clauses: List[ControlClause]):
-        self.project_name = project_name
-        self.control_clauses: List[ControlClause] = control_clauses
-        # We can add more fields like pipeline_version, timestamps, etc.
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "project_name": self.project_name,
-            "control_clauses": [cc.model_dump() for cc in self.control_clauses]
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> ProjectRunData:
-        clauses_data = data.get("control_clauses", [])
-        control_clauses = [ControlClause(**cc_data) for cc_data in clauses_data]
-        return cls(project_name=data.get("project_name", "Unknown Project"), control_clauses=control_clauses)
 
 def _load_run_json(run_json_path: Path) -> Optional[ProjectRunData]:
     if run_json_path.exists():
@@ -65,7 +47,7 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
     {
         "name": "Project Name",
         "clauses": [
-            { "id": "CL001", "title": "Clause 1 Title", "text": "Clause 1 Text",
+            { "id": "CL001", "title": "Clause 1 Title", "text": "Clause 1 Text", 
               "subclauses": [ { "id": "SCL001.1", ... } ] },
             ...
         ]
@@ -79,7 +61,7 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
 
     try:
         data = json.loads(controls_json_path.read_text(encoding='utf-8'))
-
+        
         def extract_clauses_recursive(clauses_data: List[Dict[str, Any]], parent_id: Optional[str] = None) -> List[ControlClause]:
             extracted: List[ControlClause] = []
             for clause_data in clauses_data:
@@ -93,7 +75,7 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
                 metadata = {"original_data": clause_data}
                 if parent_id:
                     metadata["parent_id"] = parent_id
-
+                
                 # Ensure all fields expected by ControlClause are present or have defaults
                 # For now, ControlClause only has id, text, metadata. Add title if it exists.
                 # And need_procedure, tasks will be added by pipeline steps.
@@ -102,8 +84,8 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
                     "text": clause_data["text"],
                     "metadata": metadata,
                     # Ensure default values for fields to be populated by pipeline
-                    "need_procedure": None,
-                    "tasks": []
+                    "need_procedure": None, 
+                    "tasks": [] 
                 }
                 # Add title if present in JSON
                 if "title" in clause_data:
@@ -129,13 +111,13 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
         logger.error(f"Invalid JSON in controls file: {controls_json_path}")
     except Exception as e:
         logger.error(f"Error processing controls file {controls_json_path}: {e}")
-
+        
     return control_clauses
 
 
-def run_project_pipeline_v1_1(project: CompareProject,
-                              settings: PipelineSettings,
-                              progress_callback: Callable[[float, str], None],
+def run_project_pipeline_v1_1(project: CompareProject, 
+                              settings: PipelineSettings, 
+                              progress_callback: Callable[[float, str], None], 
                               cancel_cb: Callable[[], bool]):
     """
     Main orchestrator for the V1.1 pipeline.
@@ -156,14 +138,14 @@ def run_project_pipeline_v1_1(project: CompareProject,
     # Load existing run data or initialize if not present/fresh start requested
     # For now, let's assume we always load controls from source JSON and then update from run.json
     # A more sophisticated resume logic might be needed later.
-
+    
     initial_clauses = load_controls_from_json(project.controls_json_path)
     if not initial_clauses:
         progress_callback(1.0, "Error: No control clauses loaded. Stopping pipeline.")
         return
 
     project_run_data = _load_run_json(project.run_json_path)
-
+    
     if project_run_data:
         logger.info(f"Loaded existing run data from {project.run_json_path}")
         # Merge or update initial_clauses with data from project_run_data
@@ -176,18 +158,18 @@ def run_project_pipeline_v1_1(project: CompareProject,
                 # Pydantic models are immutable by default, so create new instance or use .copy(update=...)
                 existing_version = existing_clauses_map[loaded_clause.id]
                 updated_data = loaded_clause.model_dump() # Start with fresh data from source JSON
-
+                
                 # Overwrite with fields that were populated by the pipeline if they exist in run.json
                 # This ensures that if source text changes, it's picked up, but pipeline results are preserved.
                 if existing_version.need_procedure is not None:
                     updated_data['need_procedure'] = existing_version.need_procedure
                 if existing_version.tasks: # If tasks list is not empty
                     updated_data['tasks'] = [task.model_dump() for task in existing_version.tasks]
-
+                
                 final_clauses_for_pipeline.append(ControlClause(**updated_data))
             else:
                 final_clauses_for_pipeline.append(loaded_clause)
-
+        
         # Add clauses that might be in run.json but not in source (e.g. if source file changed)
         # This logic might need refinement based on how we want to handle discrepancies.
         # For now, source JSON is the master list.
@@ -218,10 +200,10 @@ def run_project_pipeline_v1_1(project: CompareProject,
     # control_clauses_for_run = execute_need_check_step(control_clauses_for_run, project.run_json_path, settings, cancel_cb)
     # Update run_data and save (within execute_need_check_step or here)
     execute_need_check_step(
-        control_clauses=control_clauses_for_run,
+        control_clauses=control_clauses_for_run, 
         project_run_json_path=project.run_json_path,
         current_project_run_data=project_run_data, # Pass the main run data object
-        settings=settings,
+        settings=settings, 
         progress_callback=progress_callback, # Pass down for finer-grained progress
         cancel_cb=cancel_cb
     )
@@ -300,10 +282,10 @@ def run_project_pipeline_v1_1(project: CompareProject,
 # These will be added in subsequent steps.
 
 def execute_need_check_step(
-    control_clauses: List[ControlClause],
+    control_clauses: List[ControlClause], 
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData, # To update and save the overall run.json
-    settings: PipelineSettings,
+    settings: PipelineSettings, 
     progress_callback: Callable[[float, str], None], # For detailed progress
     cancel_cb: Callable[[], bool]
 ) -> List[ControlClause]:
@@ -323,14 +305,14 @@ def execute_need_check_step(
             logger.debug(f"Skipping Need-Check for clause {clause.id} as it's already determined.")
             clauses_processed +=1
             # Update progress based on overall pipeline percentage for this step (e.g. Step 1 is 0.1 to 0.3)
-            base_progress = 0.1
+            base_progress = 0.1 
             step_progress_span = 0.2 # Step 1 contributes 20% of total progress
             current_step_progress = (clauses_processed / total_clauses) * step_progress_span
             progress_callback(base_progress + current_step_progress, f"Need-Check: Clause {clause.id} (skipped)")
             continue
 
         logger.info(f"Performing Need-Check for clause: {clause.id} - {clause.text[:50]}...")
-
+        
         # Construct prompt for LLM
         # Basic prompt, can be enhanced with more context or specific instructions
         prompt = (
@@ -354,7 +336,7 @@ def execute_need_check_step(
             # Optionally, implement retry logic or specific error handling here
 
         clauses_processed +=1
-
+        
         # Update the specific clause in current_project_run_data.control_clauses
         # This assumes current_project_run_data.control_clauses is the same list object
         # or requires finding and updating the clause by ID if it's a copy.
@@ -365,7 +347,7 @@ def execute_need_check_step(
                 current_project_run_data.control_clauses[i] = clause
                 break
         _save_run_json(current_project_run_data, project_run_json_path)
-
+        
         base_progress = 0.1
         step_progress_span = 0.2 # Step 1 is 10% to 30%
         current_step_progress = (clauses_processed / total_clauses) * step_progress_span
@@ -375,10 +357,10 @@ def execute_need_check_step(
 
 
 def execute_audit_plan_step(
-    control_clauses: List[ControlClause],
+    control_clauses: List[ControlClause], 
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData,
-    settings: PipelineSettings,
+    settings: PipelineSettings, 
     progress_callback: Callable[[float, str], None],
     cancel_cb: Callable[[], bool]
 ) -> List[ControlClause]:
@@ -388,11 +370,11 @@ def execute_audit_plan_step(
     """
     total_relevant_clauses = sum(1 for c in control_clauses if c.need_procedure)
     clauses_processed_for_plan = 0
-
+    
     if total_relevant_clauses == 0:
         logger.info("No clauses require audit planning.")
         # Set progress for this step to complete if no work to do
-        base_progress = 0.3
+        base_progress = 0.3 
         step_progress_span = 0.3 # Step 2 is 30% to 60%
         progress_callback(base_progress + step_progress_span, "Audit-Plan: No relevant clauses")
         return control_clauses
@@ -411,7 +393,7 @@ def execute_audit_plan_step(
             clauses_processed_for_plan +=1
             # Update progress
             base_progress = 0.3
-            step_progress_span = 0.3
+            step_progress_span = 0.3 
             current_step_progress = (clauses_processed_for_plan / total_relevant_clauses) * step_progress_span
             progress_callback(base_progress + current_step_progress, f"Audit-Plan: Clause {clause.id} (skipped, tasks exist)")
             continue
@@ -429,7 +411,7 @@ def execute_audit_plan_step(
         llm_response = call_llm_api(
             prompt=prompt,
             model_name=settings.llm_model_audit_plan,
-            expected_response_type="json_list"
+            expected_response_type="json_list" 
         )
 
         new_tasks: List[AuditTask] = []
@@ -449,7 +431,7 @@ def execute_audit_plan_step(
             logger.error(f"Failed to generate audit tasks for clause {clause.id}. LLM response: {llm_response}")
 
         clauses_processed_for_plan +=1
-
+        
         # Update and save run.json
         for i, run_clause in enumerate(current_project_run_data.control_clauses):
             if run_clause.id == clause.id:
@@ -461,7 +443,7 @@ def execute_audit_plan_step(
         step_progress_span = 0.3 # Step 2 (Audit-Plan) contributes 30% (e.g. from 0.3 to 0.6)
         current_step_progress = (clauses_processed_for_plan / total_relevant_clauses) * step_progress_span
         progress_callback(base_progress + current_step_progress, f"Audit-Plan: Clause {clause.id} ({len(new_tasks)} tasks)")
-
+        
     return control_clauses
 
 
@@ -488,9 +470,9 @@ def execute_search_step(
         logger.warning("No raw procedure documents were ingested. Skipping search step.")
         progress_callback(0.8, "Search: No procedure documents ingested.")
         return
-
+    
     norm_docs_procedures: List[NormDoc] = [normalize_document(doc) for doc in raw_docs_procedures]
-
+    
     # Store NormDoc original filenames for later reference in task.top_k
     norm_doc_id_to_filename: Dict[str, str] = {nd.id: nd.metadata.get("original_filename", "Unknown Filename") for nd in norm_docs_procedures}
 
@@ -509,7 +491,7 @@ def execute_search_step(
         api_key = getattr(settings, 'openai_api_key', '') # Check if PipelineSettings has this
         embeds = generate_embeddings(norm_doc, cache_service, api_key, settings.embedding_model)
         all_proc_embed_sets.extend(embeds)
-
+    
     if cancel_cb() or not all_proc_embed_sets:
         logger.info("Search step cancelled or no procedure embeddings generated.")
         progress_callback(0.8, "Search: Cancelled or no procedure embeddings.")
@@ -519,7 +501,7 @@ def execute_search_step(
     # It's good practice to ensure this path is unique per project if not per run.
     temp_index_dir = project.run_json_path.parent / f"temp_index_cache_{project.name}"
     temp_index_dir.mkdir(parents=True, exist_ok=True)
-
+    
     logger.info(f"Creating FAISS index for procedures at {temp_index_dir}...")
     proc_index_meta: Optional[IndexMeta] = create_or_load_index(
         all_proc_embed_sets, temp_index_dir, f"procedures_{project.name}", settings.embedding_model
@@ -534,7 +516,7 @@ def execute_search_step(
     # --- Iterate through Audit Tasks ---
     total_tasks_to_search = sum(len(c.tasks) for c in control_clauses if c.need_procedure and c.tasks)
     tasks_searched = 0
-
+    
     # Create a map of all EmbedSets for easy lookup by retrieve_similar_chunks
     all_embed_sets_map: Dict[str, EmbedSet] = {es.id: es for es in all_proc_embed_sets}
 
@@ -546,11 +528,11 @@ def execute_search_step(
 
         for task_idx, task in enumerate(clause.tasks):
             if cancel_cb(): break
-
+            
             # TODO: Should check if task.top_k is already populated and not empty.
             # The current model has default_factory=list, so it's always a list.
             # We should perhaps initialize it to None to distinguish.
-            if task.top_k and len(task.top_k) > 0:
+            if task.top_k and len(task.top_k) > 0: 
                 logger.debug(f"Skipping search for task '{task.id}' as top_k evidence already exists.")
                 tasks_searched += 1
                 # Update progress
@@ -565,15 +547,15 @@ def execute_search_step(
             # Embed the task sentence. This needs a way to embed a single string.
             # Reusing generate_embeddings for a single, temporary NormDoc.
             # This is a bit hacky; a dedicated embed_single_text function would be cleaner.
-            temp_task_norm_doc = NormDoc(id=f"task_{task.id}_query", raw_doc_id="task_query",
+            temp_task_norm_doc = NormDoc(id=f"task_{task.id}_query", raw_doc_id="task_query", 
                                          text_content=task.sentence, sections=[], metadata={}, doc_type="task_query_text")
             task_embed_sets = generate_embeddings(temp_task_norm_doc, cache_service, api_key, settings.embedding_model)
-
+            
             if not task_embed_sets:
                 logger.error(f"Failed to generate embedding for task: {task.id}")
                 tasks_searched += 1
                 continue
-
+            
             task_embedding = task_embed_sets[0] # Assuming one EmbedSet for the short sentence
 
             matches: List[MatchSet] = retrieve_similar_chunks(
@@ -583,7 +565,7 @@ def execute_search_step(
                 k_results=settings.audit_retrieval_top_k,
                 # faiss_index_obj and id_map_list_obj are loaded by retrieve_similar_chunks
             )
-
+            
             task.top_k = [] # Clear previous results if any, or initialize
             for match in matches:
                 matched_embed_set = all_embed_sets_map.get(match.matched_embed_set_id)
@@ -597,7 +579,7 @@ def execute_search_step(
                         "page_no": page_no,
                         "score": match.score
                     })
-
+            
             logger.info(f"Found {len(task.top_k)} evidence snippets for task {task.id}")
             tasks_searched += 1
 
@@ -632,13 +614,13 @@ def execute_judge_step(
     Executes Step 4: Judge compliance for each audit task with evidence.
     """
     logger.info("Starting Judge Step...")
-
+    
     tasks_to_judge = []
     for clause in control_clauses:
         if clause.need_procedure and clause.tasks:
             for task in clause.tasks:
                 # Only judge if top_k evidence exists and compliance not yet determined
-                if task.top_k and task.compliant is None:
+                if task.top_k and task.compliant is None: 
                     tasks_to_judge.append((clause, task)) # Store as (clause, task) tuple
 
     if not tasks_to_judge:
@@ -653,10 +635,10 @@ def execute_judge_step(
         if cancel_cb():
             logger.info("Judge step cancelled.")
             break
-
+        
         logger.info(f"Judging task: {task.id} for clause {clause.id} - {task.sentence[:50]}...")
 
-        evidence_texts = [f"Evidence {i+1} (Source: {ev.get('source_pdf', 'N/A')}, Page: {ev.get('page_no', 'N/A')}):\n{ev.get('excerpt', '')}"
+        evidence_texts = [f"Evidence {i+1} (Source: {ev.get('source_pdf', 'N/A')}, Page: {ev.get('page_no', 'N/A')}):\n{ev.get('excerpt', '')}" 
                           for i, ev in enumerate(task.top_k or [])]
         evidence_prompt_str = "\n\n".join(evidence_texts) if evidence_texts else "No evidence found."
 
@@ -685,7 +667,7 @@ def execute_judge_step(
             logger.error(f"Failed to judge compliance for task {task.id}. LLM response: {llm_response}")
 
         judged_tasks_count += 1
-
+        
         # Update original clause in current_project_run_data by finding it (or its task)
         # This is a bit complex if the list passed to this function is not the one in current_project_run_data
         # Assuming current_project_run_data.control_clauses is the source of truth that needs updating.
@@ -697,7 +679,7 @@ def execute_judge_step(
                         break
                 break
         _save_run_json(current_project_run_data, project_run_json_path)
-
+        
         base_progress = 0.8 # Judge step is 80-100%
         step_progress_span = 0.2
         current_task_progress = (judged_tasks_count / total_tasks_to_judge_count) * step_progress_span
@@ -707,17 +689,17 @@ def execute_judge_step(
 if __name__ == '__main__':
     # This is a basic test runner.
     # In a real scenario, CompareProject and PipelineSettings would be instantiated properly.
-
+    
     # Create a dummy project
     mock_project_dir = Path("temp_pipeline_test_project")
     mock_project_dir.mkdir(parents=True, exist_ok=True)
-
+    
     mock_controls_data = {
         "name": "Test Controls",
         "clauses": [
             {"id": "CTRL001", "title": "Access Control", "text": "Systems must have access control mechanisms."},
             {"id": "CTRL002", "title": "Data Backup", "text": "Regular data backups must be performed."},
-            {"id": "CTRL003", "title": "Password Policy", "text": "Strong password policies must be enforced.",
+            {"id": "CTRL003", "title": "Password Policy", "text": "Strong password policies must be enforced.", 
              "subclauses": [
                  {"id": "CTRL003.1", "text": "Passwords must be at least 12 characters."}
              ]}
@@ -761,7 +743,7 @@ if __name__ == '__main__':
     print(f"--- Running Test Pipeline for Project: {test_project.name} ---")
     print(f"Controls JSON: {test_project.controls_json_path}")
     print(f"Run JSON: {test_project.run_json_path}")
-
+    
     # Clean up previous run.json if it exists to test initialization
     if test_project.run_json_path.exists():
         test_project.run_json_path.unlink()
@@ -772,7 +754,7 @@ if __name__ == '__main__':
     if test_project.run_json_path.exists():
         print("Contents of run.json:")
         print(test_project.run_json_path.read_text())
-
+    
     # shutil.rmtree(mock_project_dir) # Clean up
     print(f"Test artifacts in {mock_project_dir}")
 
