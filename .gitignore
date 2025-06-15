@@ -18,6 +18,8 @@ logs/
 cache/
 output/
 *.meta.json
+run.json
+projects/
 
 # Test outputs
 htmlcov/

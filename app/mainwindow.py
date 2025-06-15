@@ -236,6 +236,8 @@ class MainWindow(QMainWindow):
             # Message to user is handled within _ensure_settings_configured
             return
 
+        self.apply_theme()
+
         self._cancelled = False  # Reset cancellation flag for new run
         self._progress_panel = ProgressPanel(self)  # Using new ProgressPanel
         self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)

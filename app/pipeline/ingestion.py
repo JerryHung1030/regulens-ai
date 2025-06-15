@@ -40,8 +40,8 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
         return raw_docs
 
     for file_path in procedure_pdf_paths:
-        if not file_path.is_file() or file_path.suffix.lower() != ".pdf":
-            print(f"Skipping non-PDF or non-existent file: {file_path}")
+        if not file_path.is_file() or file_path.suffix.lower() not in [".txt", ".md"]:
+            print(f"Skipping non-TXT/MD or non-existent file: {file_path}")
             continue
 
         file_hash = _calculate_file_hash(file_path)
@@ -60,13 +60,13 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
             abs_file_path = file_path.resolve()
 
             try:
-                reader = PdfReader(file_path)
-                text_by_page = [page.extract_text() or "" for page in reader.pages]
-                content = "\n".join(text_by_page)
-                metadata["num_pages"] = len(reader.pages)
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                # Optionally, add line count to metadata if useful
+                # metadata["num_lines"] = content.count('\n') + 1
             except Exception as e:
-                print(f"Error processing PDF {file_path}: {e}")
-                metadata["errors"].append(f"PDF processing error: {str(e)}")
+                print(f"Error processing TXT {file_path}: {e}")
+                metadata["errors"].append(f"TXT processing error: {str(e)}")
                 content = ""
 
             raw_doc_instance = RawDoc(
@@ -84,13 +84,16 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
                 "source_path": str(abs_file_path),
                 "original_filename": file_path.name,
                 "doc_type": doc_type,
-                "num_pages": metadata.get("num_pages"),
+                # "num_pages": metadata.get("num_pages"), # Removed
                 "num_rows": metadata.get("num_rows"),
                 "num_cols": metadata.get("num_cols"),
                 "headers": metadata.get("headers"),
                 "errors": metadata.get("errors")
             }
             meta_json_content = {k: v for k, v in meta_json_content.items() if v is not None}
+            # Ensure metadata dictionary itself doesn't carry over "num_pages"
+            if "num_pages" in metadata:
+                del metadata["num_pages"]
             
             try:
                 with open(meta_json_path, 'w', encoding='utf-8') as meta_f:
@@ -120,43 +123,34 @@ if __name__ == '__main__':
     # Control files are not ingested by this function anymore.
     # (sub_dir_controls / "control_doc1.txt").write_text("This is a control document in TXT format.", encoding="utf-8")
     
-    # Create a simple PDF for testing procedures
-    procedure_pdf_list: List[Path] = []
+    # Create simple TXT files for testing procedures
+    procedure_txt_list: List[Path] = []
+    txt_path1 = sub_dir_procedures_pdfs / "procedure_doc1.txt"
+    txt_path1.write_text("This is the content of procedure_doc1.txt.\nIt has multiple lines.", encoding="utf-8")
+    procedure_txt_list.append(txt_path1)
+    print(f"Created a dummy TXT: {txt_path1.name}")
+
+    txt_path2 = sub_dir_procedures_pdfs / "procedure_doc2.txt"
+    txt_path2.write_text("This is procedure_doc2.txt.", encoding="utf-8")
+    procedure_txt_list.append(txt_path2)
+    print(f"Created a dummy TXT: {txt_path2.name}")
+    
+    # Create a TXT file with non-utf-8 content to test error handling
+    error_txt_path = sub_dir_procedures_pdfs / "error_doc.txt"
     try:
-        from reportlab.pdfgen import canvas
-        pdf_path1 = sub_dir_procedures_pdfs / "procedure_doc1.pdf"
-        c1 = canvas.Canvas(str(pdf_path1))
-        c1.drawString(100, 750, "Procedure PDF 1, Page 1.")
-        c1.showPage()
-        c1.drawString(100, 750, "Procedure PDF 1, Page 2.")
-        c1.save()
-        procedure_pdf_list.append(pdf_path1)
-        print(f"Created a dummy PDF: {pdf_path1.name}")
-
-        pdf_path2 = sub_dir_procedures_pdfs / "procedure_doc2.pdf"
-        c2 = canvas.Canvas(str(pdf_path2))
-        c2.drawString(100, 750, "Procedure PDF 2, Single Page.")
-        c2.save()
-        procedure_pdf_list.append(pdf_path2)
-        print(f"Created a dummy PDF: {pdf_path2.name}")
-
-    except ImportError:
-        print("reportlab not found, skipping real PDF creation for test. Place PDFs manually for testing.")
-        # Create placeholder text files if reportlab is not available, but suffix them .pdf
-        placeholder_pdf1 = sub_dir_procedures_pdfs / "placeholder_proc1.pdf"
-        placeholder_pdf1.write_text("This is a placeholder for procedure PDF 1.")
-        procedure_pdf_list.append(placeholder_pdf1)
-
-        placeholder_pdf2 = sub_dir_procedures_pdfs / "placeholder_proc2.pdf"
-        placeholder_pdf2.write_text("This is a placeholder for procedure PDF 2.")
-        procedure_pdf_list.append(placeholder_pdf2)
+        with open(error_txt_path, 'wb') as f_err:
+            f_err.write(b'\xff\xfe\x00\x00This is not valid UTF-8') # Example: UTF-16 BOM with non-UTF-8 chars
+        procedure_txt_list.append(error_txt_path)
+        print(f"Created a dummy TXT with invalid encoding: {error_txt_path.name}")
+    except Exception as e_create:
+        print(f"Could not create error_doc.txt for testing: {e_create}")
 
 
-    # (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8") # No longer CSV
-    # (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0') # No longer TXT
+    # (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8")
+    # (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0')
 
-    # print(f"\nIngesting 'control' documents from: {sub_dir_controls}") # Controls no longer ingested here
-    # control_docs = ingest_documents(sub_dir_controls, "control") # This would now be an error if not a list of Paths
+    # print(f"\nIngesting 'control' documents from: {sub_dir_controls}")
+    # control_docs = ingest_documents(sub_dir_controls, "control")
     # for doc in control_docs:
     #     print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
     #     meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
@@ -165,20 +159,22 @@ if __name__ == '__main__':
     #         with open(meta_json_file, 'r') as f_meta:
     #             print(f"  Meta JSON content: {json.load(f_meta)}")
 
-    print(f"\nIngesting 'procedure' PDF documents from list: {procedure_pdf_list}")
-    procedure_docs = ingest_documents(procedure_pdf_list, "procedure") # Pass list of paths
+    print(f"\nIngesting 'procedure' TXT documents from list: {procedure_txt_list}")
+    procedure_docs = ingest_documents(procedure_txt_list, "procedure") # Pass list of paths
     for doc in procedure_docs:
         print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
         meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
         print(f"  Meta JSON exists: {meta_json_file.exists()}")
         if meta_json_file.exists():
             with open(meta_json_file, 'r') as f_meta:
-                print(f"  Meta JSON content: {json.load(f_meta)}")
+                loaded_meta = json.load(f_meta)
+                print(f"  Meta JSON content: {loaded_meta}")
+                assert "num_pages" not in loaded_meta # Ensure num_pages is not in the meta file
 
     # Test with a non-existent directory (now an empty list or list with non-existent paths)
-    print("\nIngesting from a list with a non-existent PDF path:")
-    non_existent_pdf_path = Path("non_existent_dir_test/non_existent.pdf") # This path won't exist
-    non_existent_docs = ingest_documents([non_existent_pdf_path], "error_test")
+    print("\nIngesting from a list with a non-existent TXT path:")
+    non_existent_txt_path = Path("non_existent_dir_test/non_existent.txt") # This path won't exist
+    non_existent_docs = ingest_documents([non_existent_txt_path], "error_test")
     print(f"  Number of documents found: {len(non_existent_docs)}")
 
     print("\nIngesting from an empty list:")

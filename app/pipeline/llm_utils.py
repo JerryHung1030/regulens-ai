@@ -39,9 +39,9 @@ def call_llm_api(
 
     client = OpenAI(api_key=api_key)
 
-    system_message_content = "You are an AI assistant helping with compliance audits. Please provide responses in the requested JSON format."
+    system_message_content = "You are an AI assistant helping with compliance audits. Please provide responses in the requested JSON format. All textual content in your response that is intended for human reading (like reasoning or descriptions) should be in Traditional Chinese, using Taiwan-specific terminology (請使用台灣常用的繁體中文)."
     if expected_response_type in ["boolean", "json_list", "json_object"]:
-        system_message_content = "Ensure your response is a single, valid JSON object (or list of objects) as described, without any surrounding text or explanations."
+        system_message_content = "Ensure your response is a single, valid JSON object (or list of objects) as described, without any surrounding text or explanations. All textual content within the JSON that is intended for human reading (e.g., audit task sentences, reasoning) should be in Traditional Chinese, using Taiwan-specific terminology (請使用台灣常用的繁體中文)."
 
     messages = [
         {"role": "system", "content": system_message_content},

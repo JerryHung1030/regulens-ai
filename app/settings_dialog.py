@@ -142,22 +142,11 @@ class SettingsDialog(QDialog):
             logger.error(f"Error loading themes: {e}")
             self.theme_combo.addItems(["light", "dark", "system"])
         
-        self.general_app_theme_label = layout.addRow(self.translator.get("settings_label_app_theme", "Application Theme:"), self.theme_combo)
-        # For QFormLayout, addRow returns the QLabel it creates if a string is passed for the label.
-        # We need to retrieve it to update it later.
-        # However, the most robust way is to create QLabel explicitly if we want to store and update it.
-        # For this iteration, let's assume direct update or simpler retrieval.
-        # If QFormLayout.labelForField is not working as expected, we might need to store the QLabel object created by addRow.
-        # Let's assume storing the layout and iterating or finding label by field for now.
-        # For simplicity, I will create QLabels and store them.
-        
-        # Re-doing with explicit QLabel for easier storage and update
-        page_layout = QFormLayout()
         self.general_app_theme_label = QLabel(self.translator.get("settings_label_app_theme", "Application Theme:"))
-        page_layout.addRow(self.general_app_theme_label, self.theme_combo)
+        layout.addRow(self.general_app_theme_label, self.theme_combo)
         
         container = QWidget()
-        container.setLayout(page_layout)
+        container.setLayout(layout)
         return container
 
     def _build_models_tab(self) -> QWidget:
@@ -274,7 +263,10 @@ class SettingsDialog(QDialog):
 
         # General Tab
         current_theme_value = s.get("theme", "system")
-        self.theme_combo.setCurrentText(current_theme_value.capitalize())
+        # 確保 theme_combo 中有 system 選項
+        if "system" not in [self.theme_combo.itemText(i).lower() for i in range(self.theme_combo.count())]:
+            self.theme_combo.addItem("system")
+        self.theme_combo.setCurrentText(current_theme_value)
 
         # Models Tab
         self.key_edit.setText(s.get("openai.api_key", "")) # Ensure key matches new config_default structure

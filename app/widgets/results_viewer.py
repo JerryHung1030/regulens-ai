@@ -331,7 +331,9 @@ class ResultsViewer(QWidget):
 
         current_row = 0
         for clause in self.project.project_run_data.control_clauses:
-            clause_title = clause.metadata.get("title", clause.id)  # Use ID if title not in metadata
+            # clause_title = clause.metadata.get("title", clause.id)  # Use ID if title not in metadata
+            clause_display_content = clause.text # Get the full text from the clause object
+            elided_clause_content = elide_text(clause_display_content, max_length=100) # Elide it
 
             requires_proc_text = "N/A"
             if clause.need_procedure is True: requires_proc_text = self.tr("yes", "Yes")
@@ -344,7 +346,7 @@ class ResultsViewer(QWidget):
                 item_clause_id.setData(Qt.UserRole, clause.id)
                 self.table_widget.setItem(current_row, 0, item_clause_id)
 
-                self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
+                self.table_widget.setItem(current_row, 1, QTableWidgetItem(elided_clause_content))
                 self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
 
                 item_task_id_na = QTableWidgetItem("N/A") # Task ID
@@ -361,7 +363,7 @@ class ResultsViewer(QWidget):
                     item_clause_id.setData(Qt.UserRole, clause.id)
                     self.table_widget.setItem(current_row, 0, item_clause_id)
 
-                    self.table_widget.setItem(current_row, 1, QTableWidgetItem(clause_title))
+                    self.table_widget.setItem(current_row, 1, QTableWidgetItem(elided_clause_content))
                     self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
 
                     item_task_id = QTableWidgetItem(task.id)

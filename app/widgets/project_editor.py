@@ -127,14 +127,14 @@ class ProjectEditor(QWidget):
         # Procedures Row
         procedures_row_layout = QHBoxLayout()
         procedures_row_layout.setAlignment(Qt.AlignVCenter)
-        procedures_label = QLabel("Procedure PDF Files:")
-        procedures_label.setObjectName("procedure_pdf_files_label")
+        procedures_label = QLabel("Procedure Documents:")
+        procedures_label.setObjectName("procedure_doc_files_label")
         procedures_label.setFixedWidth(180)
         procedures_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         procedures_row_layout.addWidget(procedures_label)
 
         browse_proc_button = QPushButton("Browse…")
-        browse_proc_button.setObjectName("procedure_pdf_files_browse_button")
+        browse_proc_button.setObjectName("procedure_doc_files_browse_button")
         browse_proc_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         browse_proc_button.clicked.connect(self._pick_proc)
         procedures_row_layout.addWidget(browse_proc_button)
@@ -195,17 +195,17 @@ class ProjectEditor(QWidget):
         procedures_tab_layout = QVBoxLayout(procedures_tab_content_widget)
         procedures_tab_layout.setContentsMargins(0,0,0,0)
         procedures_splitter = QSplitter(Qt.Horizontal)
-        self.procedures_list_view = QListView() # Lists selected PDF files
+        self.procedures_list_view = QListView() # Lists selected document files
         self.procedures_list_view.setObjectName("proceduresListView")
-        self.procedures_list_view.clicked.connect(self._on_procedure_pdf_selected)
+        self.procedures_list_view.clicked.connect(self._on_procedure_doc_selected)
         procedures_splitter.addWidget(self.procedures_list_view)
-        self.procedures_text_preview = QTextEdit() # Displays path or basic info of selected PDF
+        self.procedures_text_preview = QTextEdit() # Displays content of selected document
         self.procedures_text_preview.setReadOnly(True)
         self.procedures_text_preview.setObjectName("proceduresTextPreview")
         procedures_splitter.addWidget(self.procedures_text_preview)
         procedures_splitter.setSizes([200, 300])
         procedures_tab_layout.addWidget(procedures_splitter)
-        self.preview_tab_widget.addTab(procedures_tab_content_widget, "Procedure PDFs")
+        self.preview_tab_widget.addTab(procedures_tab_content_widget, "Procedure Documents")
 
         # Evidences tab is no longer created.
 
@@ -258,7 +258,7 @@ class ProjectEditor(QWidget):
         self._update_preview_ui_state()
 
     # _handle_tree_selection is removed as QFileSystemModel is no longer the primary way to show file previews.
-    # Instead, _update_controls_preview and _on_procedure_pdf_selected handle content display.
+    # Instead, _update_controls_preview and _on_procedure_txt_selected handle content display.
 
     def _toggle_preview_visibility(self):
         self._preview_is_visible = not self._preview_is_visible
@@ -357,65 +357,62 @@ class ProjectEditor(QWidget):
             self.controls_json_preview.setText(msg)
             return
 
-        # Schema validation
-        # ... (validation logic as defined in previous steps)
-        # Example simplified validation:
-        if not isinstance(data, dict) or "name" not in data or "clauses" not in data:
-             msg = "JSON must be an object with 'name' and 'clauses' keys."
-             QMessageBox.critical(self, "Validation Error", msg)
-             self.controls_json_preview.setText(msg)
-             return
-
-        # Recursive validation for clauses and subclauses
-        def validate_clause_structure(clause_item, path_prefix):
-            if not isinstance(clause_item, dict):
-                return f"Item at {path_prefix} is not a valid clause object."
-            required_keys = ["id", "title", "text"]
-            for key in required_keys:
-                if key not in clause_item:
-                    return f"Missing key '{key}' in clause at {path_prefix}."
-                if not isinstance(clause_item[key], str):
-                    return f"Key '{key}' in clause at {path_prefix} must be a string."
-            if "subclauses" in clause_item:
-                if not isinstance(clause_item["subclauses"], list):
-                    return f"'subclauses' at {path_prefix} must be an array."
-                for i, sub_item in enumerate(clause_item["subclauses"]):
-                    if isinstance(sub_item, str): # Simple string subclause
-                        continue
-                    err = validate_clause_structure(sub_item, f"{path_prefix}.subclauses[{i}]")
-                    if err:
-                        return err
-            return None
-
-        if not isinstance(data.get("clauses"), list):
-            msg = "'clauses' must be an array."
+        # New simplified validation logic
+        if not isinstance(data, dict):
+            msg = "JSON must be an object."
             QMessageBox.critical(self, "Validation Error", msg)
             self.controls_json_preview.setText(msg)
             return
 
-        for i, clause in enumerate(data["clauses"]):
-            error = validate_clause_structure(clause, f"clauses[{i}]")
-            if error:
-                QMessageBox.critical(self, "Validation Error", error)
-                self.controls_json_preview.setText(error)
+        if "name" not in data:
+            msg = "Missing 'name' key in JSON."
+            QMessageBox.critical(self, "Validation Error", msg)
+            self.controls_json_preview.setText(msg)
+            return
+
+        if not isinstance(data["name"], str):
+            msg = "'name' key must be a string."
+            QMessageBox.critical(self, "Validation Error", msg)
+            self.controls_json_preview.setText(msg)
+            return
+
+        for key, value in data.items():
+            if key == "name":
+                continue  # Already validated
+            if not isinstance(value, str):
+                msg = f"Value for key '{key}' must be a string."
+                QMessageBox.critical(self, "Validation Error", msg)
+                self.controls_json_preview.setText(msg)
                 return
 
-        success_msg = "Controls JSON structure is valid."
+        success_msg = "Controls JSON structure is valid according to the new simplified schema."
         QMessageBox.information(self, "Validation Successful", success_msg)
-        self.controls_json_preview.setText(success_msg)
-        # self._update_controls_preview() # Already called by _refresh after project.changed
+        # Update preview with formatted JSON if valid, or success message
+        try:
+            formatted_json = json.dumps(data, indent=4, ensure_ascii=False)
+            self.controls_json_preview.setText(formatted_json) # Show formatted JSON on success
+        except Exception as e: # Should not happen if previous validation passed
+             logger.error(f"Error formatting validated JSON for preview: {e}")
+             self.controls_json_preview.setText(success_msg) # Fallback to success message
+        # self._update_controls_preview() # Already called by _refresh after project.changed,
+        # but direct update here gives immediate feedback on validation.
 
     def _pick_proc(self):
-        # Pick multiple PDF files for procedures
+        # Pick multiple document files for procedures
         start_dir = str(Path.home())
-        if self.project.procedure_pdf_paths:
-            first_valid_path = next((p for p in self.project.procedure_pdf_paths if p.exists()), None)
+        if self.project.procedure_doc_paths:
+            first_valid_path = next((p for p in self.project.procedure_doc_paths if p.exists()), None)
             if first_valid_path:
                 start_dir = str(first_valid_path.parent if first_valid_path.is_file() else first_valid_path)
 
-        file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Procedure PDF Files", start_dir, "PDF Files (*.pdf)")
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self, 
+            "Select Procedure Documents", 
+            start_dir, 
+            "Text Files (*.txt);;Markdown Files (*.md);;All Files (*.*)"
+        )
         if file_paths:
-            self.project.procedure_pdf_paths = [Path(fp) for fp in file_paths]
+            self.project.procedure_doc_paths = [Path(fp) for fp in file_paths]
             self.project.changed.emit() # Triggers _refresh
             self._proc_edit.setFocus()
             # _update_procedures_preview() will be called by _refresh
@@ -444,25 +441,28 @@ class ProjectEditor(QWidget):
             self.controls_json_preview.clear()
 
     def _update_procedures_preview(self):
-        if self.project.procedure_pdf_paths:
-            model = QStringListModel([p.name for p in self.project.procedure_pdf_paths])
+        if self.project.procedure_doc_paths:
+            model = QStringListModel([p.name for p in self.project.procedure_doc_paths])
             self.procedures_list_view.setModel(model)
         else:
             self.procedures_list_view.setModel(QStringListModel([]))
         self.procedures_text_preview.clear() # Clear text preview when list reloads
 
-    def _on_procedure_pdf_selected(self, index):
-        # Display file path or basic info for the selected PDF
-        if not self.project.procedure_pdf_paths or not index.isValid():
+    def _on_procedure_doc_selected(self, index):
+        # Display content of the selected document file
+        if not self.project.procedure_doc_paths or not index.isValid():
             self.procedures_text_preview.clear()
             return
 
         selected_path_index = index.row()
-        if 0 <= selected_path_index < len(self.project.procedure_pdf_paths):
-            pdf_path = self.project.procedure_pdf_paths[selected_path_index]
-            # Basic text extraction could be attempted here if desired (e.g. using PyMuPDF)
-            # For now, just display path and placeholder
-            self.procedures_text_preview.setText(f"Selected: {pdf_path}\n\n(PDF content preview not yet implemented)")
+        if 0 <= selected_path_index < len(self.project.procedure_doc_paths):
+            doc_path = self.project.procedure_doc_paths[selected_path_index]
+            try:
+                with open(doc_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                self.procedures_text_preview.setText(content)
+            except Exception as e:
+                self.procedures_text_preview.setText(f"Error reading file: {e}")
         else:
             self.procedures_text_preview.clear()
 
@@ -501,11 +501,11 @@ class ProjectEditor(QWidget):
         self._ctrl_edit.setText(controls_path_str)
         self.validate_json_button.setEnabled(bool(self.project.controls_json_path and self.project.controls_json_path.exists()))
 
-        if self.project.procedure_pdf_paths:
-            if len(self.project.procedure_pdf_paths) == 1:
-                procedures_display_str = str(self.project.procedure_pdf_paths[0])
+        if self.project.procedure_doc_paths:
+            if len(self.project.procedure_doc_paths) == 1:
+                procedures_display_str = str(self.project.procedure_doc_paths[0])
             else:
-                procedures_display_str = f"{len(self.project.procedure_pdf_paths)} PDF files selected"
+                procedures_display_str = f"{len(self.project.procedure_doc_paths)} documents selected"
         else:
             procedures_display_str = ""
         self._proc_edit.setText(procedures_display_str)

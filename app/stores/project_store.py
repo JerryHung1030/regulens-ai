@@ -60,7 +60,7 @@ class ProjectStore(QObject):
         project1 = CompareProject(
             name="資通安全情資分享辦法 (Demo)",
             controls_json_path=sample_base_dir / "sample1" / "controls" / "external.json",
-            procedure_pdf_paths=[sample_base_dir / "sample1" / "procedures" / "internal.pdf"], # Changed "evidences" to "procedures"
+            procedure_doc_paths=[sample_base_dir / "sample1" / "procedures" / "internal.md"],
             run_json_path=sample_base_dir / "sample1" / "run.json",
             is_sample=True
         )

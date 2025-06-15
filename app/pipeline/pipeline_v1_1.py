@@ -435,13 +435,13 @@ def execute_search_step(
     Executes Step 3: Search for relevant procedure chunks for each audit task.
     """
     logger.info("Starting Search Step: Processing procedure documents...")
-    if not project.procedure_pdf_paths:
-        logger.warning("No procedure PDF paths found in project. Skipping search step.")
-        progress_callback(0.8, "Search: No procedure PDFs to process.") # Assuming Search is 60-80%
+    if not project.procedure_doc_paths:  # 改為更通用的名稱
+        logger.warning("No procedure document paths found in project. Skipping search step.")
+        progress_callback(0.8, "Search: No procedure documents to process.")
         return
 
-    # --- Procedure PDF Processing ---
-    raw_docs_procedures: List[RawDoc] = ingest_documents(project.procedure_pdf_paths, "procedure")
+    # --- Procedure Document Processing ---
+    raw_docs_procedures: List[RawDoc] = ingest_documents(project.procedure_doc_paths, "procedure")
     if not raw_docs_procedures:
         logger.warning("No raw procedure documents were ingested. Skipping search step.")
         progress_callback(0.8, "Search: No procedure documents ingested.")
@@ -543,12 +543,12 @@ def execute_search_step(
             for match in matches:
                 matched_embed_set = all_embed_sets_map.get(match.matched_embed_set_id)
                 if matched_embed_set:
-                    source_filename = norm_doc_id_to_filename.get(matched_embed_set.norm_doc_id, "Unknown Source PDF")
+                    source_filename = norm_doc_id_to_filename.get(matched_embed_set.norm_doc_id, "Unknown Source TXT")
                     # Page number might be in matched_embed_set.metadata if populated during embedding/chunking
                     page_no = matched_embed_set.metadata.get("page_number", "N/A") # Example key
                     task.top_k.append({
                         "excerpt": matched_embed_set.chunk_text,
-                        "source_pdf": source_filename,
+                        "source_txt": source_filename,
                         "page_no": page_no,
                         "score": match.score
                     })
@@ -611,7 +611,7 @@ def execute_judge_step(
         
         logger.info(f"Judging task: {task.id} for clause {clause.id} - {task.sentence[:50]}...")
 
-        evidence_texts = [f"Evidence {i+1} (Source: {ev.get('source_pdf', 'N/A')}, Page: {ev.get('page_no', 'N/A')}):\n{ev.get('excerpt', '')}" 
+        evidence_texts = [f"Evidence {i+1} (Source: {ev.get('source_txt', 'N/A')}, Page: {ev.get('page_no', 'N/A')}):\n{ev.get('excerpt', '')}" 
                           for i, ev in enumerate(task.top_k or [])]
         evidence_prompt_str = "\n\n".join(evidence_texts) if evidence_texts else "No evidence found."
 
