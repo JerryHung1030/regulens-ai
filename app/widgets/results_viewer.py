@@ -392,20 +392,16 @@ class ResultsViewer(QWidget):
                                 self.tr("no_data_to_export_message", "Project run data is not loaded or available. Cannot export CSV."))
             return
 
-        project_name_safe = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in self.project.name)
+        # 使用更安全的文件名生成方式
+        project_name_safe = re.sub(r'[^\w\s-]', '', self.project.name)  # 移除特殊字符
+        project_name_safe = re.sub(r'[-\s]+', '_', project_name_safe).strip('-_')  # 將空格和連字符轉換為底線
         if not project_name_safe.strip():
             project_name_safe = "Untitled_Project"
 
-        # Attempt to get a run datetime from metadata if it exists on ProjectRunData
-        run_datetime_str = "latest" # Default if not found
-        # Assuming project_run_data might have a 'metadata' attribute that is a dict
-        # And that dict might have 'run_start_time' or similar. This is speculative.
-        # For now, let's assume ProjectRunData itself doesn't store this directly yet.
-        # We can add a timestamp to ProjectRunData later if needed.
-        # if hasattr(self.project.project_run_data, 'metadata_custom') and self.project.project_run_data.metadata_custom:
-        #     run_datetime_str = self.project.project_run_data.metadata_custom.get("run_datetime", "latest")
-
-        suggested_filename = f"{project_name_safe}_audit_results_{run_datetime_str}.csv"
+        # 添加時間戳以避免文件名衝突
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        suggested_filename = f"{project_name_safe}_audit_results_{timestamp}.csv"
 
         target_file_path_str, selected_filter = QFileDialog.getSaveFileName(
             self,
@@ -418,9 +414,12 @@ class ResultsViewer(QWidget):
             return # User cancelled
 
         target_file_path = Path(target_file_path_str)
+        
+        # 確保目標目錄存在
+        target_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         headers = [
-            "project_name", #"run_datetime", # Add if available
+            "project_name",
             "control_clause_id", "control_clause_title", "control_clause_text",
             "requires_procedure",
             "audit_task_id", "audit_task_sentence",
@@ -428,67 +427,77 @@ class ResultsViewer(QWidget):
             "evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"
         ]
 
-        try:
-            with open(target_file_path, 'w', newline='', encoding='utf-8') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=headers, quoting=csv.QUOTE_ALL)
-                writer.writeheader()
+        max_retries = 3
+        retry_delay = 1  # 秒
 
-                for clause in self.project.project_run_data.control_clauses:
-                    clause_title = clause.metadata.get("title", "")
-                    requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
-                    
-                    base_row_data = {
-                        "project_name": self.project.name,
-                        # "run_datetime": run_datetime_str,
-                        "control_clause_id": clause.id,
-                        "control_clause_title": clause_title,
-                        "control_clause_text": clause.text,
-                        "requires_procedure": requires_procedure,
-                    }
+        for attempt in range(max_retries):
+            try:
+                with open(target_file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=headers, quoting=csv.QUOTE_ALL)
+                    writer.writeheader()
 
-                    if not clause.tasks:
-                        row_data = base_row_data.copy()
-                        for key in headers: # Ensure all headers present
-                            if key not in row_data: row_data[key] = ""
-                        writer.writerow(row_data)
-                    else:
-                        for task in clause.tasks:
-                            task_row_data = base_row_data.copy()
-                            task_row_data.update({
-                                "audit_task_id": task.id,
-                                "audit_task_sentence": task.sentence,
-                                "compliant": str(task.compliant) if task.compliant is not None else "",
-                                "judge_reasoning": task.metadata.get("judge_reasoning", ""),
-                            })
+                    for clause in self.project.project_run_data.control_clauses:
+                        clause_title = clause.metadata.get("title", "")
+                        requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
+                        
+                        base_row_data = {
+                            "project_name": self.project.name,
+                            "control_clause_id": clause.id,
+                            "control_clause_title": clause_title,
+                            "control_clause_text": clause.text,
+                            "requires_procedure": requires_procedure,
+                        }
 
-                            if not task.top_k: # Task has no top_k evidence
-                                for key_ev in ["evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"]:
-                                    task_row_data[key_ev] = ""
-                                writer.writerow(task_row_data)
-                            else:
-                                for evidence_item in task.top_k: # Create a row for each piece of evidence
-                                    evidence_row_data = task_row_data.copy()
-                                    evidence_row_data.update({
-                                        "evidence_source_pdf": evidence_item.get("source_pdf", ""),
-                                        "evidence_excerpt": evidence_item.get("excerpt", ""),
-                                        "evidence_page_number": str(evidence_item.get("page_no", "")),
-                                        "evidence_score": f"{evidence_item.get('score', ''):.4f}" if isinstance(evidence_item.get('score'), float) else str(evidence_item.get('score', ''))
-                                    })
-                                    writer.writerow(evidence_row_data)
+                        if not clause.tasks:
+                            row_data = base_row_data.copy()
+                            for key in headers:
+                                if key not in row_data: row_data[key] = ""
+                            writer.writerow(row_data)
+                        else:
+                            for task in clause.tasks:
+                                task_row_data = base_row_data.copy()
+                                task_row_data.update({
+                                    "audit_task_id": task.id,
+                                    "audit_task_sentence": task.sentence,
+                                    "compliant": str(task.compliant) if task.compliant is not None else "",
+                                    "judge_reasoning": task.metadata.get("judge_reasoning", ""),
+                                })
 
-            QMessageBox.information(self,
+                                if not task.top_k:
+                                    for key_ev in ["evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"]:
+                                        task_row_data[key_ev] = ""
+                                    writer.writerow(task_row_data)
+                                else:
+                                    for evidence_item in task.top_k:
+                                        evidence_row_data = task_row_data.copy()
+                                        evidence_row_data.update({
+                                            "evidence_source_pdf": evidence_item.get("source_pdf", ""),
+                                            "evidence_excerpt": evidence_item.get("excerpt", ""),
+                                            "evidence_page_number": str(evidence_item.get("page_no", "")),
+                                            "evidence_score": f"{evidence_item.get('score', ''):.4f}" if isinstance(evidence_item.get('score'), float) else str(evidence_item.get('score', ''))
+                                        })
+                                        writer.writerow(evidence_row_data)
+
+                QMessageBox.information(self,
                                     self.tr("csv_exported_dialog_title", "CSV Exported"),
                                     self.tr("csv_exported_dialog_message", "Results successfully exported to: {filepath}").format(filepath=target_file_path))
-        except IOError as e:
-            logger.error(f"IOError exporting CSV for project {self.project.name} to {target_file_path}: {e}", exc_info=True)
-            QMessageBox.critical(self,
+                return  # 成功導出，退出函數
+
+            except IOError as e:
+                logger.error(f"IOError exporting CSV for project {self.project.name} to {target_file_path}: {e}", exc_info=True)
+                if attempt < max_retries - 1:
+                    import time
+                    time.sleep(retry_delay)
+                    continue
+                QMessageBox.critical(self,
                                  self.tr("export_error_dialog_title", "Export Error"),
-                                 self.tr("export_error_dialog_message_csv", "Could not write CSV file: {error}").format(error=e))
-        except Exception as e:
-            logger.error(f"Unexpected error during CSV export for project {self.project.name}: {e}", exc_info=True)
-            QMessageBox.critical(self,
+                                 self.tr("export_error_dialog_message_csv", "Could not write CSV file: {error}\n\nPlease try saving to a different location.").format(error=e))
+            except Exception as e:
+                logger.error(f"Unexpected error during CSV export for project {self.project.name}: {e}", exc_info=True)
+                QMessageBox.critical(self,
                                  self.tr("export_error_dialog_title", "Export Error"),
                                  self.tr("unexpected_export_error_dialog_message", "An unexpected error occurred during CSV export: {error}").format(error=e))
+                return
 
     # Old _export_report method, to be replaced by _export_result_csv
     # def _export_report(self):

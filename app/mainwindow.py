@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
 
     def _ensure_settings_configured(self) -> bool:
         required_fields = [
-            "openai_api_key",
+            "openai.api_key", # Changed from "openai_api_key"
             "embedding_model",
             # New specific model settings:
             "llm.model_need_check",
@@ -191,20 +191,15 @@ class MainWindow(QMainWindow):
             "llm.model_judge",
             # audit.retrieval_top_k is not listed as it has a default in PipelineSettings.
         ]
-        # If specific models are not set, the general "llm_model" might be used as a fallback.
-        # Check if all specific new LLM models are configured.
-        specific_models = [
-            self.settings.get("llm.model_need_check"),
-            self.settings.get("llm.model_audit_plan"),
-            self.settings.get("llm.model_judge")
-        ]
-        specific_models_set = all(specific_models)
-        if not specific_models_set:
-            # If specific ones aren't fully set, ensure 'llm_model' (general fallback) is checked.
-            if not self.settings.get("llm_model") and "llm_model" not in required_fields:
-                 required_fields.append("llm_model")
+        # The check for "llm_model" as a fallback is removed as it's deprecated.
+        # The specific models llm.model_need_check, llm.model_audit_plan, llm.model_judge
+        # are now the primary ones to check.
 
         missing_fields = [field for field in required_fields if not self.settings.get(field)]
+        
+        # Check if the primary key 'openai.api_key' is missing or empty string
+        # The previous list comprehension for missing_fields already covers this.
+        # For example, if settings.get("openai.api_key") returns None or "", it's in missing_fields.
 
         if missing_fields:
             msg_box = QMessageBox(self)

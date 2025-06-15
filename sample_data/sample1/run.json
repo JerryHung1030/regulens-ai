@@ -5,77 +5,1963 @@
             "id": "C001",
             "text": "資通安全情資分享辦法依資通安全管理法（以下簡稱資通安全管理法）第八條第二項規定訂定之。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that the information security intelligence sharing method is established in accordance with Article 8, Paragraph 2 of the Information Security Management Act.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not explicitly confirm that the information security intelligence sharing method is established in accordance with Article 8, Paragraph 2 of the Information Security Management Act. While the evidence mentions procedures for collecting, managing, and sharing security intelligence, it lacks specific references to compliance with the legal requirements outlined in the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check for documentation that outlines the procedures for information security intelligence sharing as per the Information Security Management Act.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided indicates that there are documented procedures for information security intelligence sharing, including the management and sharing of security intelligence, maintaining records, and ensuring compliance with legal requirements. The procedures cover aspects such as threat detection, vulnerability recording, and sharing protocols, which align with the requirements of the Information Security Management Act."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that the information security intelligence sharing method complies with the requirements specified in Article 8, Paragraph 2 of the Information Security Management Act.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided indicates that the information security intelligence sharing method includes measures to ensure compliance with Article 8, Paragraph 2 of the Information Security Management Act. The evidence shows that there are processes for obtaining necessary consents, maintaining records, ensuring data protection, and managing security intelligence effectively. These measures align with the requirements of the control clause, demonstrating effective implementation."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Review the implementation of the information security intelligence sharing method to confirm alignment with the Information Security Management Act.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization has implemented a comprehensive information security intelligence sharing method. The processes include obtaining necessary consents, maintaining records, ensuring data anonymization, and preventing unauthorized access. The information security department manages and preserves records, ensuring traceability and compliance with the Information Security Management Act."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Assess whether the information security intelligence sharing method has been updated to reflect any amendments to Article 8, Paragraph 2 of the Information Security Management Act.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not explicitly mention any updates to the information security intelligence sharing method in response to amendments to Article 8, Paragraph 2 of the Information Security Management Act. The documents focus on maintaining system integrity, threat analysis, and sharing procedures, but do not confirm compliance with the specific legislative updates required by the audit task."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": false
+                }
+            ]
         },
         {
             "id": "C002",
             "text": "資通安全情資分享辦法所稱資通安全情資（以下簡稱情資），指包括下列任一款內容之資訊：\n一、資通系統之惡意偵察或情蒐活動。\n二、資通系統之安全漏洞。\n三、使資通系統安全控制措施無效或利用安全漏洞之方法。\n四、與惡意程式相關之資訊。\n五、資通安全事件造成之實際損害或可能產生之負面影響。\n六、用以偵測、預防或因應前五款情形，或降低其損害之相關措施。\n七、其他與資通安全事件相關之技術性資訊。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify the documentation of information related to malicious reconnaissance or intelligence gathering activities on information systems.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization has documented processes for detecting and recording malicious reconnaissance or intelligence gathering activities. Evidence 1 explicitly mentions the detection and recording of such activities, and the management of related information by the information security department. Additionally, the evidence shows that there are procedures for maintaining and managing security intelligence to enhance system protection and reduce risks, which aligns with the requirements of the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check for records of identified security vulnerabilities in information systems.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the organization maintains records of identified security vulnerabilities, as required by the audit task. Evidence 1 mentions the detection and recording of vulnerabilities, and the management of security intelligence to enhance system protection. Evidence 3 further supports this by describing threat and vulnerability analysis, and the implementation of preventive or responsive measures. These practices align with the control clause requirements for managing information related to security vulnerabilities."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure there are documented methods that invalidate security controls or exploit vulnerabilities in information systems.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence demonstrates that there are documented methods for detecting, recording, and managing vulnerabilities and threats in information systems. Evidence 2 specifically mentions the detection and recording of malicious reconnaissance activities and vulnerabilities, which aligns with the audit task requirement to have documented methods that invalidate security controls or exploit vulnerabilities. Additionally, the evidence shows a comprehensive approach to maintaining system integrity and managing security information, supporting compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Review the information related to malicious software.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization has implemented processes for monitoring, detecting, and recording malicious reconnaissance activities, as well as maintaining and managing information related to malicious software. This includes maintaining system integrity, recording vulnerabilities, and managing security intelligence to enhance system protection and reduce security incident risks. The evidence supports compliance with the control clause related to sharing information about malicious software."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Assess the documentation of actual damages or potential negative impacts caused by information security incidents.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided demonstrates that the organization has documented procedures and records for assessing and managing information security incidents, including the documentation of actual damages or potential negative impacts. Evidence 2 and 3 specifically mention the detection, recording, and management of security threats and vulnerabilities, as well as the implementation of measures to reduce potential damages. These align with the requirements of the control clause regarding the documentation of security incidents and their impacts."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Evaluate the measures documented for detecting, preventing, or responding to the first five conditions, or for mitigating their damages.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence demonstrates that measures are in place for detecting, preventing, and responding to the specified conditions. Evidence 1 and 2 detail the use of threat and vulnerability analysis, behavior analysis, and threat intelligence comparison to mitigate risks. Evidence 2 further confirms the detection and recording of malicious reconnaissance activities and vulnerabilities. Evidence 3 outlines procedures for sharing security intelligence while maintaining confidentiality and compliance. Collectively, these measures align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_007",
+                    "sentence": "Examine the technical information related to information security incidents.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence demonstrates that the organization has implemented processes to monitor, detect, and record information security incidents, including malicious reconnaissance, vulnerabilities, and methods to exploit them. There are procedures for maintaining and managing security information to enhance system protection and reduce risks. The organization also conducts threat and vulnerability analysis, takes preventive measures, and manages information sharing with appropriate controls and documentation. These actions align with the requirements of the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5038478076670972
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.48453972264826245
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4171668111659325
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C003",
             "text": "1   主管機關應就情資分享事宜進行國際合作。\n2   主管機關應適時與公務機關進行情資分享。\n3   公務機關應適時與主管機關進行情資分享。但情資已依前項規定分享或已經公開者，不在此限。\n4   中央目的事業主管機關應適時與其所管之特定非公務機關進行情資分享。\n5   特定非公務機關得與中央目的事業主管機關進行情資分享。\n6   前項分享之情資，經中央目的事業主管機關認定足以防止其他機關資通安全事件之發生或降低其損害者，中央目的事業主管機關得予以獎勵。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that the competent authority has established international cooperation for information sharing.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not mention any international cooperation for information sharing, which is required by the audit task. The evidence focuses on internal procedures and compliance measures but lacks any reference to international collaboration."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if the competent authority shares information with public agencies in a timely manner.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not explicitly demonstrate that the competent authority shares information with public agencies in a timely manner. While there are references to information sharing processes and management, there is no specific mention of timely sharing with public agencies as required by the audit task."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure public agencies share information with the competent authority unless it has already been shared or made public.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that public agencies maintain a flexible information-sharing process with competent authorities, ensuring that sensitive information is protected and shared appropriately. There are procedures for obtaining written consent before sharing, and records are kept to ensure traceability. The evidence also shows that information is shared using approved methods and is anonymized or masked based on sensitivity. These practices align with the control clause requirements for timely information sharing with competent authorities, except when information has already been shared or made public."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Confirm that the central competent authority shares information with specific non-public agencies under its jurisdiction in a timely manner.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence does not explicitly confirm that the central competent authority shares information with specific non-public agencies under its jurisdiction in a timely manner. The evidence focuses on internal processes, security measures, and compliance checks but lacks direct references to timely information sharing with non-public agencies as required by the audit task."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Verify that specific non-public agencies are allowed to share information with the central competent authority.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that specific non-public agencies are allowed to share information with the central competent authority, as it mentions the requirement for written consent from the central competent authority before sharing, and the maintenance of records for traceability. This aligns with the audit task of verifying that specific non-public agencies are allowed to share information with the central competent authority."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Check if the central competent authority provides incentives for information sharing that prevents or mitigates information security incidents.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not mention any incentives or rewards given by the central competent authority for information sharing that prevents or mitigates information security incidents. The focus is on information sharing procedures, security measures, and compliance, but there is no indication of a reward system as required by the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": false
+                }
+            ]
         },
         {
             "id": "C004",
             "text": "1   情資有下列情形之一者，不得分享：\n一、涉及個人、法人或團體營業上秘密或經營事業有關之資訊，其公開或提供有侵害公務機關、個人、法人或團體之權利或其他正當利益。但法規另有規定，或對公益有必要，或為保護人民生命、身體、健康有必要，或經當事人同意者，不在此限。\n二、其他依法規規定應秘密或應限制、禁止公開之情形。\n2   情資含有前項不得分享之內容者，得僅就其他部分分享之。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that information involving business secrets or related to business operations is not shared unless legally required or consented by the concerned parties.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization has implemented measures to ensure that business secrets or related information are not shared without legal requirement or consent. Evidence 2 specifically mentions the review by the legal compliance group to ensure no business secrets are shared, and the requirement for written consent before sharing. Additionally, there are procedures for splitting and sharing only unrestricted parts of the information, and maintaining records of consent and sharing processes. These measures align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if there are procedures in place to assess whether sharing information could infringe on the rights or legitimate interests of public agencies, individuals, or organizations.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that there are procedures in place to assess and manage the sharing of information to prevent infringement on rights or legitimate interests. Evidence 2 explicitly mentions the review process by the legal compliance group and the requirement for written consent before sharing sensitive information. Additionally, there are procedures for anonymization and documentation of sharing activities, ensuring compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that information required to be kept confidential by law is not shared without proper authorization.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the organization has implemented measures to ensure that information required to be kept confidential by law is not shared without proper authorization. The processes include obtaining written consent before sharing, maintaining records of shared information, and ensuring that only non-restricted parts of information are shared. Additionally, there are procedures for anonymization and masking of sensitive data, and the information security department manages and monitors these processes to prevent unauthorized access or modification."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Confirm that only non-restricted parts of information are shared when the content includes elements that should not be shared.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization maintains flexibility in sharing information while ensuring that restricted parts are not shared. There are procedures for obtaining written consent, splitting information to share only non-restricted parts, and maintaining records of the sharing process. Additionally, the evidence shows that sensitive information is masked or anonymized, and unauthorized access is prevented. The sharing process is traceable, and records are kept by the compliance group, aligning with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Review the process for obtaining consent from individuals or entities before sharing information that may affect their rights or interests.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that there are processes in place to ensure that information sharing is compliant with the control clause. The organization maintains flexibility in sharing information while ensuring that sensitive information is not shared without consent. There are procedures for obtaining written consent from relevant authorities before sharing information that may affect rights or interests. Additionally, the evidence indicates that there are measures to prevent unauthorized access and ensure traceability of the sharing process, which aligns with the requirements of the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Assess the mechanisms in place to determine the necessity of sharing information for public interest or protection of life, body, or health.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that mechanisms are in place to assess the necessity of sharing information for public interest or protection of life, body, or health. Evidence 3 indicates that there is a review process by the legal department's information security compliance group to ensure that shared information does not contain business secrets or sensitive information unless necessary for public interest or with consent. Additionally, there are procedures for obtaining written consent and maintaining records of the sharing process, ensuring compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_007",
+                    "sentence": "Evaluate the documentation and approval process for exceptions to the non-sharing rule based on legal or public interest grounds.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that there is a documented process for evaluating and approving exceptions to the non-sharing rule based on legal or public interest grounds. Evidence 3 shows that the legal compliance group reviews and approves information sharing with specific entities, ensuring that sensitive information is not shared without proper authorization. Additionally, there are procedures for splitting information to share only non-restricted parts and maintaining written records of approvals and sharing methods. This aligns with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5038478076670972
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.48453972264826245
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4171668111659325
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C005",
             "text": "公務機關或特定非公務機關（以下簡稱各機關）進行情資分享，應就情資進行分析及整合，並規劃適當之安全維護措施，避免情資內容、個人資料或依法規規定不得分享之資訊外洩，或遭未經授權之存取或竄改。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that the agency has established procedures for analyzing and integrating shared intelligence data.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency has established procedures for analyzing and integrating shared intelligence data. Evidence 1 and 3 describe processes for collecting, managing, and analyzing security intelligence to enhance system protection and reduce risk. Evidence 2 outlines procedures for sharing intelligence data while ensuring compliance and preventing unauthorized access or modification. These procedures align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if the agency has documented security maintenance measures for shared intelligence data.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency has documented security maintenance measures for shared intelligence data. Evidence 1 and 3 describe procedures for monitoring, evaluating, and responding to security threats, as well as maintaining the integrity of systems and data. Evidence 2 outlines the process for sharing data, including obtaining necessary approvals and maintaining records, which ensures compliance with legal and security requirements. The presence of encryption, access control, and data masking further supports the implementation of security measures to prevent unauthorized access or data breaches."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that the agency's security measures prevent unauthorized access to shared intelligence data.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the agency has implemented comprehensive security measures to prevent unauthorized access to shared intelligence data. These measures include maintaining system and data integrity through monitoring and threat response, ensuring traceability of the sharing process, and using encryption, access control, and data masking to protect sensitive information. Additionally, there are procedures for obtaining written consent before sharing restricted information and maintaining records of all sharing activities. The presence of these controls and processes indicates compliance with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Confirm that the agency has protocols to prevent the leakage of personal data during intelligence sharing.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the agency has established protocols to prevent the leakage of personal data during intelligence sharing. Measures include obtaining written consent before sharing sensitive information, maintaining records of shared data, using anonymization techniques, and ensuring traceability of the sharing process. Additionally, there are systems in place for monitoring, detecting unauthorized access, and managing security threats, which align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Assess whether the agency has mechanisms to prevent unauthorized modification of shared intelligence data.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the agency has mechanisms in place to prevent unauthorized modification of shared intelligence data. Evidence 1 mentions the requirement to prevent unauthorized access and modification, with processes for approval and record-keeping. Evidence 2 describes monitoring and responding to security threats, maintaining data integrity, and managing security intelligence to reduce risks. Evidence 3 outlines threat analysis, preventive measures, and controls like encryption and access control to ensure data confidentiality, integrity, and availability. These measures collectively support compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Review the agency's compliance with legal regulations regarding non-shareable information.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency has implemented measures to analyze, integrate, and protect shared information, including sensitive data and legally protected information. There are procedures for threat analysis, vulnerability scanning, and incident response to prevent unauthorized access or data leaks. The agency also maintains records of information sharing, ensures compliance with legal requirements, and uses encryption and access controls to safeguard data. These practices align with the control clause requirements, demonstrating compliance with legal regulations regarding non-shareable information."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_007",
+                    "sentence": "Evaluate the effectiveness of the agency's security measures in protecting shared intelligence data.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency has implemented comprehensive security measures to protect shared intelligence data. These measures include monitoring and responding to security threats, maintaining data integrity, conducting vulnerability assessments, and implementing access controls. The agency also ensures the confidentiality, integrity, and availability of data through encryption, access control, and data masking. Additionally, there are procedures for detecting unauthorized access or data tampering, and immediate reporting and handling of anomalies. The sharing process is traceable, and sensitive information is masked or anonymized to prevent unauthorized access or modification. Overall, the agency's security measures align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5038478076670972
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.48453972264826245
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4171668111659325
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C006",
             "text": "各機關應就所接受之情資，辨識其來源之可靠性及時效性，及時進行威脅與弱點分析及研判潛在風險，並採取對應之預防或應變措施。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that the organization has a documented process for identifying the reliability and timeliness of received intelligence.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the organization has a documented process for identifying the reliability and timeliness of received intelligence. Evidence 1 and 3 detail procedures for collecting, managing, and maintaining intelligence data, ensuring its timeliness and accuracy. Additionally, threat and vulnerability analyses are conducted, and preventive or responsive measures are taken to mitigate risks. The processes are managed by the information security department, indicating a structured approach to compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if the organization conducts regular threat and vulnerability analyses based on the received intelligence.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization conducts regular threat and vulnerability analyses. Evidence 1 and 3 describe processes for monitoring, detecting, and recording vulnerabilities and threats, as well as maintaining the timeliness and accuracy of intelligence. These activities align with the control clause requirements for identifying the reliability and timeliness of intelligence sources and conducting threat and vulnerability analyses. Additionally, preventive and responsive measures are mentioned, supporting the implementation of the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that potential risks are assessed promptly after receiving intelligence.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the organization maintains a process for monitoring, assessing, and responding to security threats and vulnerabilities. Evidence 2 and 3 specifically mention the detection, recording, and analysis of threats and vulnerabilities, as well as the implementation of preventive or responsive measures. This aligns with the control clause requirement to assess potential risks promptly after receiving intelligence."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Confirm that preventive or responsive measures are implemented in response to identified risks.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that preventive and responsive measures are implemented in response to identified risks. Evidence 1 details the process of sharing information with necessary precautions and approvals, ensuring traceability and protection against unauthorized access. Evidence 2 describes the monitoring, evaluation, and response to security threats, maintaining system integrity, and managing security intelligence to reduce risk. Evidence 3 outlines threat and vulnerability analysis and the implementation of preventive or responsive measures to mitigate security risks. These actions align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Review records to ensure timely updates and actions are taken based on the latest intelligence.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the organization maintains a comprehensive process for monitoring, evaluating, and responding to security threats and vulnerabilities. They ensure the timeliness and accuracy of intelligence, perform threat and vulnerability analysis, and take preventive or responsive measures. Records are maintained for traceability, and there is a structured process for sharing intelligence, ensuring compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C007",
             "text": "1   各機關進行情資整合時，得依情資之來源、接收日期、可用期間、類別、威脅指標特性及其他適當項目與內部情資進行關聯分析。\n2   公務機關應就整合後發現之新型威脅情資進行分享。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that the organization conducts correlation analysis based on the source of the intelligence.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization conducts correlation analysis based on the source of intelligence. Evidence 3 mentions threat vulnerability analysis and the use of threat intelligence databases, which implies correlation analysis. Additionally, Evidence 1 and 2 describe procedures for collecting, managing, and sharing intelligence, supporting the implementation of the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if the organization considers the receipt date of intelligence during correlation analysis.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not mention the consideration of the receipt date of intelligence during correlation analysis, which is required by the control clause. The focus is on maintaining system integrity, sharing information, and managing security risks, but there is no specific reference to the receipt date in the correlation process."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that the organization includes the usable period of intelligence in its correlation analysis.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence does not explicitly mention the inclusion of the usable period of intelligence in the correlation analysis, which is required by the audit task."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Confirm that the organization categorizes intelligence for correlation analysis.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization is actively categorizing intelligence for correlation analysis. Evidence 2 and 3 describe processes for collecting, managing, and analyzing security intelligence, including threat indicators and vulnerabilities. These processes align with the control clause requirements for correlating intelligence based on various attributes. Additionally, the organization maintains records and manages intelligence through its information security department, ensuring compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Assess whether the organization analyzes threat indicator characteristics during correlation analysis.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization conducts threat indicator analysis during correlation analysis. Evidence 2 and 3 describe processes for detecting, recording, and analyzing threat indicators such as malicious reconnaissance, command and control points, and abnormal access. These activities align with the control clause requirement to analyze threat indicator characteristics during correlation analysis."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Determine if the organization includes other appropriate items in its correlation analysis.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the organization includes various appropriate items in its correlation analysis, such as source credibility, update speed, historical accuracy, vulnerability scanning, behavior analysis, and threat intelligence database comparison. These items align with the control clause's requirement to include other appropriate items in correlation analysis. Additionally, the organization maintains a comprehensive process for managing and sharing threat intelligence, which supports the control's implementation."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_007",
+                    "sentence": "Verify that the organization integrates internal intelligence with external intelligence for correlation analysis.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization integrates internal intelligence with external intelligence for correlation analysis. Evidence 1 and 2 describe processes for collecting, managing, and analyzing security intelligence, including threat indicators and vulnerabilities. Evidence 3 shows procedures for sharing new threat intelligence, ensuring compliance with legal and regulatory requirements. These activities align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5038478076670972
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.48453972264826245
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4171668111659325
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_008",
+                    "sentence": "Check if the organization shares newly discovered threat intelligence after integration.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the organization has processes in place for sharing newly discovered threat intelligence. Evidence 1 describes the procedures for sharing information, including obtaining necessary approvals and maintaining records. Evidence 2 and 3 further support the organization's capability to detect, analyze, and manage threat intelligence, ensuring that it is shared in a timely and secure manner. These processes align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4449068330360431
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.42877687839525985
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4196936528437462
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C008",
             "text": "各機關應就所接收之情資，採取適當之安全維護措施，避免情資內容、個人資料或依法規規定不得分享之資訊外洩，或遭未經授權之存取或竄改。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that the agency has documented security measures for received information.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the agency has documented security measures for received information. Evidence 1 and 3 detail procedures for monitoring, assessing, and responding to security threats, maintaining data integrity, and managing security information. Evidence 2 outlines processes for sharing information securely, including obtaining necessary approvals and maintaining records. These measures align with the control clause requirements to prevent unauthorized access or modification of information."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if there are procedures in place to prevent unauthorized access to sensitive information.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that there are procedures in place to prevent unauthorized access to sensitive information. Evidence 1 details the monitoring, evaluation, and response to security threats and incidents, ensuring system and data integrity. Evidence 2 outlines the process for sharing information, including obtaining written consent and maintaining records to prevent unauthorized access and modification. Evidence 3 describes threat analysis and preventive measures, including encryption, access control, and data masking, to ensure confidentiality, integrity, and availability. These measures collectively demonstrate compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that personal data is protected against unauthorized sharing or leakage.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that there are measures in place to prevent unauthorized access and leakage of personal data, such as requiring written consent before sharing, maintaining records of data sharing, using anonymization techniques, and ensuring traceability of data sharing processes. Additionally, there are systems for monitoring, detecting, and responding to security threats, which help maintain data integrity and confidentiality. These practices align with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Review the agency's compliance with legal regulations regarding information sharing.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency has implemented appropriate security measures to prevent unauthorized access or alteration of sensitive information. There are processes for monitoring, evaluating, and responding to security threats, maintaining system integrity, and ensuring traceability of information sharing. Legal compliance is ensured through reviews by the legal compliance group and obtaining necessary written consents. Sensitive information is masked or anonymized, and records are maintained by the information security department, demonstrating adherence to the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Assess the effectiveness of security measures in preventing unauthorized modifications to information.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that there are comprehensive security measures in place to prevent unauthorized access and modifications. These include monitoring, vulnerability assessments, threat intelligence comparison, and maintaining records of security assessments. Additionally, there are procedures for encryption, access control, and data masking to ensure data integrity and confidentiality. The presence of a dedicated information security department managing these processes further supports compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Confirm that there is a regular audit process for security measures related to received information.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that there is a structured process for monitoring, evaluating, and responding to security threats and incidents, which includes regular audits and management by the information security department. The presence of vulnerability scanning, behavior analysis, and threat intelligence comparison suggests a proactive approach to security maintenance. Additionally, the documentation and management of security assessments and procedures by the information security department support the existence of a regular audit process for security measures related to received information."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_007",
+                    "sentence": "Examine the training programs for staff on handling sensitive information securely.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not mention any specific training programs for staff on handling sensitive information securely. While there are references to security measures, threat analysis, and data protection protocols, there is no explicit mention of training programs or initiatives aimed at educating staff on these practices."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5038478076670972
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.48453972264826245
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4171668111659325
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_008",
+                    "sentence": "Check for the existence of incident response plans for information breaches.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence provided does not explicitly mention the existence of incident response plans specifically for information breaches. While there are references to security measures, threat assessments, and management of security incidents, there is no direct evidence of a documented incident response plan for breaches as required by the audit task."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4449068330360431
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.42877687839525985
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4196936528437462
+                        }
+                    ],
+                    "compliant": false
+                },
+                {
+                    "id": "task_009",
+                    "sentence": "Verify that access controls are implemented to restrict information access to authorized personnel only.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that access controls are implemented to restrict information access to authorized personnel only. Measures such as encryption, access control, and data masking are mentioned to ensure confidentiality, integrity, and availability. Unauthorized access or data tampering is detected and reported immediately. Information security management is centralized, and sensitive data is identified and protected according to regulations. These practices align with the control clause requirements and the audit task."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4679060779539283
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4368257174009108
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43441502498896434
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_010",
+                    "sentence": "Ensure encryption methods are used for transmitting sensitive information.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that encryption methods are used to ensure the confidentiality, integrity, and availability of sensitive information. Evidence 1 mentions the use of encryption, access control, and data masking to protect sensitive data. Additionally, Evidence 2 and 3 describe measures to prevent unauthorized access and ensure data integrity, supporting the implementation of appropriate security maintenance measures as required by the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4313066219226192
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.40671208602238956
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4043844476375281
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C009",
             "text": "1   各機關進行情資分享，應分別依主管機關或中央目的事業主管機關指定之方式為之。\n2   各機關因故無法依前項規定方式進行情資分享者，分別經主管機關或中央目的事業主管機關同意後，得以下列方式之一為之：一、書面。二、傳真。三、電子郵件。四、資訊系統。五、其他適當方式。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify if the agency follows the designated method by the competent authority for information sharing.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency maintains flexibility in information sharing while ensuring compliance with designated methods. Evidence 2 explicitly mentions obtaining written consent if the designated method cannot be followed and records the sharing method and content. This aligns with the control clause requirements, demonstrating effective implementation."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check if the agency has obtained approval from the competent authority for alternative information sharing methods.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence shows that the agency has obtained written approval from the competent authority for alternative information sharing methods, as required by the control clause. Evidence 2 explicitly mentions the need for written consent from the competent authority when sharing information through alternative methods like fax, email, or information systems, and confirms that such consent has been obtained."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Confirm if the agency uses written communication for information sharing with approval.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency maintains written records and requires written approval from the competent authority for information sharing when not using the designated methods. This aligns with the control clause requirement for using written communication with approval."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Ensure the agency utilizes fax for information sharing with the necessary approvals.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency uses fax, among other methods, for information sharing and maintains complete records of the sharing content and methods. Additionally, it specifies that written approval from the competent authority is required before sharing if the designated method cannot be used. This aligns with the control clause requirement for necessary approvals when using fax for information sharing."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Assess if the agency employs email for information sharing after obtaining consent.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency employs email for information sharing after obtaining consent, as required by the control clause. Evidence 1 explicitly mentions the use of email for sharing information, provided there is prior written consent from the competent authority, which aligns with the audit task requirement."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_006",
+                    "sentence": "Determine if the agency uses information systems for sharing information with proper authorization.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency uses information systems for sharing information, as mentioned in Evidence 3, which states that information can be shared via information systems or other approved methods. Additionally, the process requires proper authorization, as sharing must be approved by the relevant authority, ensuring compliance with the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.45722617908711394
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.43433688533850606
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.39145727421475174
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_007",
+                    "sentence": "Review if the agency employs other appropriate methods for information sharing with approval.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that the agency employs various methods for information sharing, including written records, fax, email, and information systems, with the necessary approvals from the competent authority. The processes are managed by the information security department, ensuring compliance with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5038478076670972
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.48453972264826245
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4171668111659325
+                        }
+                    ],
+                    "compliant": true
+                }
+            ]
         },
         {
             "id": "C010",
             "text": "1   未適用資通安全管理法之個人、法人或團體，經主管機關或中央目的事業主管機關同意後，得與其進行情資分享。\n2   主管機關或中央目的事業主管機關同意前項個人、法人或團體進行情資分享，應以書面與其約定應遵守第四條至前條之規定。",
             "metadata": {},
-            "need_procedure": null,
-            "tasks": []
+            "need_procedure": true,
+            "tasks": [
+                {
+                    "id": "task_001",
+                    "sentence": "Verify that individuals, legal entities, or organizations not subject to the Information Security Management Act have received approval from the competent authority or central business authority before engaging in information sharing.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that information sharing by individuals, legal entities, or organizations not subject to the Information Security Management Act is conducted with prior written approval from the competent authority or central business authority. Evidence 2 specifically mentions that the legal department's information security compliance group must obtain written consent from the competent authority before sharing information, which aligns with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5007722664385775
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49043384229988146
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4770629700795485
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_002",
+                    "sentence": "Check for documented agreements between the competent authority or central business authority and the individuals, legal entities, or organizations regarding compliance with Articles 4 to the preceding article before information sharing.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that there are documented procedures and requirements for obtaining written consent from the competent authority or central business authority before sharing information. Evidence 2 specifically mentions the requirement for written consent and documentation of the sharing process, which aligns with the control clause requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49096446220403656
+                        },
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.484728517965032
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47309871864284425
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_003",
+                    "sentence": "Ensure that the competent authority or central business authority has provided written consent for information sharing activities.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that written consent from the competent authority or central business authority is required and obtained before information sharing, as specified in the control clause. Evidence 1 explicitly mentions that the legal compliance group must obtain written consent from the competent authority before sharing information. This aligns with the audit task requirement, confirming compliance."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5361661923141404
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5163753068487744
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4784160080035912
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_004",
+                    "sentence": "Confirm that the agreements for information sharing include clauses that mandate adherence to the specified articles.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence indicates that information sharing agreements require written consent from the competent authority before sharing, as mandated by the control clause. The agreements include clauses for maintaining records and ensuring compliance with specified articles, which aligns with the audit task requirements."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.47833959535676995
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4773429606832315
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.46360700117418696
+                        }
+                    ],
+                    "compliant": true
+                },
+                {
+                    "id": "task_005",
+                    "sentence": "Review records to ensure that all parties involved in information sharing have been informed of their obligations under the specified articles.",
+                    "metadata": {
+                        "judge_reasoning": "The evidence does not explicitly confirm that all parties involved in information sharing have been informed of their obligations under the specified articles. While there are mentions of obtaining written consent and maintaining records, there is no direct evidence showing that parties were informed of their obligations as required by the control clause."
+                    },
+                    "top_k": [
+                        {
+                            "excerpt": "要求下維持分享之靈活性。\n（含法務部資安合規組對特定對象分享之審核）\n.\n，確認不含：\n、法人或團體營業秘密或經營資訊\n.\n，應拆分並僅分享不受限制部分。\n，惟須留存書面記錄：\n、身體、健康之必要\n／同意模式\n／同意模式\n.\n；若無法依指定方式，分享前須取得書面同意。\n.\n、法人或團體分享時，法務部資安合規組須先取得主管機關或中央目的事業主管機關書面同意。\n.\n、傳真、電子郵件、資訊系統或其他經核准方式分享，並完整記錄分享內容與方式。\n.\n，並依敏感性進行遮蔽或匿名化。\n.\n，防止未經授權存取與竄改。\n.\n，確保分享流程可追溯。\n、分析、分享與主管機關溝通之完整記錄保存至少\n，由資訊安全管理部門（合規組）保存與管理。",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.5032380704762391
+                        },
+                        {
+                            "excerpt": "，藉由監控、評估與應對資安威脅與事件，維持系統及資料完整性。\n：\n：\n.\n，偵測與記錄任何惡意偵察或情蒐活動。\n.\n，並記錄所有發現之漏洞。\n.\n（含技術與策略）。\n.\n，如惡意指令、中繼站位址及控制方式。\n、安全評估報告及相關文件須保存至少\n，由資訊安全部門統一管理。\n、收集與管理作業程序\n、收集與管理作業程序\n、收集與管理資安情資，以提升系統防護能力並降低安全事件風險。\n：\n：\n：\n.\n，收集並維護下列情資：\n（指令、控制點、連線資訊等）\n、預防、因應或降低前述風險之措施資訊\n.\n，確保情資之及時性與準確性。\n.\n，內容至少涵蓋：\n.\n，確保具備識別與因應各類資安情資之能力。\n、處理及應對方案文件保存至少\n，由資訊安全部門存檔",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.49403784651625204
+                        },
+                        {
+                            "excerpt": "維護。\n，進行威脅弱點分析並採取預防或應變措施，以降低安全風險。\n：\n：\n.\n（來源信譽度、更新速度、歷史準確性）。\n.\n：漏洞掃描、行為分析、威脅情報庫對比等。\n.\n。\n.\n，例如：\n.\n。\n，由資訊安全部門管理。\n，減少可能損害。\n.\n（例：網路流量、異常訪問）。\n.\n。\n.\n。\n.\n（指令、不明網域）。\n.\n。\n.\n（防火牆規則、教育訓練等）。\n.\n。\n，由資訊安全部門集中管理。\n，防止外洩或未經授權存取與竄改。\n.\n，識別敏感資料及受法規保護資訊。\n.\n：加密、存取控制、資料屏蔽等，確保機密性、完整性、可用性。\n.\n，偵測未經授權存取或資料竄改；異常時立即通報並處理。\n.\n。\n，由資訊安全管理部門保存與管理。\n，避免未經授權洩漏，並在符合主管機關",
+                            "source_pdf": "internal.pdf",
+                            "page_no": "N/A",
+                            "score": 0.4823042583436384
+                        }
+                    ],
+                    "compliant": false
+                }
+            ]
         },
         {
             "id": "C011",
             "text": "1   資通安全情資分享辦法施行日期，由主管機關定之。\n2   資通安全情資分享辦法修正條文自發布日施行。",
             "metadata": {},
-            "need_procedure": null,
+            "need_procedure": false,
             "tasks": []
         }
     ]

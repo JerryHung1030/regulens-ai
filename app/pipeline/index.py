@@ -5,6 +5,8 @@ from typing import List, Optional
 
 import faiss  # type: ignore
 import numpy as np
+import urllib.parse
+import base64
 
 # Adjust import based on project structure and PYTHONPATH
 try:
@@ -17,10 +19,14 @@ except ImportError:
 
 def _sanitize_filename(name: str) -> str:
     """Sanitizes a string to be filesystem-friendly."""
-    name = name.lower()
-    name = re.sub(r'[^\w\s-]', '', name)  # Remove non-alphanumeric, non-whitespace, non-hyphen
-    name = re.sub(r'[\s-]+', '_', name).strip('_')  # Replace whitespace/hyphens with underscore
-    return name
+    # 將中文字串轉換為 base64 編碼
+    encoded = base64.urlsafe_b64encode(name.encode('utf-8')).decode('ascii')
+    # 移除 base64 編碼中的 = 符號
+    encoded = encoded.rstrip('=')
+    # 確保檔案名稱不會太長
+    if len(encoded) > 255:
+        encoded = encoded[:255]
+    return encoded
 
 
 def _create_index_files(

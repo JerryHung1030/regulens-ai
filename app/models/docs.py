@@ -28,6 +28,7 @@ class EmbedSet(BaseModel):
     chunk_index: int
     total_chunks: int
     doc_type: str
+    metadata: Dict[str, Any] = {}  # 添加 metadata 屬性，默認為空字典
 
 
 class IndexMeta(BaseModel):

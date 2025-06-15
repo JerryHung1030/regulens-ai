@@ -60,12 +60,13 @@ class ProjectStore(QObject):
         project1 = CompareProject(
             name="資通安全情資分享辦法 (Demo)",
             controls_json_path=sample_base_dir / "sample1" / "controls" / "external.json",
-            procedure_pdf_paths=[sample_base_dir / "sample1" / "evidences" / "internal.pdf"],
+            procedure_pdf_paths=[sample_base_dir / "sample1" / "procedures" / "internal.pdf"], # Changed "evidences" to "procedures"
             run_json_path=sample_base_dir / "sample1" / "run.json",
             is_sample=True
         )
 
-        # Ensure self.projects is an empty list before adding samples
+        # Ensure self.projects is an empty list before adding samples,
+        # and only this sample project is added.
         self.projects = [project1]
         self._save()  # Save projects.json
 

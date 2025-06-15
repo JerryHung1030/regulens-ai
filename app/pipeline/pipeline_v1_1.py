@@ -298,6 +298,7 @@ def execute_need_check_step(
         llm_response = call_llm_api(
             prompt=prompt,
             model_name=settings.llm_model_need_check,
+            api_key=settings.openai_api_key,
             expected_response_type="boolean"
         )
 
@@ -385,6 +386,7 @@ def execute_audit_plan_step(
         llm_response = call_llm_api(
             prompt=prompt,
             model_name=settings.llm_model_audit_plan,
+            api_key=settings.openai_api_key,
             expected_response_type="json_list" 
         )
 
@@ -457,12 +459,7 @@ def execute_search_step(
     all_proc_embed_sets: List[EmbedSet] = []
     for norm_doc in norm_docs_procedures:
         if cancel_cb(): break
-        # Assuming generate_embeddings can take openai_api_key from settings if required,
-        # or it's globally configured for the environment.
-        # The current signature of generate_embeddings in template is (doc, cache_service, api_key, model_name)
-        # We need to ensure settings.openai_api_key is available if using OpenAI models.
-        # For now, passing empty string if not explicitly in PipelineSettings.
-        api_key = getattr(settings, 'openai_api_key', '') # Check if PipelineSettings has this
+        api_key = getattr(settings, 'openai_api_key', '')
         embeds = generate_embeddings(norm_doc, cache_service, api_key, settings.embedding_model)
         all_proc_embed_sets.extend(embeds)
     
@@ -472,13 +469,15 @@ def execute_search_step(
         return
 
     # Create temporary FAISS index for procedures
-    # It's good practice to ensure this path is unique per project if not per run.
-    temp_index_dir = project.run_json_path.parent / f"temp_index_cache_{project.name}"
+    # Use base64 encoded name for the temp directory to avoid path issues
+    import base64
+    safe_project_name = base64.urlsafe_b64encode(project.name.encode('utf-8')).decode('ascii').rstrip('=')
+    temp_index_dir = project.run_json_path.parent / f"temp_index_cache_{safe_project_name}"
     temp_index_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"Creating FAISS index for procedures at {temp_index_dir}...")
     proc_index_meta: Optional[IndexMeta] = create_or_load_index(
-        all_proc_embed_sets, temp_index_dir, f"procedures_{project.name}", settings.embedding_model
+        all_proc_embed_sets, temp_index_dir, f"procedures_{safe_project_name}", settings.embedding_model
     )
 
     if not proc_index_meta:
@@ -628,6 +627,7 @@ def execute_judge_step(
         llm_response = call_llm_api(
             prompt=prompt,
             model_name=settings.llm_model_judge,
+            api_key=settings.openai_api_key,
             expected_response_type="json_object"
         )
 
@@ -699,6 +699,9 @@ if __name__ == '__main__':
         llm_model_need_check: str = "mock_need_check_model"
         llm_model_audit_plan: str = "mock_audit_plan_model"
         llm_model_judge: str = "mock_judge_model"
+        openai_api_key: str = "sk-test-placeholder-main-pipeline" # Add placeholder for tests
+        embedding_model: str = "text-embedding-ada-002" # Add placeholder
+        audit_retrieval_top_k: int = 3 # Add placeholder
 
     test_settings = MockPipelineSettings()
 

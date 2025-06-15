@@ -1,12 +1,23 @@
 # Default parameters for RAGCore-X Compare API
-base_url: "https://api.example.com"
-api_key: "YOUR_API_KEY"
-timeout: 30
+
+# OpenAI specific settings
+openai:
+  api_key: "YOUR_API_KEY_HERE" # Placeholder for user's actual OpenAI API key
+  timeout: 30 # Default timeout for OpenAI API calls in seconds
 
 # Audit settings
-audit.retrieval_top_k: 5
+audit.retrieval_top_k: 5 # Number of relevant procedure chunks to retrieve per audit task
 
-# LLM settings
-llm.model_need_check: "default_model_need_check"
-llm.model_audit_plan: "default_model_audit_plan"
-llm.model_judge: "default_model_judge"
+# LLM settings for different pipeline steps
+llm.model_need_check: "gpt-4o" # Example model, user should update
+llm.model_audit_plan: "gpt-4o" # Example model, user should update
+llm.model_judge: "gpt-4o" # Example model, user should update
+
+# Embedding model (used by pipeline for creating embeddings)
+embedding_model: "text-embedding-ada-002" # Example, ensure this is a valid OpenAI model or other supported one
+
+# Language setting for the application (e.g., for UI, can also influence LLM prompts if designed so)
+language: "en" # Options: "en", "zh", "ja", etc.
+
+# Path to a local model (optional, if supported and used by a non-OpenAI backend)
+# local_model_path: "/path/to/your/local/model_directory_or_file"

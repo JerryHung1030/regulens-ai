@@ -522,22 +522,17 @@ class ProjectEditor(QWidget):
         
         if self.project.is_sample:
             self.btn_compare.setText("Re-run sample")
-            # For sample projects, we might want a slightly different overall card style
-            # The self.setStyleSheet below will override the _base_css for the ProjectEditor itself.
-            sample_style = f"""
-                ProjectEditor {{
-                    background-color: {"#e3f2fd" if self.project.name == "ISO27k-A.9.4.2_強密碼合規稽核範例" else "#f1f8e9"};
-                    border-radius: 8px;
-                    border: 1px solid #dadce0; /* Keep consistent border */
-                    /* Consider adding a subtle dashed border on top or left for distinction if needed */
-                    /* border-top: 2px dashed #1a73e8; */
-                }}
-            """
-            self.setStyleSheet(sample_style)
+            # 移除強制設定的樣式，讓主題系統接管
+            # sample_style = f"""
+            #     ProjectEditor {{
+            #         background-color: {"#e3f2fd" if self.project.name == "ISO27k-A.9.4.2_強密碼合規稽核範例" else "#f1f8e9"};
+            #         border-radius: 8px;
+            #         border: 1px solid #dadce0;
+            #     }}
+            # """
+            # self.setStyleSheet(sample_style)
         else:
             self.btn_compare.setText("Start compare")
-            # Remove the setStyleSheet call below this line
-            # self.setStyleSheet(self._base_css)  # Apply the base style for non-sample projects
 
         self.btn_compare.setEnabled(self.project.ready)
 # --------------------------------------------------------------------

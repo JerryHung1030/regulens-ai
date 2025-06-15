@@ -86,7 +86,6 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 ---
 
 ## 6 | LLM 評估機制
-想請我跟你吃飯
 ### 6.1  評估層級
 
 * **TripleAssessment**：Control + Procedure + Evidence
