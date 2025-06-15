@@ -34,9 +34,73 @@ class IntroPage(QWidget):
         if hasattr(self, 'get_started_button'):
             self.get_started_button.setText(self.translator.get("intro_get_started_button", "Get Started"))
 
-        # TODO: Add more elements here, like pipeline steps, data journey, trust card texts
-        # For now, log that other parts would be updated
-        logger.debug("IntroPage retranslated (partially). More elements pending full refactor.")
+        # Update Header Section
+        if hasattr(self, 'title_label'):
+            self.title_label.setText(self.translator.get("intro_title", "<h1>Regulens-AI</h1>"))
+
+        # Update Pipeline Card
+        # self.pipeline_card_title_label is already updated
+        if hasattr(self, 'pipeline_step_labels'):
+            steps_data_keys = [
+                ("intro_workflow_step1_title", "intro_workflow_step1_desc"),
+                ("intro_workflow_step2_title", "intro_workflow_step2_desc"),
+                ("intro_workflow_step3_title", "intro_workflow_step3_desc"),
+                ("intro_workflow_step4_title", "intro_workflow_step4_desc")
+            ]
+            default_steps_text = [
+                ("<strong>Controls, Procedures, Evidence</strong>", "<small>Upload your compliance documents</small>"),
+                ("<strong>Processing</strong>", "<small>Normalization, Vectorization, Indexing</small>"),
+                ("<strong>LLM Assessment</strong>", "<small>AI-powered evaluation</small>"),
+                ("<strong>Audit Report</strong>", "<small>Markdown & PDF output</small>")
+            ]
+            for i, label_pair in enumerate(self.pipeline_step_labels):
+                icon_label, text_label = label_pair
+                title_key, desc_key = steps_data_keys[i]
+                default_title, default_desc = default_steps_text[i]
+                # Icon is not translated
+                translated_text = f"{self.translator.get(title_key, default_title)}<br>{self.translator.get(desc_key, default_desc)}"
+                text_label.setText(translated_text)
+        
+        # Update Data Journey Card
+        if hasattr(self, 'data_journey_title_label'):
+            self.data_journey_title_label.setText(self.translator.get("intro_data_journey_title", "<h3>Data Journey</h3>"))
+        if hasattr(self, 'data_journey_list_label'):
+            # It's probably easier to reconstruct the HTML string with translated parts
+            # than to try and update parts of a complex QLabel.
+            # However, for simplicity here, if these are individual labels, update them.
+            # Assuming it's one complex HTML string, this demonstrates the need for a helper or different structure.
+            # For now, we'll assume the keys exist for the full HTML list items in i18n.py
+            # This is a simplification; a real solution might involve building the HTML from translated parts.
+            list_items_html = "<ul style='list-style-type: none; padding: 0; margin: 0;'>"
+            list_items_keys_defaults = [
+                ("intro_data_journey_item1", "<strong>Ingestion:</strong> Supports TXT (PDF/CSV TBC)"),
+                ("intro_data_journey_item2", "<strong>Embedding:</strong> OpenAI text-embedding-3-large"),
+                ("intro_data_journey_item3", "<strong>Retrieval:</strong> FAISS k-NN similarity search"),
+                ("intro_data_journey_item4", "<strong>Assessment:</strong> GPT-4o for Pass / Partial / Fail"),
+                ("intro_data_journey_item5", "<strong>Report:</strong> Markdown → Optional PDF"),
+            ]
+            for key, default_text in list_items_keys_defaults:
+                list_items_html += f"<li style='margin-bottom: 8px;'>{self.translator.get(key, default_text)}</li>"
+            list_items_html += "</ul>"
+            self.data_journey_list_label.setText(list_items_html)
+
+        # Update Trust Card
+        if hasattr(self, 'trust_card_title_label'):
+            self.trust_card_title_label.setText(self.translator.get("intro_trust_title", "<h3>Why Trust Regulens-AI?</h3>"))
+        if hasattr(self, 'trust_card_list_label'):
+            list_items_html = "<ul style='list-style-type: none; padding: 0; margin: 0;'>"
+            list_items_keys_defaults = [
+                ("intro_trust_item1", "✅ <strong>Offline Capability:</strong> Supports pipeline and can run offline."),
+                ("intro_trust_item2", "🔒 <strong>Robust Caching:</strong> Content hashing & vector indexing."),
+                ("intro_trust_item3", "🔍 <strong>Full Traceability:</strong> Detailed logs in logs/ and output/."),
+            ]
+            for key, default_text in list_items_keys_defaults:
+                list_items_html += f"<li style='margin-bottom: 8px;'>{self.translator.get(key, default_text)}</li>"
+            list_items_html += "</ul>"
+            self.trust_card_list_label.setText(list_items_html)
+            
+        logger.debug("IntroPage UI retranslated")
+
 
     def _init_ui(self):
         # Main Layout
@@ -66,13 +130,13 @@ class IntroPage(QWidget):
         header_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Title
-        title_label = QLabel("<h1>Regulens-AI</h1>")
-        title_label.setTextFormat(Qt.TextFormat.RichText)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        header_layout.addWidget(title_label)
+        self.title_label = QLabel(self.translator.get("intro_title", "<h1>Regulens-AI</h1>")) # Made self.title_label
+        self.title_label.setTextFormat(Qt.TextFormat.RichText)
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header_layout.addWidget(self.title_label)
 
         # Subtitle
-        self.subtitle_label = QLabel(self.translator.get("intro_subtitle", "<p style='margin:0px;'>合規文件比對，一鍵產出審計報告</p>"))
+        self.subtitle_label = QLabel(self.translator.get("intro_subtitle", "<p style='margin:0px;'>Compliance document comparison, one-click audit report generation</p>"))
         self.subtitle_label.setTextFormat(Qt.TextFormat.RichText)
         self.subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(self.subtitle_label)
@@ -125,32 +189,52 @@ class IntroPage(QWidget):
         card_layout.addWidget(self.pipeline_card_title_label)
 
         workflow_steps_layout = QVBoxLayout()
-        workflow_steps_layout.setSpacing(12)  # 微調步驟間距
+        workflow_steps_layout.setSpacing(12)
 
-        steps_data = [
-            ("📄", "<strong>Controls, Procedures, Evidence</strong><br><small>Upload your compliance documents</small>"),
-            ("⚙️", "<strong>Processing</strong><br><small>Normalization, Vectorization, Indexing</small>"),
-            ("🤖", "<strong>LLM Assessment</strong><br><small>AI-powered evaluation</small>"),
-            ("📝", "<strong>Audit Report</strong><br><small>Markdown & PDF output</small>")
+        # Store labels for retranslation
+        self.pipeline_step_labels = [] # List of (icon_label, text_label) tuples
+
+        # Define keys and default texts for steps
+        steps_data_keys = [
+            ("intro_workflow_step1_title", "intro_workflow_step1_desc"),
+            ("intro_workflow_step2_title", "intro_workflow_step2_desc"),
+            ("intro_workflow_step3_title", "intro_workflow_step3_desc"),
+            ("intro_workflow_step4_title", "intro_workflow_step4_desc")
         ]
+        default_steps_text = [
+            ("<strong>Controls, Procedures, Evidence</strong>", "<small>Upload your compliance documents</small>"),
+            ("<strong>Processing</strong>", "<small>Normalization, Vectorization, Indexing</small>"),
+            ("<strong>LLM Assessment</strong>", "<small>AI-powered evaluation</small>"),
+            ("<strong>Audit Report</strong>", "<small>Markdown & PDF output</small>")
+        ]
+        step_icons = ["📄", "⚙️", "🤖", "📝"]
 
-        for i, (icon, text) in enumerate(steps_data):
+        for i in range(len(steps_data_keys)):
+            icon = step_icons[i]
+            title_key, desc_key = steps_data_keys[i]
+            default_title, default_desc = default_steps_text[i]
+
             step_layout = QHBoxLayout()
             step_layout.setSpacing(12)
 
             step_icon_label = QLabel(icon)
             step_icon_label.setFixedWidth(30)
 
-            step_text_label = QLabel(text)
+            # Get translated text
+            translated_text = f"{self.translator.get(title_key, default_title)}<br>{self.translator.get(desc_key, default_desc)}"
+            step_text_label = QLabel(translated_text)
             step_text_label.setTextFormat(Qt.TextFormat.RichText)
             step_text_label.setWordWrap(True)
 
             step_layout.addWidget(step_icon_label)
             step_layout.addWidget(step_text_label)
             workflow_steps_layout.addLayout(step_layout)
+            
+            self.pipeline_step_labels.append((step_icon_label, step_text_label))
 
-            if i < len(steps_data) - 1:
-                arrow_label = QLabel("⬇️")
+
+            if i < len(steps_data_keys) - 1:
+                arrow_label = QLabel("⬇️") # Icon, not translated
                 arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 workflow_steps_layout.addWidget(arrow_label)
 
@@ -170,25 +254,28 @@ class IntroPage(QWidget):
         card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         card_layout.setSpacing(15)
 
-        title = QLabel("<h3>資料流程 (Data Journey)</h3>")
-        title.setTextFormat(Qt.TextFormat.RichText)
-        title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        card_layout.addWidget(title)
+        self.data_journey_title_label = QLabel(self.translator.get("intro_data_journey_title", "<h3>Data Journey</h3>"))
+        self.data_journey_title_label.setTextFormat(Qt.TextFormat.RichText)
+        self.data_journey_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        card_layout.addWidget(self.data_journey_title_label)
 
-        list_data_text = """
-        <ul style='list-style-type: none; padding: 0; margin: 0;'>
-          <li style='margin-bottom: 8px;'><strong>Ingestion：</strong>支援 TXT(PDF/CSV TBC)</li>
-          <li style='margin-bottom: 8px;'><strong>Embedding：</strong>OpenAI text-embedding-3-large</li>
-          <li style='margin-bottom: 8px;'><strong>Retrieval：</strong>FAISS k-NN similarity search</li>
-          <li style='margin-bottom: 8px;'><strong>Assessment：</strong>GPT-4o for Pass / Partial / Fail</li>
-          <li style='margin-bottom: 8px;'><strong>Report：</strong>Markdown → Optional PDF</li>
-        </ul>
-        """
-        list_data_label = QLabel(list_data_text)
-        list_data_label.setTextFormat(Qt.TextFormat.RichText)
-        list_data_label.setWordWrap(True)
-        # 卡片內文列表由 14pt → 12pt
-        card_layout.addWidget(list_data_label)
+        # Build HTML list from translated parts
+        list_items_html = "<ul style='list-style-type: none; padding: 0; margin: 0;'>"
+        list_items_keys_defaults = [
+            ("intro_data_journey_item1", "<strong>Ingestion:</strong> Supports TXT (PDF/CSV TBC)"),
+            ("intro_data_journey_item2", "<strong>Embedding:</strong> OpenAI text-embedding-3-large"),
+            ("intro_data_journey_item3", "<strong>Retrieval:</strong> FAISS k-NN similarity search"),
+            ("intro_data_journey_item4", "<strong>Assessment:</strong> GPT-4o for Pass / Partial / Fail"),
+            ("intro_data_journey_item5", "<strong>Report:</strong> Markdown → Optional PDF"),
+        ]
+        for key, default_text in list_items_keys_defaults:
+            list_items_html += f"<li style='margin-bottom: 8px;'>{self.translator.get(key, default_text)}</li>"
+        list_items_html += "</ul>"
+
+        self.data_journey_list_label = QLabel(list_items_html)
+        self.data_journey_list_label.setTextFormat(Qt.TextFormat.RichText)
+        self.data_journey_list_label.setWordWrap(True)
+        card_layout.addWidget(self.data_journey_list_label)
         card_layout.addStretch(1)
         card.setLayout(card_layout)
         return card
@@ -204,22 +291,25 @@ class IntroPage(QWidget):
         card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         card_layout.setSpacing(15)
 
-        title = QLabel("<h3>為什麼信任 Regulens-AI？</h3>")
-        title.setTextFormat(Qt.TextFormat.RichText)
-        title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        card_layout.addWidget(title)
+        self.trust_card_title_label = QLabel(self.translator.get("intro_trust_title", "<h3>Why Trust Regulens-AI?</h3>"))
+        self.trust_card_title_label.setTextFormat(Qt.TextFormat.RichText)
+        self.trust_card_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        card_layout.addWidget(self.trust_card_title_label)
+        
+        list_items_html = "<ul style='list-style-type: none; padding: 0; margin: 0;'>"
+        list_items_keys_defaults = [
+            ("intro_trust_item1", "✅ <strong>Offline Capability:</strong> Supports pipeline and can run offline."),
+            ("intro_trust_item2", "🔒 <strong>Robust Caching:</strong> Content hashing & vector indexing."),
+            ("intro_trust_item3", "🔍 <strong>Full Traceability:</strong> Detailed logs in logs/ and output/."),
+        ]
+        for key, default_text in list_items_keys_defaults:
+            list_items_html += f"<li style='margin-bottom: 8px;'>{self.translator.get(key, default_text)}</li>"
+        list_items_html += "</ul>"
 
-        list_trust_text = """
-        <ul style='list-style-type: none; padding: 0; margin: 0;'>
-          <li style='margin-bottom: 8px;'>✅ <strong>Offline Capability：</strong>支援pipeline並可離線執行。</li>
-          <li style='margin-bottom: 8px;'>🔒 <strong>Robust Caching：</strong>Content hashing 與 vector indexing。</li>
-          <li style='margin-bottom: 8px;'>🔍 <strong>Full Traceability：</strong>logs/ 與 output/ 中的詳細日誌。</li>
-        </ul>
-        """
-        list_trust_label = QLabel(list_trust_text)
-        list_trust_label.setTextFormat(Qt.TextFormat.RichText)
-        list_trust_label.setWordWrap(True)
-        card_layout.addWidget(list_trust_label)
+        self.trust_card_list_label = QLabel(list_items_html)
+        self.trust_card_list_label.setTextFormat(Qt.TextFormat.RichText)
+        self.trust_card_list_label.setWordWrap(True)
+        card_layout.addWidget(self.trust_card_list_label)
         card_layout.addStretch(1)
         card.setLayout(card_layout)
         return card

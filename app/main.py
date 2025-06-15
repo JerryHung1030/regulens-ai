@@ -40,8 +40,7 @@ def main(argv: list[str] | None = None) -> None:
     qapp.setFont(default_font)
 
     settings = Settings()  # Load settings (e.g., from config_default.yaml or user settings)
-    initial_lang = settings.get("language", "en")
-    translator = Translator(initial_language=initial_lang)
+    translator = Translator(settings=settings)  # 傳入 settings 對象
 
     # Load and apply theme CSS
     theme_setting = settings.get("theme", "default")

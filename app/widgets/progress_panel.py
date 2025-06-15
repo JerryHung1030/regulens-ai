@@ -38,98 +38,104 @@ def elide_long_id(text: str, max_length: int = 32, font: Optional[QFont] = None,
 
 class ProgressPanel(QDialog):
     cancelled = Signal()
-    audit_plan_confirmed = Signal() # New signal for audit plan confirmation
+    # audit_plan_confirmed = Signal() # Removed: No longer needed
     completed = Signal()  # To be emitted by MainWindow when the task is truly done
 
-    def __init__(self, parent=None, total_stages=0):
+    def __init__(self, translator, parent=None, total_stages=0): # Added translator
         super().__init__(parent)
+        self.translator = translator # Store translator
 
-        self.setWindowTitle("Pipeline Progress")
+        # self.setWindowTitle("Pipeline Progress") # Will be set in _retranslate_ui
         self.setWindowModality(Qt.WindowModal)
 
         # UI Elements
-        self.current_stage_label = QLabel("Initializing...")
+        self.current_stage_label = QLabel() # Text set in _retranslate_ui and update_progress
         font_label = QFont()
         font_label.setPointSize(10)
         self.current_stage_label.setFont(font_label)
 
         self.progress_bar = QProgressBar()
-        # self.details_text_edit = QTextEdit()
-        # self.details_text_edit.setReadOnly(True)
-        # self.details_text_edit.setWordWrapMode(QTextOption.WordWrap)  # Ensure word wrap
-        # font_details = QFont()
-        # font_details.setPointSize(9)  # Slightly smaller for details
-        # self.details_text_edit.setFont(font_details)
         self.details_tree_widget = QTreeWidget()
         self.details_tree_widget.setColumnCount(1)
-        self.details_tree_widget.setHeaderLabels(["Audit Plan Details"])
+        # self.details_tree_widget.setHeaderLabels(["Audit Plan Details"]) # Set in _retranslate_ui
         font_details = QFont()
         font_details.setPointSize(9) # Slightly smaller for details
         self.details_tree_widget.setFont(font_details)
 
-
-        self.confirm_button = QPushButton("Confirm and Start Checking Internal Documents")
-        self.confirm_button.setEnabled(False) # Initially disabled
-        self.cancel_button = QPushButton("Cancel")
+        # self.confirm_button = QPushButton() # Removed
+        self.cancel_button = QPushButton() # Text set in _retranslate_ui
 
         # Layout
         layout = QVBoxLayout()
         layout.addWidget(self.current_stage_label)
         layout.addWidget(self.progress_bar)
-        layout.addWidget(self.details_tree_widget) # Replaced QTextEdit with QTreeWidget
-        layout.addWidget(self.confirm_button) # Added confirm button
+        layout.addWidget(self.details_tree_widget)
+        # layout.addWidget(self.confirm_button) # Removed
         layout.addWidget(self.cancel_button)
         self.setLayout(layout)
 
         # Connections
         self.cancel_button.clicked.connect(self._handle_cancel)
-        self.confirm_button.clicked.connect(self._handle_confirm) # Connect new button
+        # self.confirm_button.clicked.connect(self._handle_confirm) # Removed
 
-        # _total_stages is not explicitly passed at init anymore, but can be set by first update_progress call
         self._user_cancelled = False
-        self.pipeline_stage_names = [ # Define the new stage names
-            "Initializing Pipeline", # Corresponds to progress < 0.1 (or initial message)
-            "Need-Check",            # Progress 0.1 to < 0.3
-            "Audit-Plan Generation", # Progress 0.3 to < 0.6
-            "Evidence Search & Retrieval", # Progress 0.6 to < 0.8
-            "Compliance Judgment"    # Progress 0.8 to 1.0
+        self.pipeline_stage_names = [] # Will be populated in _retranslate_ui and used
+        self._total_stages = 0 # Will be set after populating stage names
+
+        # Connect translator signal and set initial translation
+        self.translator.language_changed.connect(self._retranslate_ui)
+        self._retranslate_ui() # Set initial text
+
+    def _retranslate_ui(self):
+        self.setWindowTitle(self.translator.get("progress_panel_title", "Pipeline Progress"))
+        self.current_stage_label.setText(self.translator.get("progress_panel_initializing", "Initializing..."))
+        self.details_tree_widget.setHeaderLabels([self.translator.get("progress_panel_audit_plan_details_header", "Audit Plan Details")])
+        # self.confirm_button.setText(self.translator.get("progress_panel_confirm_button", "Confirm and Start Checking Internal Documents")) # Removed
+        self.cancel_button.setText(self.translator.get("progress_panel_cancel_button", "Cancel"))
+
+        self.pipeline_stage_names = [
+            self.translator.get("progress_stage_initializing", "Initializing Pipeline"),
+            self.translator.get("progress_stage_need_check", "Need-Check"),
+            self.translator.get("progress_stage_audit_plan", "Audit-Plan Generation"),
+            self.translator.get("progress_stage_evidence_search", "Evidence Search & Retrieval"),
+            self.translator.get("progress_stage_compliance_judgment", "Compliance Judgment")
         ]
-        self._total_stages = len(self.pipeline_stage_names) # Now 5 stages including initialization
+        self._total_stages = len(self.pipeline_stage_names)
+        logger.debug("ProgressPanel UI retranslated")
+
 
     def update_progress(self, progress: float, message_data: object): # Signature changed: message -> message_data, str -> object
         """
         Updates the progress display based on float progress (0.0 to 1.0) and a message_data (str or AuditPlanClauseUIData).
         """
-        # logger.debug(f"Progress update: {progress*100:.0f}% - Message Type: {type(message_data)}")
         if isinstance(message_data, str):
              logger.debug(f"Progress update: {progress*100:.0f}% - Message: {message_data}")
         elif isinstance(message_data, AuditPlanClauseUIData):
              logger.debug(f"Progress update: {progress*100:.0f}% - AuditPlan Data: {message_data.clause_id}")
 
-
         percent_complete = int(progress * 100)
 
         # Determine current stage name based on progress
-        stage_name = "Unknown Stage"
+        stage_name = self.translator.get("progress_stage_unknown", "Unknown Stage")
         stage_idx = 0 # 0-based for list index
         if progress < 0.01 : # Initializing often sends 0.0
             stage_idx = 0
-        elif 0.01 <= progress < 0.3: # Step 1: Need-Check (0.1 to 0.3 in pipeline, but callback sends overall progress)
+        elif 0.01 <= progress < 0.3:
             stage_idx = 1
-        elif 0.3 <= progress < 0.6: # Step 2: Audit-Plan
+        elif 0.3 <= progress < 0.6:
             stage_idx = 2
-        elif 0.6 <= progress < 0.8: # Step 3: Search
+        elif 0.6 <= progress < 0.8:
             stage_idx = 3
-        elif 0.8 <= progress < 1.0: # Step 4: Judge
+        elif 0.8 <= progress < 1.0:
             stage_idx = 4
         elif progress >= 1.0:
-            stage_idx = self._total_stages -1 # Last stage if progress is 1.0 or more
-            percent_complete = 100 # Cap at 100
+            stage_idx = self._total_stages -1 if self._total_stages > 0 else 0
+            percent_complete = 100
 
         if 0 <= stage_idx < self._total_stages:
             stage_name = self.pipeline_stage_names[stage_idx]
-
-        current_stage_label_text = f"Current Stage: {stage_name} ({percent_complete}%)"
+        
+        current_stage_label_text = self.translator.get("progress_panel_current_stage_label", "Current Stage: {stage_name} ({percent_complete}%)").format(stage_name=stage_name, percent_complete=percent_complete)
         self.current_stage_label.setText(current_stage_label_text)
 
         self.progress_bar.setRange(0, 100)
@@ -157,7 +163,7 @@ class ProgressPanel(QDialog):
             clause_item = QTreeWidgetItem(self.details_tree_widget, [elided_clause_text])
 
             if message_data.no_audit_needed:
-                QTreeWidgetItem(clause_item, ["無須制定條文"])
+                QTreeWidgetItem(clause_item, [self.translator.get("progress_panel_no_audit_needed", "無須制定條文")])
             elif message_data.tasks: # Check if there are tasks
                 for task_obj in message_data.tasks: # task_obj is AuditTaskUIData
                     task_sentence = task_obj.sentence
@@ -167,11 +173,11 @@ class ProgressPanel(QDialog):
             
             self.details_tree_widget.scrollToItem(clause_item)
 
-            # Enable confirm_button based on the audit_plan_generation_complete flag
-            if message_data.audit_plan_generation_complete and self.confirm_button.text() != "Confirmed":
-                 if not self.confirm_button.isEnabled(): # Only enable if not already enabled
-                    self.confirm_button.setEnabled(True)
-                    logger.info("Audit plan display complete. Confirm button enabled via audit_plan_generation_complete flag.")
+            # Enable confirm_button based on the audit_plan_generation_complete flag - REMOVED
+            # if message_data.audit_plan_generation_complete and self.confirm_button.text() != "Confirmed": # Removed
+            #      if not self.confirm_button.isEnabled(): # Removed
+            #         self.confirm_button.setEnabled(True) # Removed
+            #         logger.info("Audit plan display complete. Confirm button enabled via audit_plan_generation_complete flag.") # Removed
 
         elif isinstance(message_data, str): # Existing behavior for string messages
             log_message = f"[{percent_complete}%] {message_data}"
@@ -192,12 +198,12 @@ class ProgressPanel(QDialog):
         self.cancelled.emit()
         self.reject()  # Close the dialog
 
-    def _handle_confirm(self):
-        """Handles the confirm button click."""
-        self.audit_plan_confirmed.emit()
-        self.confirm_button.setEnabled(False) # Disable after clicking
-        self.confirm_button.setText("Confirmed") # Optional: Change text
-        logger.info("Audit plan confirmed by user.")
+    # def _handle_confirm(self): # Removed
+    #     """Handles the confirm button click."""
+    #     self.audit_plan_confirmed.emit()
+    #     self.confirm_button.setEnabled(False) # Disable after clicking
+    #     self.confirm_button.setText(self.translator.get("progress_panel_confirmed_button", "Confirmed")) # Optional: Change text
+    #     logger.info("Audit plan confirmed by user.")
 
     def closeEvent(self, event):
         if not self._user_cancelled:

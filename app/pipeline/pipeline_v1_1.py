@@ -108,8 +108,8 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
 def run_project_pipeline_v1_1(project: CompareProject,
                               settings: PipelineSettings,
                               progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
-                              cancel_cb: Callable[[], bool],
-                              confirm_event: Optional[threading.Event] = None): # New parameter
+                              cancel_cb: Callable[[], bool]):
+                              # confirm_event: Optional[threading.Event] = None): # Removed parameter
     """
     Main orchestrator for the V1.1 pipeline.
     """
@@ -219,19 +219,18 @@ def run_project_pipeline_v1_1(project: CompareProject,
     )
     logger.info("Step 2: Audit-Plan completed.")
 
-    # --- Pause for user confirmation before Search step ---
-    if confirm_event:
+    # --- Pause for user confirmation before Search step --- # REMOVED
+    # if confirm_event:
         # The audit_plan_generation_complete=True message should have been sent by execute_audit_plan_step
         # The button in UI should be enabled by that signal.
         # Now, wait for the user to press it.
-        logger.info("Audit plan generated. Waiting for user confirmation to proceed to Search step...")
-        progress_callback(0.6, "等待使用者確認以開始文件檢索...") # Message indicating waiting state
-        confirm_event.wait()  # Block until main_window sets the event
-        confirm_event.clear() # Clear the event for potential future use
-        logger.info("User confirmed. Proceeding with Search step.")
+        # logger.info("Audit plan generated. Waiting for user confirmation to proceed to Search step...")
+        # progress_callback(0.6, "等待使用者確認以開始文件檢索...") # Message indicating waiting state
+        # confirm_event.wait()  # Block until main_window sets the event
+        # confirm_event.clear() # Clear the event for potential future use
+        # logger.info("User confirmed. Proceeding with Search step.")
         # Optionally, send another progress message that confirmation received, though next step's start message will also show.
         # progress_callback(0.6, "Confirmation received. Starting Search step...")
-
 
     # --- Future Steps (3 & 4) would follow here ---
     # Step 3: Procedure Association (Search)

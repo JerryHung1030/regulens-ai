@@ -17,13 +17,14 @@ class Workspace(QWidget):
         self.project_store = project_store
         self.main_window = parent  # To access MainWindow's _run_compare, etc.
         self._project_connections = {}  # 用於跟踪項目的信號連接
+        self.translator = self.main_window.translator  # 從 MainWindow 獲取 translator
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)  # Use full space
 
         self.splitter = QSplitter(Qt.Horizontal)
         
-        self.sidebar = Sidebar(self.project_store, self.splitter)  # Pass splitter
+        self.sidebar = Sidebar(self.project_store, self.splitter, self.translator)  # 傳遞 translator
         self.splitter.addWidget(self.sidebar)
 
         self.stack = QStackedWidget()
@@ -198,13 +199,13 @@ class Workspace(QWidget):
         self._clear_stack()
 
         if project.has_results:
-            viewer = ResultsViewer(project)
+            viewer = ResultsViewer(project, self.translator)  # 傳遞 translator
             viewer.edit_requested.connect(self._switch_to_editor)
             self.stack.addWidget(viewer)
             self.stack.setCurrentWidget(viewer)
             project.viewer_idx = self.stack.indexOf(viewer)
         else:
-            editor = ProjectEditor(project)
+            editor = ProjectEditor(project, self.translator)  # 傳遞 translator
             if self.main_window and hasattr(self.main_window, "_run_compare"):
                 editor.compare_requested.connect(self.main_window._run_compare)
             
@@ -235,81 +236,67 @@ class Workspace(QWidget):
         project.viewer_idx = -1  # Clear viewer index as we are back to editor
 
     def _switch_to_editor(self, project: CompareProject):
-        """Switches the view to the ProjectEditor for the given project."""
-        # This method is connected to ResultsViewer.edit_requested
-        self._clear_stack()  # Clear current widget (ResultsViewer)
-        
-        # Create and show the editor for this project
-        editor = ProjectEditor(project)
+        """
+        Switches from the results viewer to the project editor.
+        This is called when the user clicks the back button in the results viewer.
+        """
+        self._clear_stack()
+        editor = ProjectEditor(project, self.translator)  # 傳遞 translator
         if self.main_window and hasattr(self.main_window, "_run_compare"):
             editor.compare_requested.connect(self.main_window._run_compare)
-        
-        # 重新建立（或確認）這個專案的所有 signal-slot 關係
-        self._disconnect_project_signals(project)
-        self._connect_project_signals(project)
-
         self.stack.addWidget(editor)
         self.stack.setCurrentWidget(editor)
         project.editor_idx = self.stack.indexOf(editor)
-        project.viewer_idx = -1  # Ensure viewer_idx is reset
+        project.viewer_idx = -1  # Reset viewer_idx
 
     def show_project_results(self, project: CompareProject):
-        QApplication.processEvents()  # Added to process pending events, e.g., dialog closure
+        """
+        Shows the results viewer for a project.
+        This is called when the pipeline finishes.
+        """
+        QApplication.processEvents()  # 處理待處理的事件，例如對話框關閉
         logger.debug(f"Attempting to show results for project: {project.name if project else 'None'}")
 
         if project is None:
             logger.error("show_project_results called with a None project.")
-            self.show_default_message()  # Or some other appropriate error display
+            self.show_default_message()  # 或其他適當的錯誤顯示
             return
 
-        # Ensure sidebar reflects this project
-        # This might be redundant if already handled by calling context, but good for safety
+        # 確保側邊欄反映當前項目
         for i in range(self.sidebar.list_projects.count()):
             item = self.sidebar.list_projects.item(i)
-            if item.data(Qt.UserRole) == project:  # Compare project objects
+            if item.data(Qt.UserRole) == project:  # 比較項目對象
                 self.sidebar.list_projects.setCurrentItem(item)
                 break
         
         if not project.has_results:
             logger.warning(f"Project '{project.name}' has no results. Switching to editor view.")
-            self._clear_stack()  # Clear current view (e.g. if it was an old editor)
+            self._clear_stack()  # 清除當前視圖
             
-            editor = ProjectEditor(project)  # Parent will be set by addWidget
+            editor = ProjectEditor(project, self.translator)  # 傳遞 translator
             if self.main_window and hasattr(self.main_window, "_run_compare"):
                 editor.compare_requested.connect(self.main_window._run_compare)
             
-            # Ensure signals are connected for this editor instance.
-            # Disconnecting and reconnecting signals here might be too aggressive if not managed carefully.
-            # The existing _show_project_in_stack and _switch_to_editor methods already handle
-            # signal connections when an editor is explicitly shown.
-            # Let's rely on those and ensure _connect_project_signals is robust.
-            # self._disconnect_project_signals(project) # Potentially problematic if called out of sync
-            # self._connect_project_signals(project)    
-
             self.stack.addWidget(editor)
             self.stack.setCurrentWidget(editor)
             project.editor_idx = self.stack.indexOf(editor)
-            project.viewer_idx = -1  # Ensure viewer_idx is reset
+            project.viewer_idx = -1  # 重置 viewer_idx
 
             logger.info(f"Switched to editor view for '{project.name}' as no results are available.")
-            # Consider adding a QMessageBox.information here if direct user feedback is desired.
-            # from PySide6.QtWidgets import QMessageBox
-            # QMessageBox.information(self, "No Results", f"No results were generated for project '{project.name}'. Displaying editor.")
             return
 
         logger.info(f"Displaying results for project: {project.name}")
-        self._clear_stack() 
+        self._clear_stack()
 
-        viewer = ResultsViewer(project)  # Parent will be set by addWidget
-        viewer.edit_requested.connect(self._switch_to_editor)
+        viewer = ResultsViewer(project, self.translator)  # 傳遞 translator
+        viewer.edit_requested.connect(self._switch_to_editor)  # 連接返回按鈕的信號
         
         self.stack.addWidget(viewer)
         self.stack.setCurrentWidget(viewer)
         project.viewer_idx = self.stack.indexOf(viewer)
         
-        # Save project state (e.g. has_results might have been set)
-        self.project_store._save() 
-        logger.debug(f"Successfully displayed results for project: {project.name}")
+        # 保存項目狀態
+        self.project_store._save()
 
     def _handle_project_deleted(self, project_to_delete: CompareProject | None = None):
         # 如果是直接由 signal 呼叫，project_to_delete 會是 None

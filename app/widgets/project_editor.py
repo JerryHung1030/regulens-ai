@@ -20,9 +20,10 @@ class ProjectEditor(QWidget):
 
     compare_requested = Signal(CompareProject)
 
-    def __init__(self, project: CompareProject, parent=None):
+    def __init__(self, project: CompareProject, translator, parent=None): # Added translator
         super().__init__(parent)
         self.project = project
+        self.translator = translator # Store translator
         # Updated base CSS for the card look
         # self._base_css = """
         #     ProjectEditor {
@@ -52,75 +53,45 @@ class ProjectEditor(QWidget):
 
         # Title row
         head = QHBoxLayout()
-        self.lb_title = QLabel()
-        # Remove the setStyleSheet call below this line
-        # self.lb_title.setStyleSheet("""
-        #     QLabel {
-        #         font-size: 20px;
-        #         font-weight: 600;
-        #         color: #202124; /* Google's primary text color */
-        #         margin-bottom: 15px; 
-        #     }
-        # """)
+        self.lb_title = QLabel() # Text set in _refresh
         head.addWidget(self.lb_title)
-        # Tool buttons are styled in _tool_btn method
-        head.addWidget(self._tool_btn(QStyle.SP_FileDialogDetailedView, "Rename project", self._rename))
-        head.addWidget(self._tool_btn(QStyle.SP_DialogDiscardButton, "Delete project", self._delete))
+        
+        # Tool buttons - Tooltips will be set in _retranslate_ui
+        self.rename_button = self._tool_btn(QStyle.SP_FileDialogDetailedView, "", self._rename) # Placeholder tooltip
+        self.delete_button = self._tool_btn(QStyle.SP_DialogDiscardButton, "", self._delete) # Placeholder tooltip
+        head.addWidget(self.rename_button)
+        head.addWidget(self.delete_button)
         head.addStretch()
         lay.addLayout(head)
 
         # Folder Selection Area
         self.folder_selection_container = QWidget()
-        # Remove the setStyleSheet call below this line
-        # self.folder_selection_container.setStyleSheet("margin-bottom: 20px;")  # Space before compare button
         folder_selection_layout = QVBoxLayout(self.folder_selection_container)
         folder_selection_layout.setContentsMargins(0, 0, 0, 0)
         folder_selection_layout.setSpacing(10)
 
-        self._ctrl_edit, self._proc_edit = [QLineEdit(readOnly=True) for _ in range(2)] # _evid_edit removed
-        
-        # Remove the setStyleSheet call below this line
-        # line_edit_stylesheet = """
-        #     QLineEdit {
-        #         font-size: 14px;
-        #         padding: 8px 10px;
-        #         border-radius: 4px;
-        #         border: 1px solid #dadce0;
-        #         background-color: #f8f9fa;
-        #         color: #202124;
-        #     }
-        #     QLineEdit:read-only {
-        #         background-color: #f1f3f4;
-        #     }
-        #     QLineEdit:focus {
-        #         border-color: #1a73e8; /* Google Blue focus */
-        #     }
-        # """
-        for edit_widget in [self._ctrl_edit, self._proc_edit]: # _evid_edit removed
-            # Remove the setStyleSheet call below this line
-            pass # Keep pass or other logic if needed after removing setStyleSheet
+        self._ctrl_edit, self._proc_edit = [QLineEdit(readOnly=True) for _ in range(2)]
 
         # Controls Row
         controls_row_layout = QHBoxLayout()
         controls_row_layout.setAlignment(Qt.AlignVCenter)
-        controls_label = QLabel("Controls JSON File:")
-        controls_label.setObjectName("controls_json_file_label")
-        controls_label.setFixedWidth(180)
-        controls_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        controls_row_layout.addWidget(controls_label)
+        self.controls_label = QLabel() # Text set in _retranslate_ui
+        self.controls_label.setObjectName("controls_json_file_label")
+        self.controls_label.setFixedWidth(180)
+        self.controls_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        controls_row_layout.addWidget(self.controls_label)
 
-        browse_ctrl_button = QPushButton("Browse…")
-        browse_ctrl_button.setObjectName("controls_json_file_browse_button")
-        browse_ctrl_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        browse_ctrl_button.clicked.connect(self._pick_ctrl)
-        controls_row_layout.addWidget(browse_ctrl_button)
+        self.browse_ctrl_button = QPushButton() # Text set in _retranslate_ui
+        self.browse_ctrl_button.setObjectName("controls_json_file_browse_button")
+        self.browse_ctrl_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.browse_ctrl_button.clicked.connect(self._pick_ctrl)
+        controls_row_layout.addWidget(self.browse_ctrl_button)
         controls_row_layout.addWidget(self._ctrl_edit)
         
-        self.validate_json_button = QPushButton("Validate JSON")
+        self.validate_json_button = QPushButton() # Text set in _retranslate_ui
         self.validate_json_button.setObjectName("validate_json_button")
         self.validate_json_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.validate_json_button.clicked.connect(self._validate_controls_json)
-        # Initially disable validate button until a file is chosen
         self.validate_json_button.setEnabled(False)
         controls_row_layout.addWidget(self.validate_json_button)
         folder_selection_layout.addLayout(controls_row_layout)
@@ -128,99 +99,85 @@ class ProjectEditor(QWidget):
         # Procedures Row
         procedures_row_layout = QHBoxLayout()
         procedures_row_layout.setAlignment(Qt.AlignVCenter)
-        procedures_label = QLabel("Procedure Documents:")
-        procedures_label.setObjectName("procedure_doc_files_label")
-        procedures_label.setFixedWidth(180)
-        procedures_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        procedures_row_layout.addWidget(procedures_label)
+        self.procedures_label = QLabel() # Text set in _retranslate_ui
+        self.procedures_label.setObjectName("procedure_doc_files_label")
+        self.procedures_label.setFixedWidth(180)
+        self.procedures_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        procedures_row_layout.addWidget(self.procedures_label)
 
-        browse_proc_button = QPushButton("Browse…")
-        browse_proc_button.setObjectName("procedure_doc_files_browse_button")
-        browse_proc_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        browse_proc_button.clicked.connect(self._pick_proc)
-        procedures_row_layout.addWidget(browse_proc_button)
+        self.browse_proc_button = QPushButton() # Text set in _retranslate_ui
+        self.browse_proc_button.setObjectName("procedure_doc_files_browse_button")
+        self.browse_proc_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.browse_proc_button.clicked.connect(self._pick_proc)
+        procedures_row_layout.addWidget(self.browse_proc_button)
         procedures_row_layout.addWidget(self._proc_edit)
         folder_selection_layout.addLayout(procedures_row_layout)
 
-        # Evidences row is removed.
-
         lay.addWidget(self.folder_selection_container)
 
-        # File Preview Section - Before Compare button
+        # File Preview Section
         self.preview_container = QWidget()
         self.preview_container.setObjectName("previewContainer")
         preview_container_layout = QVBoxLayout(self.preview_container)
-        preview_container_layout.setContentsMargins(0, 10, 0, 0)  # Add some top margin
+        preview_container_layout.setContentsMargins(0, 10, 0, 0)
 
-        self.toggle_preview_button = QPushButton()  # Text set based on _preview_is_visible
+        self.toggle_preview_button = QPushButton() # Text set in _update_preview_ui_state (which calls _retranslate_ui implicitly)
         self.toggle_preview_button.setObjectName("togglePreviewButton")
         preview_container_layout.addWidget(self.toggle_preview_button)
 
         self.preview_content_area = QWidget()
         preview_content_layout = QVBoxLayout(self.preview_content_area)
-        preview_content_layout.setContentsMargins(0, 5, 0, 0)  # Small margin
+        preview_content_layout.setContentsMargins(0, 5, 0, 0)
         preview_container_layout.addWidget(self.preview_content_area)
 
         self.preview_tab_widget = QTabWidget()
         self.preview_tab_widget.setObjectName("previewTabWidget")
         preview_content_layout.addWidget(self.preview_tab_widget)
 
-        # Create tabs: Controls (JSON), Procedures (PDF List)
-        # Evidences tab is removed.
-        self.preview_tab_widget.clear() # Clear existing tabs if any during a refresh scenario (though _build_ui is usually once)
-
-        # Controls Tab
-        controls_tab_content_widget = QWidget()
-        controls_tab_layout = QVBoxLayout(controls_tab_content_widget)
+        # Tabs will be added in _retranslate_ui to ensure their titles are translated
+        self.controls_tab_content_widget = QWidget()
+        controls_tab_layout = QVBoxLayout(self.controls_tab_content_widget)
         controls_tab_layout.setContentsMargins(0,0,0,0)
         controls_splitter = QSplitter(Qt.Horizontal)
-        
-        # 左側：檔案名稱列表
         self.controls_list_view = QListView()
         self.controls_list_view.setObjectName("controlsListView")
         self.controls_list_view.clicked.connect(self._on_control_file_selected)
         controls_splitter.addWidget(self.controls_list_view)
-        
-        # 右側：檔案內容預覽
         self.controls_json_preview = QTextEdit()
         self.controls_json_preview.setReadOnly(True)
         self.controls_json_preview.setObjectName("controlsJsonPreview")
-        preview_font = get_font(size=10) # Get font for preview panes
+        preview_font = get_font(size=10)
         self.controls_json_preview.setFont(preview_font)
         controls_splitter.addWidget(self.controls_json_preview)
-        
-        controls_splitter.setSizes([200, 300])  # 設定左右兩側的預設寬度比例
+        controls_splitter.setSizes([200, 300])
         controls_tab_layout.addWidget(controls_splitter)
-        self.preview_tab_widget.addTab(controls_tab_content_widget, "Controls JSON")
+        # self.preview_tab_widget.addTab(self.controls_tab_content_widget, "Controls JSON") # Moved to _retranslate_ui
 
-        # Procedures Tab
-        procedures_tab_content_widget = QWidget()
-        procedures_tab_layout = QVBoxLayout(procedures_tab_content_widget)
+        self.procedures_tab_content_widget = QWidget()
+        procedures_tab_layout = QVBoxLayout(self.procedures_tab_content_widget)
         procedures_tab_layout.setContentsMargins(0,0,0,0)
         procedures_splitter = QSplitter(Qt.Horizontal)
-        self.procedures_list_view = QListView() # Lists selected document files
+        self.procedures_list_view = QListView()
         self.procedures_list_view.setObjectName("proceduresListView")
         self.procedures_list_view.clicked.connect(self._on_procedure_doc_selected)
         procedures_splitter.addWidget(self.procedures_list_view)
-        self.procedures_text_preview = QTextEdit() # Displays content of selected document
+        self.procedures_text_preview = QTextEdit()
         self.procedures_text_preview.setReadOnly(True)
         self.procedures_text_preview.setObjectName("proceduresTextPreview")
-        # preview_font is already defined above for controls_json_preview
         self.procedures_text_preview.setFont(preview_font)
         procedures_splitter.addWidget(self.procedures_text_preview)
         procedures_splitter.setSizes([200, 300])
         procedures_tab_layout.addWidget(procedures_splitter)
-        self.preview_tab_widget.addTab(procedures_tab_content_widget, "Procedure Documents")
-
-        # Evidences tab is no longer created.
+        # self.preview_tab_widget.addTab(self.procedures_tab_content_widget, "Procedure Documents") # Moved to _retranslate_ui
 
         lay.addWidget(self.preview_container)
 
-        # Compare button - Moved to bottom right
-        self.btn_compare = QPushButton()  # Text set in _refresh
+        # Compare button
+        self.btn_compare = QPushButton()  # Text set in _refresh (which calls _retranslate_ui implicitly)
         self.btn_compare.clicked.connect(lambda: self.compare_requested.emit(self.project))
-        # Remove the setStyleSheet call below this line
-        # self.btn_compare.setStyleSheet("""
+        
+        # Styling for btn_compare is handled by global stylesheet or theme
+        # self.btn_compare.setStyleSheet(""" 
         #     QPushButton {
         #         font-size: 15px;
         #         font-weight: 500;
@@ -229,41 +186,79 @@ class ProjectEditor(QWidget):
         #         color: white;
         #         background-color: #1a73e8;
         #         border: none;
-        #         margin-top: 10px; 
-        #         margin-bottom: 10px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #1765cc;
-        #     }
-        #     QPushButton:pressed {
-        #         background-color: #1459b3;
-        #     }
-        #     QPushButton:disabled {
-        #         background-color: #e0e0e0;
-        #         color: #aaaaaa;
-        #     }
-        # """)
         
-        # Create a container for the button to position it at the bottom right
         button_container = QWidget()
-        button_container.setFixedHeight(60)  # 固定高度，預留空間
+        button_container.setFixedHeight(60)
         button_layout = QHBoxLayout(button_container)
         button_layout.setContentsMargins(0, 0, 0, 0)
-        button_layout.addStretch()  # Add stretch to push button to the right
+        button_layout.addStretch()
         button_layout.addWidget(self.btn_compare)
         
-        # 將按鈕容器放在最底層
-        lay.addStretch()  # 先加入 stretch 將按鈕推到底部
+        lay.addStretch()
         lay.addWidget(button_container)
 
-        # Connect toggle button
         self.toggle_preview_button.clicked.connect(self._toggle_preview_visibility)
         
-        # Set initial state for preview area based on the instance variable
-        self._update_preview_ui_state()
+        self._update_preview_ui_state() # This will also call _retranslate_ui for button text
+        
+        # Connect translator for dynamic updates
+        self.translator.language_changed.connect(self._retranslate_ui)
+        self._retranslate_ui() # Initial translation
 
-    # _handle_tree_selection is removed as QFileSystemModel is no longer the primary way to show file previews.
-    # Instead, _update_controls_preview and _on_procedure_txt_selected handle content display.
+    def _retranslate_ui(self):
+        # Update tooltips
+        self.rename_button.setToolTip(self.translator.get("project_editor_rename_tooltip", "Rename project"))
+        self.delete_button.setToolTip(self.translator.get("project_editor_delete_tooltip", "Delete project"))
+
+        # Update labels
+        self.controls_label.setText(self.translator.get("project_editor_controls_json_label", "Controls JSON File:"))
+        self.procedures_label.setText(self.translator.get("project_editor_procedure_docs_label", "Procedure Documents:"))
+
+        # Update button texts
+        self.browse_ctrl_button.setText(self.translator.get("project_editor_browse_button", "Browse…"))
+        self.browse_proc_button.setText(self.translator.get("project_editor_browse_button", "Browse…"))
+        self.validate_json_button.setText(self.translator.get("project_editor_validate_json_button", "Validate JSON"))
+        
+        # Update toggle preview button text (also handled in _update_preview_ui_state)
+        if self._preview_is_visible:
+            self.toggle_preview_button.setText(self.translator.get("project_editor_hide_preview_button", "Hide File Preview"))
+        else:
+            self.toggle_preview_button.setText(self.translator.get("project_editor_show_preview_button", "Show File Preview"))
+
+        # Update tab titles
+        # Ensure tabs are added only once or cleared before adding
+        current_tab_count = self.preview_tab_widget.count()
+        if current_tab_count == 0 : # Add tabs only if they don't exist
+            self.preview_tab_widget.addTab(self.controls_tab_content_widget, self.translator.get("project_editor_controls_tab", "Controls JSON"))
+            self.preview_tab_widget.addTab(self.procedures_tab_content_widget, self.translator.get("project_editor_procedures_tab", "Procedure Documents"))
+        else: # Update existing tab titles
+            self.preview_tab_widget.setTabText(0, self.translator.get("project_editor_controls_tab", "Controls JSON"))
+            if current_tab_count > 1: # Check if procedure tab exists before trying to set text
+                 self.preview_tab_widget.setTabText(1, self.translator.get("project_editor_procedures_tab", "Procedure Documents"))
+
+
+        # Refresh texts that depend on project state (like compare button)
+        self._refresh_dynamic_texts()
+        logger.debug("ProjectEditor UI retranslated")
+
+    def _refresh_dynamic_texts(self):
+        # This method is for texts that change based on project state AND need translation
+        # For example, the compare button text
+        self.lb_title.setText(f"<h2>{self.project.name}</h2>") # Project name is not translated
+
+        if self.project.is_sample:
+            self.btn_compare.setText(self.translator.get("project_editor_rerun_sample_button", "Re-run sample"))
+        else:
+            self.btn_compare.setText(self.translator.get("project_editor_start_compare_button", "Start compare"))
+        
+        # Update procedure edit text for multiple files
+        if self.project.procedure_doc_paths and len(self.project.procedure_doc_paths) > 1:
+            self._proc_edit.setText(self.translator.get("project_editor_multiple_docs_selected", "{count} documents selected").format(count=len(self.project.procedure_doc_paths)))
+        elif self.project.procedure_doc_paths and len(self.project.procedure_doc_paths) == 1:
+            self._proc_edit.setText(str(self.project.procedure_doc_paths[0]))
+        else:
+            self._proc_edit.setText("")
+
 
     def _toggle_preview_visibility(self):
         self._preview_is_visible = not self._preview_is_visible
@@ -271,41 +266,29 @@ class ProjectEditor(QWidget):
 
     def _update_preview_ui_state(self):
         self.preview_content_area.setVisible(self._preview_is_visible)
+        # This will call _retranslate_ui, which updates the button text
         if self._preview_is_visible:
-            self.toggle_preview_button.setText("Hide File Preview")
+            self.toggle_preview_button.setText(self.translator.get("project_editor_hide_preview_button", "Hide File Preview"))
         else:
-            self.toggle_preview_button.setText("Show File Preview")
+            self.toggle_preview_button.setText(self.translator.get("project_editor_show_preview_button", "Show File Preview"))
 
     # ---------- Helpers ----------
-    # def _row(self, line, chooser): # _row helper is no longer needed in this form
-    #     h = QHBoxLayout()
+    # def _row(self, line, chooser):
     #     h.addWidget(line)
-    #     b = QPushButton("Browse…")
-    #     b.setStyleSheet("""
-    #         QPushButton {
-    #             padding: 8px 12px; /* Match QLineEdit padding */
-    #             background-color: #e9ecef; /* Light grayish blue */
-    #             border: 1px solid #ced4da;
-    #             border-radius: 4px;
-    #             color: #495057;
-    #             font-size: 14px;
-    #             font-weight: 500;
-    #         }
-    #         QPushButton:hover {
-    #             background-color: #dee2e6;
-    #         }
-    #         QPushButton:pressed {
-    #             background-color: #ced4da;
-    #         }
-    #     """)
+    #     b = QPushButton("Browse…") # This would need translation too if used
+    #     # ... styles ...
     #     b.clicked.connect(chooser)
     #     h.addWidget(b)
     #     return h
 
-    def _tool_btn(self, icon, tip, slot):
+    def _tool_btn(self, icon, tip_key, slot): # Changed tip to tip_key
         btn = QToolButton()
         btn.setIcon(self.style().standardIcon(icon))
-        btn.setToolTip(tip)
+        # Tooltip set by _retranslate_ui using tip_key if it's stored, or directly if not dynamic
+        # For simplicity, if these tooltips are static, they are set in _retranslate_ui
+        # If they need to be dynamic based on `tip_key`, then this method needs the translator
+        # or the caller needs to handle it. Assuming static for now, set in _retranslate_ui.
+        # btn.setToolTip(self.translator.get(tip_key, default_tip_value_if_any))
         btn.setStyleSheet("""
             QToolButton {
                 border: none;
@@ -337,9 +320,19 @@ class ProjectEditor(QWidget):
             # _update_controls_preview() will be called by _refresh
 
     def _validate_controls_json(self):
+        # TODO: Internationalize QMessageBox messages and preview text messages
+        # This requires defining keys and using self.translator.get()
+        # Example for one message:
+        # title = self.translator.get("validation_error_title", "Validation Error")
+        # text = self.translator.get("controls_json_not_selected_text", "Controls JSON file not selected or does not exist.")
+        # QMessageBox.warning(self, title, text)
+        # self.controls_json_preview.setText(text)
+
         if not self.project.controls_json_path or not self.project.controls_json_path.exists():
-            QMessageBox.warning(self, "Validation Error", "Controls JSON file not selected or does not exist.")
-            self.controls_json_preview.setText("Controls JSON file not selected or does not exist.")
+            title = self.translator.get("validation_error_title", "Validation Error")
+            text = self.translator.get("controls_json_not_selected_text", "Controls JSON file not selected or does not exist.")
+            QMessageBox.warning(self, title, text)
+            self.controls_json_preview.setText(text)
             return
 
         try:
@@ -347,74 +340,77 @@ class ProjectEditor(QWidget):
                 content = f.read()
                 data = json.loads(content)
         except FileNotFoundError:
-            msg = f"File not found: {self.project.controls_json_path}"
-            QMessageBox.critical(self, "Validation Error", msg)
+            msg = self.translator.get("file_not_found_error", "File not found: {path}").format(path=self.project.controls_json_path)
+            QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
             self.controls_json_preview.setText(msg)
             return
         except json.JSONDecodeError as e:
-            msg = f"The file '{self.project.controls_json_path.name}' is not a valid JSON file. Please check its format.\n\nDetails: {e}"
-            QMessageBox.critical(self, "Validation Error", msg)
+            msg = self.translator.get("json_decode_error", "The file '{filename}' is not a valid JSON file. Please check its format.\n\nDetails: {error_details}").format(filename=self.project.controls_json_path.name, error_details=e)
+            QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
             self.controls_json_preview.setText(msg)
             return
         except Exception as e:
-            msg = f"Error reading file '{self.project.controls_json_path.name}'.\n\nDetails: {e}"
-            QMessageBox.critical(self, "Validation Error", msg)
+            msg = self.translator.get("file_read_error", "Error reading file '{filename}'.\n\nDetails: {error_details}").format(filename=self.project.controls_json_path.name, error_details=e)
+            QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
             self.controls_json_preview.setText(msg)
             return
 
-        # New simplified validation logic
         if not isinstance(data, dict):
-            msg = f"The controls JSON file '{self.project.controls_json_path.name}' must be an object (dictionary)."
-            QMessageBox.critical(self, "Validation Error", msg)
+            msg = self.translator.get("json_must_be_object_error", "The controls JSON file '{filename}' must be an object (dictionary).").format(filename=self.project.controls_json_path.name)
+            QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
             self.controls_json_preview.setText(msg)
             return
 
         if "name" not in data:
-            msg = f"The controls JSON file '{self.project.controls_json_path.name}' is missing the 'name' key."
-            QMessageBox.critical(self, "Validation Error", msg)
+            msg = self.translator.get("json_missing_name_key_error", "The controls JSON file '{filename}' is missing the 'name' key.").format(filename=self.project.controls_json_path.name)
+            QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
             self.controls_json_preview.setText(msg)
             return
 
         if not isinstance(data["name"], str):
-            msg = f"In '{self.project.controls_json_path.name}', the 'name' key must correspond to a string value."
-            QMessageBox.critical(self, "Validation Error", msg)
+            msg = self.translator.get("json_name_must_be_string_error", "In '{filename}', the 'name' key must correspond to a string value.").format(filename=self.project.controls_json_path.name)
+            QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
             self.controls_json_preview.setText(msg)
             return
 
         for key, value in data.items():
             if key == "name":
-                continue  # Already validated
+                continue
             if not isinstance(value, str):
-                msg = f"In '{self.project.controls_json_path.name}', the value for key '{key}' must be a string."
-                QMessageBox.critical(self, "Validation Error", msg)
+                msg = self.translator.get("json_value_must_be_string_error", "In '{filename}', the value for key '{key_name}' must be a string.").format(filename=self.project.controls_json_path.name, key_name=key)
+                QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
                 self.controls_json_preview.setText(msg)
                 return
-
-        success_msg = "Controls JSON structure is valid according to the new simplified schema."
-        QMessageBox.information(self, "Validation Successful", success_msg)
-        # Update preview with formatted JSON if valid, or success message
+        
+        success_title = self.translator.get("validation_successful_title", "Validation Successful")
+        success_msg = self.translator.get("json_valid_schema_message", "Controls JSON structure is valid according to the new simplified schema.")
+        QMessageBox.information(self, success_title, success_msg)
         try:
             formatted_json = json.dumps(data, indent=4, ensure_ascii=False)
-            self.controls_json_preview.setText(formatted_json) # Show formatted JSON on success
-        except Exception as e: # Should not happen if previous validation passed
+            self.controls_json_preview.setText(formatted_json)
+        except Exception as e:
              logger.error(f"Error formatting validated JSON for preview: {e}")
-             self.controls_json_preview.setText(success_msg) # Fallback to success message
-        # self._update_controls_preview() # Already called by _refresh after project.changed,
-        # but direct update here gives immediate feedback on validation.
+             self.controls_json_preview.setText(success_msg)
+
 
     def _pick_proc(self):
-        # Pick multiple document files for procedures
         start_dir = str(Path.home())
         if self.project.procedure_doc_paths:
             first_valid_path = next((p for p in self.project.procedure_doc_paths if p.exists()), None)
             if first_valid_path:
                 start_dir = str(first_valid_path.parent if first_valid_path.is_file() else first_valid_path)
+        
+        dialog_title = self.translator.get("select_procedure_docs_dialog_title", "Select Procedure Documents")
+        file_filter = self.translator.get("text_files_filter", "Text Files (*.txt)") + ";;" + \
+                      self.translator.get("markdown_files_filter", "Markdown Files (*.md)") + ";;" + \
+                      self.translator.get("all_files_filter", "All Files (*.*)")
+
 
         file_paths, _ = QFileDialog.getOpenFileNames(
             self, 
-            "Select Procedure Documents", 
+            dialog_title, 
             start_dir, 
-            "Text Files (*.txt);;Markdown Files (*.md);;All Files (*.*)"
+            file_filter
         )
         if file_paths:
             self.project.procedure_doc_paths = [Path(fp) for fp in file_paths]
@@ -467,12 +463,11 @@ class ProjectEditor(QWidget):
                     content = f.read()
                 self.procedures_text_preview.setText(content)
             except Exception as e:
-                self.procedures_text_preview.setText(f"Error reading file: {e}")
+                self.procedures_text_preview.setText(self.translator.get("error_reading_file_preview", "Error reading file: {error}").format(error=e))
         else:
             self.procedures_text_preview.clear()
 
     def _on_control_file_selected(self, index):
-        """當選擇左側列表中的檔案時，在右側顯示其內容"""
         if not index.isValid():
             return
             
@@ -485,59 +480,37 @@ class ProjectEditor(QWidget):
                 formatted_json = json.dumps(parsed_json, indent=4, ensure_ascii=False)
                 self.controls_json_preview.setText(formatted_json)
             except Exception as e:
-                self.controls_json_preview.setText(f"Error loading JSON: {e}")
+                self.controls_json_preview.setText(self.translator.get("error_loading_json_preview", "Error loading JSON: {error}").format(error=e))
 
     # ---------- Project operations ----------
     def _rename(self):
-        new, ok = QInputDialog.getText(self, "Rename project", "New name:", text=self.project.name)
+        title = self.translator.get("rename_project_dialog_title", "Rename project")
+        label = self.translator.get("rename_project_dialog_label", "New name:")
+        new, ok = QInputDialog.getText(self, title, label, text=self.project.name)
         if ok and new: 
-            self.project.rename(new)
+            self.project.rename(new) # project.name is not translated itself
             
     def _delete(self):
-        if QMessageBox.question(self, "Delete project", f'Delete "{self.project.name}"?') == QMessageBox.Yes:
+        title = self.translator.get("delete_project_dialog_title", "Delete project")
+        text = self.translator.get("delete_project_dialog_text", 'Delete "{project_name}"?').format(project_name=self.project.name)
+        if QMessageBox.question(self, title, text) == QMessageBox.Yes:
             self.project.deleted.emit()
 
     # ---------- Refresh ----------
     def _refresh(self):
-        self.lb_title.setText(f"<h2>{self.project.name}</h2>")
+        # This calls _retranslate_ui through _refresh_dynamic_texts
+        self._retranslate_ui() 
 
-        # Update path edits
+        # Update path edits (these are file paths, not typically translated)
         controls_path_str = str(self.project.controls_json_path or "")
         self._ctrl_edit.setText(controls_path_str)
         self.validate_json_button.setEnabled(bool(self.project.controls_json_path and self.project.controls_json_path.exists()))
 
-        if self.project.procedure_doc_paths:
-            if len(self.project.procedure_doc_paths) == 1:
-                procedures_display_str = str(self.project.procedure_doc_paths[0])
-            else:
-                procedures_display_str = f"{len(self.project.procedure_doc_paths)} documents selected"
-        else:
-            procedures_display_str = ""
-        self._proc_edit.setText(procedures_display_str)
-
-        # evidences_path_str and self._evid_edit are removed.
+        # _refresh_dynamic_texts handles the procedure edit text for multiple files
 
         # Update Previews
         self._update_controls_preview()
         self._update_procedures_preview()
-        # Evidences preview is removed.
-
-        # QFileSystemModel logic is removed.
-        # Old loop for tree views is removed.
         
-        if self.project.is_sample:
-            self.btn_compare.setText("Re-run sample")
-            # 移除強制設定的樣式，讓主題系統接管
-            # sample_style = f"""
-            #     ProjectEditor {{
-            #         background-color: {"#e3f2fd" if self.project.name == "ISO27k-A.9.4.2_強密碼合規稽核範例" else "#f1f8e9"};
-            #         border-radius: 8px;
-            #         border: 1px solid #dadce0;
-            #     }}
-            # """
-            # self.setStyleSheet(sample_style)
-        else:
-            self.btn_compare.setText("Start compare")
-
         self.btn_compare.setEnabled(self.project.ready)
 # --------------------------------------------------------------------

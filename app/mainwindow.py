@@ -72,7 +72,7 @@ class MainWindow(QMainWindow):
         self.translator = translator
         self.project_store = ProjectStore()
         self.threadpool = QThreadPool()
-        self.pipeline_confirm_event = threading.Event() # Added for pipeline pause/resume
+        # self.pipeline_confirm_event = threading.Event() # Removed: No longer needed for pipeline pause/resume
         self._cancelled = False  # Added
         self._progress_panel: ProgressPanel | None = None  # Added
 
@@ -205,10 +205,11 @@ class MainWindow(QMainWindow):
 
         if missing_fields:
             msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("組態設定不完整")  # Configuration Incomplete
-            msg_box.setText("請先設定 OpenAI API Key 與模型參數，才能執行比較")  # Please set OpenAI API Key and model parameters to proceed.
-            open_settings_button = msg_box.addButton("開啟設定", QMessageBox.ActionRole)  # Open Settings
-            cancel_button = msg_box.addButton("取消", QMessageBox.RejectRole)  # Cancel
+            # Translators for configuration incomplete dialog
+            msg_box.setWindowTitle(self.translator.get("config_incomplete_title", "組態設定不完整"))
+            msg_box.setText(self.translator.get("config_incomplete_text", "請先設定 OpenAI API Key 與模型參數，才能執行比較"))
+            open_settings_button = msg_box.addButton(self.translator.get("config_incomplete_open_settings_button", "開啟設定"), QMessageBox.ActionRole)
+            cancel_button = msg_box.addButton(self.translator.get("config_incomplete_cancel_button", "取消"), QMessageBox.RejectRole)
             msg_box.setDefaultButton(open_settings_button)
             
             msg_box.exec()
@@ -220,7 +221,9 @@ class MainWindow(QMainWindow):
                 # Re-check after settings dialog is closed
                 still_missing = [field for field in required_fields if not self.settings.get(field)]
                 if still_missing:
-                    QMessageBox.warning(self, "組態設定不完整", "設定仍未完成，無法繼續執行。")  # Settings still incomplete, cannot proceed.
+                    QMessageBox.warning(self,
+                                        self.translator.get("config_incomplete_title", "組態設定不完整"),
+                                        self.translator.get("config_still_incomplete_text", "設定仍未完成，無法繼續執行。"))
                     return False
                 return True
         return True
@@ -231,7 +234,9 @@ class MainWindow(QMainWindow):
     def _run_compare(self, proj: CompareProject):
         # The `proj.ready` check is now more comprehensive.
         if not proj.ready:
-            QMessageBox.warning(self, "專案未就緒", "請確認所有必要的資料夾都已設定且包含有效的 .txt 檔案。")
+            QMessageBox.warning(self,
+                                self.translator.get("project_not_ready_title", "專案未就緒"),
+                                self.translator.get("project_not_ready_text", "請確認所有必要的資料夾都已設定且包含有效的 .txt 檔案。"))
             return
         
         if not self._ensure_settings_configured():
@@ -241,10 +246,10 @@ class MainWindow(QMainWindow):
         self.apply_theme()
 
         self._cancelled = False  # Reset cancellation flag for new run
-        self.pipeline_confirm_event.clear() # Clear event from previous run, if any
-        self._progress_panel = ProgressPanel(self)  # Using new ProgressPanel
+        # self.pipeline_confirm_event.clear() # Removed: No longer needed
+        self._progress_panel = ProgressPanel(self.translator, self) # Pass translator
         self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)
-        self._progress_panel.audit_plan_confirmed.connect(self._handle_audit_plan_confirmation) # Connect new signal
+        # self._progress_panel.audit_plan_confirmed.connect(self._handle_audit_plan_confirmation) # Removed
         self._progress_panel.show()
 
         def task_wrapper(worker_signals: _Signals):
@@ -260,8 +265,8 @@ class MainWindow(QMainWindow):
                     proj,
                     self.settings,
                     progress_callback=progress_handler,
-                    cancel_cb=self._is_pipeline_cancelled,
-                    confirm_event=self.pipeline_confirm_event # Pass the event
+                    cancel_cb=self._is_pipeline_cancelled
+                    # confirm_event=self.pipeline_confirm_event # Removed: No longer needed
                 )
                 # For v1.1, primary output is run.json, not a single report_path from the pipeline function.
                 logger.info(f"Pipeline task finished for {proj.name}. Results are in {proj.run_json_path}")
@@ -311,9 +316,13 @@ class MainWindow(QMainWindow):
         # Show error message
         # Check if error is due to cancellation to show a more specific message
         if "Cancelled by user" in str(err) or (isinstance(err, RuntimeError) and "cancel" in str(err).lower()):
-            QMessageBox.information(self, "操作已取消", "流程已被使用者取消。")  # Operation Cancelled, The process was cancelled by the user.
+            QMessageBox.information(self,
+                                    self.translator.get("operation_cancelled_title", "操作已取消"),
+                                    self.translator.get("operation_cancelled_text", "流程已被使用者取消。"))
         else:
-            QMessageBox.critical(self, "比較失敗", str(err))  # Comparison Failed
+            QMessageBox.critical(self,
+                                 self.translator.get("comparison_failed_title", "比較失敗"),
+                                 str(err))
 
     def _compare_done(self, proj: CompareProject):
         if self._progress_panel:
@@ -340,26 +349,29 @@ class MainWindow(QMainWindow):
                     # _load_run_json logs errors, but we can add a specific message here too
                     logger.error(f"Failed to parse run.json for {proj.name}, project_run_data will be empty or stale.")
                     proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[]) # Ensure it's not None
-                    QMessageBox.warning(self, "Result Loading Error",
-                                        f"Could not load or parse results from {proj.run_json_path}. Display may be empty or outdated.")
+                    QMessageBox.warning(self,
+                                        self.translator.get("result_loading_error_title", "Result Loading Error"),
+                                        self.translator.get("result_loading_error_text", "Could not load or parse results from {path}. Display may be empty or outdated.").format(path=proj.run_json_path))
             except Exception as e: # Catch any other unexpected error during load
                 logger.error(f"Unexpected error loading run.json for project {proj.name}: {e}", exc_info=True)
                 proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[])
-                QMessageBox.critical(self, "Result Loading Error",
-                                     f"An unexpected error occurred while loading results: {e}")
+                QMessageBox.critical(self,
+                                     self.translator.get("result_loading_error_title", "Result Loading Error"),
+                                     self.translator.get("result_loading_unexpected_error_text", "An unexpected error occurred while loading results: {error}").format(error=e))
         else:
             logger.warning(f"No run.json path found for project {proj.name} at {proj.run_json_path}, or file does not exist. Cannot load results into UI.")
             proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[]) # Ensure it's not None and empty
-            QMessageBox.warning(self, "Result File Missing",
-                                f"Result file (run.json) not found for project {proj.name}. Display may be empty.")
+            QMessageBox.warning(self,
+                                self.translator.get("result_file_missing_title", "Result File Missing"),
+                                self.translator.get("result_file_missing_text", "Result file (run.json) not found for project {name}. Display may be empty.").format(name=proj.name))
 
         proj.changed.emit() # Notify that project data (potentially project_run_data) has changed
         self.comparison_finished.emit(proj) # Notify workspace to update its view
 
-    def _handle_audit_plan_confirmation(self):
-        """Slot for ProgressPanel's audit_plan_confirmed signal."""
-        logger.info("Audit plan confirmation received from ProgressPanel. Setting pipeline_confirm_event.")
-        self.pipeline_confirm_event.set()
+    # def _handle_audit_plan_confirmation(self): # Removed
+    #     """Slot for ProgressPanel's audit_plan_confirmed signal."""
+    #     logger.info("Audit plan confirmation received from ProgressPanel. Setting pipeline_confirm_event.")
+    #     self.pipeline_confirm_event.set()
 
     # ------------------------------------------------------------------
     # closeEvent is removed as Workspace handles its own splitter state.

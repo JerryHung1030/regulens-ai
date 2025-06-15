@@ -82,8 +82,7 @@ def run_pipeline(
             # The progress_callback here is passed to pipeline_v1_1, which expects Union[str, AuditPlanClauseUIData] for 'm'.
             # The 'Any' type hint for run_pipeline's progress_callback is compatible with this.
             progress_callback=progress_callback if progress_callback else lambda p, m: print(f"Progress: {p*100:.0f}% - {m}"),
-            cancel_cb=cancel_cb if cancel_cb else lambda: False,
-            confirm_event=confirm_event # Pass the confirm_event
+            cancel_cb=cancel_cb if cancel_cb else lambda: False
         )
         # pipeline_v1_1 manages its own run.json and doesn't return a report path directly in the same way.
         # The 'report_path' on the project might be set by other means or a future step in v1.1.

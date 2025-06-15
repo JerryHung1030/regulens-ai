@@ -1,13 +1,12 @@
 ## 1 | 產品概觀
 
-Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用者比對「控制項 (Controls)-程序 (Procedures)-證據 (Evidences)」三方文件，並透過向量檢索與 LLM 評估，自動產生詳盡的合規性報告。整體流程分為 **GUI 操作層** 與 **Pipeline 資料處理層** 兩大部分。
+Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，專注於法規遵循性審計。系統透過 LLM 與向量檢索技術，自動分析控制項（Controls）並生成審計計畫，協助使用者進行合規性評估。整體架構分為 **GUI 操作層** 與 **Pipeline 資料處理層** 兩大部分。
 
 ---
 
 ## 2 | 啟動與初始化流程
 
 1. **main.py**
-
    * 載入自訂字體並設定全域字體
    * 讀取 `config_default.yaml`（或使用者覆寫版本）
    * 初始化翻譯器 → 多語系資源載入
@@ -22,7 +21,6 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 ### 3.1  主視窗 (MainWindow)
 
 * **選單列**
-
   * `File → Settings…`　`Ctrl+,`
   * `File → Quit`　　　`Ctrl+Q`
 * **多語言切換**：即時刷新所有 UI 文本
@@ -30,9 +28,8 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 ### 3.2  工作區 (Workspace)
 
 * **QSplitter** 左右分割
-
-  * **左側 Sidebar：專案列表**
-  * **右側 StackedWidget：內容區**
+  * **左側 Sidebar**：專案列表
+  * **右側 StackedWidget**：內容區
 * 分割比例可拖曳調整並自動記憶
 
 ### 3.3  主要頁面
@@ -52,44 +49,45 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 
 ---
 
-## 5 | Pipeline 八大處理階段
+## 5 | Pipeline 五大處理階段
 
-> 由 `app/pipeline/__init__.py` 與相關模組實作
+> 由 `app/pipeline/pipeline_v1_1.py` 與相關模組實作
 
-1. **初始化**
+1. **初始化與載入**
+   * 讀取控制項 JSON 檔案
+   * 載入或初始化 `run.json`
+   * 建立快取與輸出目錄
 
-   * 建立快取、輸出與索引目錄
-2. **文件攝取 (Ingestion)**
+2. **需求檢查 (Need-Check)**
+   * 分析每個控制項是否需要審計程序
+   * 使用 LLM 評估控制項的複雜度
+   * 更新 `run.json` 中的需求狀態
 
-   * 讀取 *Controls / Procedures / Evidences* 三資料夾
-   * 產生 `RawDoc` 物件
-3. **文件正規化 (Normalization)**
+3. **審計計畫生成 (Audit Plan)**
+   * 為需要審計的控制項生成審計任務
+   * 使用 LLM 分解控制項為具體審計步驟
+   * 更新 `run.json` 中的審計計畫
 
-   * 轉成 `NormDoc`，建立統一欄位與映射
-4. **嵌入生成 (Embedding)**
+4. **證據搜尋 (Search)**
+   * 讀取程序與證據文件
+   * 生成文件向量嵌入
+   * 建立 FAISS 索引
+   * 檢索相關證據
 
-   * 呼叫 OpenAI API 取得區塊向量，存成 `EmbedSet`
-5. **索引建立 (Indexing)**
-
-   * 使用 **FAISS** 為三類文件分別建索引
-6. **檢索與評估**
-
-   * 對每個控制項區塊檢索相似程序與證據想請我跟你吃飯
-   * 交由 LLM 進行三重評估 (TripleAssessment)
-7. **聚合評估 (Aggregation)**
-
-   * 彙整三重結果 → 計算整體狀態與平均分數
-8. **報告生成 (Reporting)**
-
-   * 以 Markdown 產出；可選擇轉出 PDF
+5. **評估與判斷 (Judge)**
+   * 使用 LLM 評估證據與控制項的符合度
+   * 計算整體合規狀態
+   * 生成詳細評估報告
 
 ---
 
 ## 6 | LLM 評估機制
+
 ### 6.1  評估層級
 
-* **TripleAssessment**：Control + Procedure + Evidence
-* **PairAssessment**：Control + Procedure + 多個 Evidence 結果
+* **Need-Check**：評估控制項是否需要審計程序
+* **Audit Plan**：生成具體審計任務
+* **Judge**：評估證據與控制項的符合度
 
 ### 6.2  狀態與分數
 
@@ -117,9 +115,9 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 
 1. **標題與簡介**
 2. **各控制項分組結果**
-
    * 控制項原文
-   * 程序摘要、整體狀態、得分、LLM 分析
+   * 審計計畫摘要
+   * 整體狀態、得分、LLM 分析
    * 證據列表：狀態圖示 (✅⚠️❌❓)、片段、置信度、建議
 3. **摘要分析**：聚合狀態 + 重點發現 (最多 3 條)
 
@@ -144,6 +142,7 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 
 * 嵌入與評估結果寫入本地快取 → 重複運行節省 API 成本
 * FAISS 索引分離存檔，支援增量更新
+* 審計計畫與評估結果保存在 `run.json`
 
 ---
 
@@ -168,13 +167,10 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 ## 13 | 常見問題與排解
 
 1. **啟動後畫面全白**
-
    * 檢查 `config_default.yaml` 是否缺漏主題設定
 2. **無法產生嵌入**
-
    * 確認 OpenAI API Key 已在設定畫面填寫
 3. **比較流程卡住**
-
    * 於進度面板點擊 "Cancel"；檢查 log 搜尋錯誤關鍵字
 
 ---
@@ -195,34 +191,33 @@ Regulens-AI 是一款以 **PySide6** 打造的桌面 GUI 應用，協助使用�
 regulens-ai/
 ├── app/                           # 主要應用程式目錄
 │   ├── __init__.py               # 應用程式初始化
-│   ├── main.py                    # 應用程式入口點，初始化 GUI 和主要組件
-│   ├── mainwindow.py             # 主視窗類別，管理整體 UI 佈局和事件
-│   ├── settings_dialog.py        # 設定對話框，處理使用者設定和配置
-│   ├── settings.py               # 設定管理類別，處理應用程式設定
+│   ├── main.py                    # 應用程式入口點
+│   ├── mainwindow.py             # 主視窗類別
+│   ├── settings_dialog.py        # 設定對話框
+│   ├── settings.py               # 設定管理類別
 │   ├── translator.py             # 多語言翻譯管理
-│   ├── i18n.py                   # 國際化資源和翻譯文本
+│   ├── i18n.py                   # 國際化資源
 │   ├── logger.py                 # 日誌記錄工具
 │   │
 │   ├── models/                   # 資料模型目錄
-│   │   ├── project.py           # 專案資料模型，定義專案結構
-│   │   ├── docs.py              # 文件資料模型，處理文件結構
-│   │   ├── assessments.py       # 評估資料模型，定義評估結果結構
+│   │   ├── project.py           # 專案資料模型
+│   │   ├── docs.py              # 文件資料模型
+│   │   ├── assessments.py       # 評估資料模型
 │   │   └── settings.py          # 模型相關設定
 │   │
 │   ├── pipeline/                 # 處理管道目錄
-│   │   ├── __init__.py          # 管道初始化，定義主要處理流程
+│   │   ├── __init__.py          # 管道初始化
+│   │   ├── pipeline_v1_1.py     # 主要處理流程
 │   │   ├── ingestion.py         # 文件攝取處理
 │   │   ├── normalize.py         # 文件正規化處理
 │   │   ├── embed.py             # 向量嵌入生成
 │   │   ├── index.py             # 向量索引建立
 │   │   ├── retrieve.py          # 相似度檢索
-│   │   ├── judge_llm.py         # LLM 評估處理
-│   │   ├── aggregate.py         # 評估結果聚合
-│   │   ├── report.py            # 報告生成
+│   │   ├── llm_utils.py         # LLM 工具函數
 │   │   └── cache.py             # 快取管理
 │   │
 │   ├── views/                    # 視圖目錄
-│   │   └── workspace.py         # 工作區視圖，管理主要操作介面
+│   │   └── workspace.py         # 工作區視圖
 │   │
 │   ├── widgets/                  # 自定義元件目錄
 │   │   ├── intro_page.py        # 介紹頁面元件

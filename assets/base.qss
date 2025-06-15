@@ -337,3 +337,36 @@ QPushButton#getStartedButton:hover {
 QPushButton#getStartedButton:pressed {
     background-color: @button_get_started_pressed_background;
 }
+
+/* Status Indicators */
+.status-compliant-bar, QFrame[status="compliant"] {
+    background-color: #28a745; /* Green */
+    color: white; /* Text color for on the bar segment */
+}
+QLabel.status-compliant-text {
+    color: #28a745; /* Green text for labels next to or outside bars */
+}
+
+.status-non-compliant-bar, QFrame[status="non-compliant"] {
+    background-color: #dc3545; /* Red */
+    color: white;
+}
+QLabel.status-non-compliant-text {
+    color: #dc3545; /* Red text */
+}
+
+.status-pending-bar, QFrame[status="pending"] {
+    background-color: #ffc107; /* Orange/Yellow */
+    color: black; /* Darker text for better contrast on yellow */
+}
+QLabel.status-pending-text {
+    color: #ffc107; /* Orange/Yellow text */
+}
+
+.status-na-bar, QFrame[status="na"] {
+    background-color: #6c757d; /* Gray for N/A */
+    color: white;
+}
+QLabel.status-na-text {
+    color: #6c757d; /* Gray text */
+}

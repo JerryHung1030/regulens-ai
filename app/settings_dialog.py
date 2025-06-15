@@ -57,17 +57,31 @@ class SettingsDialog(QDialog):
     def _retranslate_ui(self):
         self.setWindowTitle(self.translator.get("settings_dialog_title", "Settings"))
         
-        self.tabs.setTabText(0, self.translator.get("settings_tab_general", "General"))
-        self.tabs.setTabText(1, self.translator.get("settings_tab_models", "Models"))
-        self.tabs.setTabText(2, self.translator.get("settings_tab_retrieval", "Retrieval"))
-        self.tabs.setTabText(3, self.translator.get("settings_tab_output", "Output"))
+        # New Tab Order: Models, Retrieval, Output (if exists), General
+        self.tabs.setTabText(0, self.translator.get("settings_tab_models", "Models"))
+        self.tabs.setTabText(1, self.translator.get("settings_tab_retrieval", "Retrieval"))
+        
+        current_tab_offset = 2
+        # Assuming self.output_tab_index is set in _init_ui if Output tab is added
+        if hasattr(self, 'output_tab_index') and self.output_tab_index != -1 and self.output_tab_index < self.tabs.count():
+            self.tabs.setTabText(self.output_tab_index, self.translator.get("settings_tab_output", "Output")) # Use stored index
+            # The general tab would be after output if output exists, otherwise it's at index 2
+            general_tab_actual_index = self.output_tab_index + 1 
+            if general_tab_actual_index < self.tabs.count(): # Check if general tab index is valid
+                 self.tabs.setTabText(general_tab_actual_index, self.translator.get("settings_tab_general", "General"))
+        else: # Output tab doesn't exist or index is wrong
+            if current_tab_offset < self.tabs.count(): # Check if general tab index is valid
+                self.tabs.setTabText(current_tab_offset, self.translator.get("settings_tab_general", "General"))
+
 
         # Update labels in General tab
-        if self.general_app_theme_label:
+        if hasattr(self, 'general_app_theme_label') and self.general_app_theme_label: # Check existence
             self.general_app_theme_label.setText(self.translator.get("settings_label_app_theme", "Application Theme:"))
+        if hasattr(self, 'general_gui_language_label') and self.general_gui_language_label: # New GUI language label
+            self.general_gui_language_label.setText(self.translator.get("settings_label_gui_language", "GUI Language:"))
 
         # Update labels and buttons in Models tab
-        if self.models_api_key_label:
+        if hasattr(self, 'models_api_key_label') and self.models_api_key_label: # Check existence
             self.models_api_key_label.setText(self.translator.get("settings_label_openai_api_key", "OpenAI API Key:"))
         if self.models_timeout_label:
             self.models_timeout_label.setText(self.translator.get("settings_label_openai_timeout", "OpenAI Client Timeout (s):"))
@@ -102,8 +116,9 @@ class SettingsDialog(QDialog):
         #     self.output_report_theme_label.setText(self.translator.get("settings_label_report_theme_css", "Report Theme CSS:"))
         # if hasattr(self, 'report_theme_button') and self.report_theme_button: # Removed
         #     self.report_theme_button.setText(self.translator.get("settings_button_browse_css", "Browse CSS..."))
-        if self.output_report_lang_label:
-            self.output_report_lang_label.setText(self.translator.get("settings_label_report_language", "Report Language:"))
+        # Removed: Report language label is gone from Output tab
+        # if hasattr(self, 'output_report_lang_label') and self.output_report_lang_label: # Check existence
+        #    self.output_report_lang_label.setText(self.translator.get("settings_label_report_language", "Report Language:"))
         
         logger.debug("SettingsDialog UI retranslated")
 
@@ -111,14 +126,27 @@ class SettingsDialog(QDialog):
     # UI helpers
     # ---------------------------------------------------------------------
     def _init_ui(self) -> None:
-        self.tabs = QTabWidget(self) # Store self.tabs
-        self.tabs.addTab(self._build_general_tab(), self.translator.get("settings_tab_general", "General"))
+        self.tabs = QTabWidget(self)
+        
+        # New Tab Order: Models, Retrieval, General. Output tab handled conditionally.
+        self.models_tab_index = 0
         self.tabs.addTab(self._build_models_tab(), self.translator.get("settings_tab_models", "Models"))
+        
+        self.retrieval_tab_index = 1
         self.tabs.addTab(self._build_retrieval_tab(), self.translator.get("settings_tab_retrieval", "Retrieval"))
-        self.tabs.addTab(self._build_output_tab(), self.translator.get("settings_tab_output", "Output"))
+        
+        # Handle Output Tab - build it first to see if it has content
+        output_tab_widget = self._build_output_tab()
+        if output_tab_widget.layout() is not None and output_tab_widget.layout().count() > 0:
+            self.output_tab_index = self.tabs.count() # Index at which it will be inserted
+            self.tabs.addTab(output_tab_widget, self.translator.get("settings_tab_output", "Output"))
+        else:
+            self.output_tab_index = -1 # Mark as not present / empty
+
+        self.general_tab_index = self.tabs.count() # General tab is added last
+        self.tabs.addTab(self._build_general_tab(), self.translator.get("settings_tab_general", "General"))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
-        # TODO: Translate Save/Cancel buttons if not handled by Qt locale
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
 
@@ -144,6 +172,11 @@ class SettingsDialog(QDialog):
         
         self.general_app_theme_label = QLabel(self.translator.get("settings_label_app_theme", "Application Theme:"))
         layout.addRow(self.general_app_theme_label, self.theme_combo)
+
+        self.gui_language_combo = QComboBox()
+        self.gui_language_combo.addItems(["en", "zh"]) 
+        self.general_gui_language_label = QLabel(self.translator.get("settings_label_gui_language", "GUI Language:"))
+        layout.addRow(self.general_gui_language_label, self.gui_language_combo)
         
         container = QWidget()
         container.setLayout(layout)
@@ -168,15 +201,15 @@ class SettingsDialog(QDialog):
         page_layout.addRow(self.models_embedding_label, self.embedding_model_combo)
 
         self.model_need_check_edit = QLineEdit()
-        self.models_model_need_check_label = QLabel("LLM Model for Need-Check:") # i18n key: settings_label_model_need_check
+        self.models_model_need_check_label = QLabel(self.translator.get("settings_label_model_need_check", "LLM Model for Need-Check:"))
         page_layout.addRow(self.models_model_need_check_label, self.model_need_check_edit)
 
         self.model_audit_plan_edit = QLineEdit()
-        self.models_model_audit_plan_label = QLabel("LLM Model for Audit Plan:") # i18n key: settings_label_model_audit_plan
+        self.models_model_audit_plan_label = QLabel(self.translator.get("settings_label_model_audit_plan", "LLM Model for Audit Plan:"))
         page_layout.addRow(self.models_model_audit_plan_label, self.model_audit_plan_edit)
 
         self.model_judge_edit = QLineEdit()
-        self.models_model_judge_label = QLabel("LLM Model for Judge:") # i18n key: settings_label_model_judge
+        self.models_model_judge_label = QLabel(self.translator.get("settings_label_model_judge", "LLM Model for Judge:"))
         page_layout.addRow(self.models_model_judge_label, self.model_judge_edit)
         
         local_model_layout = QHBoxLayout()
@@ -214,7 +247,7 @@ class SettingsDialog(QDialog):
         
         self.audit_top_k_spin = QSpinBox()
         self.audit_top_k_spin.setRange(1, 25)
-        self.retrieval_audit_top_k_label = QLabel("Audit Retrieval Top-K:") # i18n key: settings_label_audit_top_k
+        self.retrieval_audit_top_k_label = QLabel(self.translator.get("settings_label_audit_top_k", "Audit Retrieval Top-K:"))
         page_layout.addRow(self.retrieval_audit_top_k_label, self.audit_top_k_spin)
 
         container = QWidget()
@@ -233,13 +266,15 @@ class SettingsDialog(QDialog):
         # self.output_report_theme_label = QLabel(self.translator.get("settings_label_report_theme_css", "Report Theme CSS:")) # Removed
         # page_layout.addRow(self.output_report_theme_label, report_theme_layout) # Removed
 
-        self.language_combo = QComboBox()
-        self.language_combo.addItems(["en", "zh"])
-        self.output_report_lang_label = QLabel(self.translator.get("settings_label_report_language", "Report Language:"))
-        page_layout.addRow(self.output_report_lang_label, self.language_combo)
+        # self.language_combo = QComboBox() # Removed: Language setting moved to General tab
+        # self.language_combo.addItems(["en", "zh"]) # Removed
+        # self.output_report_lang_label = QLabel(self.translator.get("settings_label_report_language", "Report Language:")) # Removed
+        # page_layout.addRow(self.output_report_lang_label, self.language_combo) # Removed
         
         container = QWidget()
-        container.setLayout(page_layout)
+        # Only set layout if there are actual rows, otherwise it's an empty tab
+        if page_layout.rowCount() > 0:
+            container.setLayout(page_layout)
         return container
         
     # --- File Dialog Helpers ---
@@ -267,6 +302,8 @@ class SettingsDialog(QDialog):
         if "system" not in [self.theme_combo.itemText(i).lower() for i in range(self.theme_combo.count())]:
             self.theme_combo.addItem("system")
         self.theme_combo.setCurrentText(current_theme_value)
+        if hasattr(self, 'gui_language_combo'): # Check if new combo exists
+            self.gui_language_combo.setCurrentText(s.get("gui_language", "en")) # Load GUI language
 
         # Models Tab
         self.key_edit.setText(s.get("openai.api_key", "")) # Ensure key matches new config_default structure
@@ -285,9 +322,10 @@ class SettingsDialog(QDialog):
         self.audit_top_k_spin.setValue(int(s.get("audit.retrieval_top_k", 5)))
 
 
-        # Output Tab
+        # Output Tab - Language setting removed
         # self.report_theme_edit.setText(s.get("report_theme", "default.css")) # Removed
-        self.language_combo.setCurrentText(s.get("language", "en"))
+        # if hasattr(self, 'language_combo') and self.language_combo: # Original language_combo for report
+        #    self.language_combo.setCurrentText(s.get("language", "en")) # This was for report language
 
     def _save(self):
         s = self.settings
@@ -295,6 +333,8 @@ class SettingsDialog(QDialog):
         # General Tab
         selected_theme = self.theme_combo.currentText().lower()
         s.set("theme", selected_theme)
+        if hasattr(self, 'gui_language_combo'): # Check if new combo exists
+            s.set("gui_language", self.gui_language_combo.currentText()) # Save GUI language
 
         # Models Tab
         s.set("openai.api_key", self.key_edit.text().strip()) # Ensure key matches new config_default structure
@@ -315,14 +355,20 @@ class SettingsDialog(QDialog):
         # s.set("score_threshold", round(self.score_thresh_spin.value(), 2)) # Removed
         s.set("audit.retrieval_top_k", self.audit_top_k_spin.value())
         
-        # Output Tab
+        # Output Tab - Language setting removed (original "language" key for reports is no longer set here)
         # s.set("report_theme", self.report_theme_edit.text().strip()) # Removed
-        s.set("language", self.language_combo.currentText())
+        
+        if hasattr(self, 'gui_language_combo'):
+            new_lang = self.gui_language_combo.currentText() # Use GUI language for translator
+            language_changed = self.translator.set_language(new_lang)
+            if language_changed:
+                logger.info(f"Translator language set to {new_lang}. Application UI will refresh.")
+        # else: # Fallback if gui_language_combo somehow doesn't exist.
+              # This part is probably not strictly needed if _init_ui always creates gui_language_combo.
+              # old_report_lang = s.get("language", "en") # Get previously set report language if any
+              # self.translator.set_language(old_report_lang) # Or set translator to a default like 'en'
+              # logger.warning("gui_language_combo not found, translator language change might not reflect user's latest choice if it was made.")
 
-        new_lang = self.language_combo.currentText()
-        language_changed = self.translator.set_language(new_lang)
-        if language_changed:
-            logger.info(f"Translator language set to {new_lang}. MainWindow and its components will need UI refresh.")
 
         self.settings_saved.emit()
         self.accept()
