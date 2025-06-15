@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QSizePolicy
 )
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QTextOption
+from PySide6.QtGui import QTextOption, QColor, QFontMetrics # Added QColor and QFontMetrics
 
 from app.models.project import CompareProject
 # Models from assessments and old pipeline structure are no longer directly used here
@@ -32,6 +32,7 @@ from app.models.project import CompareProject
 from app.models.docs import ControlClause, AuditTask # For type hinting in new dialog
 from app.pipeline.pipeline_v1_1 import ProjectRunData, _load_run_json # For loading results
 from app.logger import logger
+from app.utils.font_manager import get_font
 
 
 # Helper function for eliding text
@@ -267,6 +268,27 @@ class ResultsViewer(QWidget):
         title_row.addWidget(btn_back)
         lay.addLayout(title_row)
 
+        # Statistics Summary Section
+        summary_layout = QHBoxLayout()
+        self.summary_total_controls_label = QLabel("<b>Total Controls:</b> N/A")
+        self.summary_requires_procedure_label = QLabel("<b>Requires Procedure:</b> N/A")
+        self.summary_compliant_label = QLabel("<b>Compliant:</b> N/A")
+        self.summary_non_compliant_label = QLabel("<b>Non-Compliant:</b> N/A")
+        self.summary_pending_label = QLabel("<b>Pending:</b> N/A")
+        
+        summary_layout.addWidget(self.summary_total_controls_label)
+        summary_layout.addSpacing(20) # Add some spacing between stats
+        summary_layout.addWidget(self.summary_requires_procedure_label)
+        summary_layout.addSpacing(20)
+        summary_layout.addWidget(self.summary_compliant_label)
+        summary_layout.addSpacing(20)
+        summary_layout.addWidget(self.summary_non_compliant_label)
+        summary_layout.addSpacing(20)
+        summary_layout.addWidget(self.summary_pending_label)
+        summary_layout.addStretch(1) # Push stats to the left
+        lay.addLayout(summary_layout)
+        lay.addSpacing(10) # Add some spacing before the table
+
         self.table_widget = QTableWidget()
         self.table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table_widget.setSelectionBehavior(QTableWidget.SelectRows)
@@ -274,17 +296,29 @@ class ResultsViewer(QWidget):
         self.table_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.column_headers = [
-            self.tr("col_clause_id", "Control Clause ID"),
-            self.tr("col_clause_title", "Control Clause Title"),
-            self.tr("col_requires_proc", "Requires Procedure?"),
-            self.tr("col_task_id", "Audit Task ID"),
-            self.tr("col_task_sentence", "Audit Task Sentence"),
-            self.tr("col_compliant", "Compliant?")
+            self.tr("col_control_id", "Control ID"),
+            self.tr("col_control_title", "Control Title"),
+            self.tr("col_requires_procedure", "Requires Procedure?"),
+            self.tr("col_audit_task", "Audit Task"),
+            self.tr("col_compliance_status", "Compliance Status"),
+            self.tr("col_details", "Details")
         ]
         self.table_widget.setColumnCount(len(self.column_headers))
         self.table_widget.setHorizontalHeaderLabels(self.column_headers)
 
-        self.table_widget.doubleClicked.connect(self._handle_table_double_click) # Connect double click
+        # Define the font used for table items (consistent with what's used in _refresh)
+        item_font = get_font(size=10) # Assuming size 10 is used for items
+        
+        # Calculate default row height
+        fm = QFontMetrics(item_font)
+        # Adjust padding as needed (e.g., 10 pixels total for top/bottom margin)
+        default_row_height = fm.height() + 10 
+        self.table_widget.verticalHeader().setDefaultSectionSize(default_row_height)
+        
+        # Optional: Hide the vertical header (row numbers) for a cleaner look
+        self.table_widget.verticalHeader().setVisible(False)
+
+        # self.table_widget.doubleClicked.connect(self._handle_table_double_click) # Disconnected, details button is primary
         lay.addWidget(self.table_widget)
 
         self.setLayout(lay)
@@ -292,16 +326,11 @@ class ResultsViewer(QWidget):
         self._refresh()
 
     def _handle_table_double_click(self, model_index):
-        if not model_index.isValid(): return
-        row = model_index.row()
-        # Placeholder: Actual data retrieval from UserRole will be in _refresh's population part
-        clause_id_item = self.table_widget.item(row, 0)
-        task_id_item = self.table_widget.item(row, 3)
-
-        clause_id = clause_id_item.text() if clause_id_item else "N/A" # Temporary
-        task_id = task_id_item.text() if task_id_item and task_id_item.text() != "N/A" else None # Temporary
-
-        self._show_evidence_details_dialog(clause_id, task_id)
+        # This method might be removed or repurposed if double-click is no longer needed.
+        # For now, it's disconnected in _build_ui.
+        # If re-enabled, ensure it correctly extracts clause_id and task_id from the new table structure.
+        logger.debug(f"Table double-clicked at row {model_index.row()}, but action is disabled.")
+        pass # Or show a message, or reactivate with updated logic.
 
 
     def _go_back(self):
@@ -314,77 +343,157 @@ class ResultsViewer(QWidget):
             self._title.setText(f"<h2>{self.tr('analysis_results_title', 'Analysis Results')} for: {self.project.name}</h2>")
         else:
             self._title.setText(f"<h2>{self.tr('analysis_results_title', 'Analysis Results')}</h2>")
+            self.summary_total_controls_label.setText("<b>Total Controls:</b> 0")
+            self.summary_requires_procedure_label.setText("<b>Requires Procedure:</b> 0")
+            self.summary_compliant_label.setText("<b>Compliant:</b> 0")
+            self.summary_non_compliant_label.setText("<b>Non-Compliant:</b> 0")
+            self.summary_pending_label.setText("<b>Pending:</b> 0")
 
         self.table_widget.setRowCount(0) # Clear the table
 
-        # Data loading and table population will be implemented in the next step.
-        # For now, it just shows an empty table or a message.
         if not self.project or not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
             logger.info("No project_run_data to display yet.")
-            # Optionally, display a "No data" message in the table
+            self.summary_total_controls_label.setText("<b>Total Controls:</b> 0")
+            self.summary_requires_procedure_label.setText("<b>Requires Procedure:</b> 0")
+            self.summary_compliant_label.setText("<b>Compliant:</b> 0")
+            self.summary_non_compliant_label.setText("<b>Non-Compliant:</b> 0")
+            self.summary_pending_label.setText("<b>Pending:</b> 0")
+            
             self.table_widget.setRowCount(1)
             item = QTableWidgetItem(self.tr("no_data_available", "No analysis data available. Please run the pipeline."))
             item.setTextAlignment(Qt.AlignCenter)
+            table_font = get_font(size=10) # Get font for table items
+            item.setFont(table_font)
             self.table_widget.setItem(0, 0, item)
             self.table_widget.setSpan(0, 0, 1, len(self.column_headers))
-            return  # Stop further processing in _refresh if no data
+            return
+
+        # Initialize statistics counters
+        table_font = get_font(size=10) # Get font for table items
+        total_controls = 0
+        requires_procedure_count = 0
+        compliant_count = 0
+        non_compliant_count = 0
+        pending_count = 0
 
         current_row = 0
         for clause in self.project.project_run_data.control_clauses:
-            # clause_title = clause.metadata.get("title", clause.id)  # Use ID if title not in metadata
-            clause_display_content = clause.text # Get the full text from the clause object
-            elided_clause_content = elide_text(clause_display_content, max_length=100) # Elide it
+            # logger.debug(f"ResultsViewer: Attempting to insert row: {current_row} for clause: {clause.id}")
+            self.table_widget.insertRow(current_row)
+            # logger.debug(f"ResultsViewer: Successfully inserted row: {current_row}")
 
-            requires_proc_text = "N/A"
-            if clause.need_procedure is True: requires_proc_text = self.tr("yes", "Yes")
-            elif clause.need_procedure is False: requires_proc_text = self.tr("no", "No")
+            total_controls += 1
+            if clause.need_procedure:
+                requires_procedure_count += 1
+            
+            if clause.tasks:
+                for task in clause.tasks: # Should typically be one task
+                    if task.compliant is True:
+                        compliant_count += 1
+                    elif task.compliant is False:
+                        non_compliant_count += 1
+                    else: # task.compliant is None
+                        pending_count += 1
+            
+            # Col 0: Control ID
+            item_clause_id = QTableWidgetItem(clause.id)
+            item_clause_id.setFont(table_font)
+            self.table_widget.setItem(current_row, 0, item_clause_id)
+            # logger.debug(f"ResultsViewer: Set item for row {current_row}, col 0, text: '{item_clause_id.text()}'")
 
-            if not clause.tasks:
-                self.table_widget.insertRow(current_row)
+            # Col 1: Control Title - Use clause.title if available, otherwise elided clause.text
+            # Assuming clause.title is already populated in the model, otherwise use clause.text
+            control_title_text = clause.title if clause.title else clause.text
+            item_control_title = QTableWidgetItem(elide_text(control_title_text, max_length=70))
+            item_control_title.setFont(table_font)
+            self.table_widget.setItem(current_row, 1, item_control_title)
+            # logger.debug(f"ResultsViewer: Set item for row {current_row}, col 1, text: '{item_control_title.text()}'")
 
-                item_clause_id = QTableWidgetItem(clause.id)
-                item_clause_id.setData(Qt.UserRole, clause.id)
-                self.table_widget.setItem(current_row, 0, item_clause_id)
-
-                self.table_widget.setItem(current_row, 1, QTableWidgetItem(elided_clause_content))
-                self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
-
-                item_task_id_na = QTableWidgetItem("N/A") # Task ID
-                item_task_id_na.setData(Qt.UserRole, None) # No task ID
-                self.table_widget.setItem(current_row, 3, item_task_id_na)
-                self.table_widget.setItem(current_row, 4, QTableWidgetItem("N/A")) # Task Sentence
-                self.table_widget.setItem(current_row, 5, QTableWidgetItem("N/A")) # Compliant
-                current_row += 1
+            # Col 2: Requires Procedure? (Badge)
+            item_requires_proc = QTableWidgetItem()
+            item_requires_proc.setTextAlignment(Qt.AlignCenter)
+            item_requires_proc.setFont(table_font)
+            if clause.need_procedure is True:
+                item_requires_proc.setText(self.tr("yes", "Yes"))
+                item_requires_proc.setBackground(QColor("#e6f7ff")) # Light blue
+                item_requires_proc.setForeground(QColor("black"))
+            elif clause.need_procedure is False:
+                item_requires_proc.setText(self.tr("no", "No"))
+                item_requires_proc.setBackground(QColor("#f0f0f0")) # Light gray
+                item_requires_proc.setForeground(QColor("black"))
             else:
-                for i, task in enumerate(clause.tasks):
-                    self.table_widget.insertRow(current_row)
+                item_requires_proc.setText(self.tr("n_a", "N/A"))
+            self.table_widget.setItem(current_row, 2, item_requires_proc)
+            # logger.debug(f"ResultsViewer: Set item for row {current_row}, col 2, text: '{item_requires_proc.text()}'")
+            
+            # Process tasks (should be one or none)
+            task = clause.tasks[0] if clause.tasks else None
 
-                    item_clause_id = QTableWidgetItem(clause.id)
-                    item_clause_id.setData(Qt.UserRole, clause.id)
-                    self.table_widget.setItem(current_row, 0, item_clause_id)
+            # Col 3: Audit Task
+            item_audit_task = QTableWidgetItem(elide_text(task.sentence, max_length=70) if task else self.tr("n_a", "N/A"))
+            item_audit_task.setFont(table_font)
+            self.table_widget.setItem(current_row, 3, item_audit_task)
+            # logger.debug(f"ResultsViewer: Set item for row {current_row}, col 3, text: '{item_audit_task.text()}'")
 
-                    self.table_widget.setItem(current_row, 1, QTableWidgetItem(elided_clause_content))
-                    self.table_widget.setItem(current_row, 2, QTableWidgetItem(requires_proc_text))
+            # Col 4: Compliance Status (Badge)
+            item_compliance_status = QTableWidgetItem()
+            item_compliance_status.setTextAlignment(Qt.AlignCenter)
+            item_compliance_status.setFont(table_font)
+            if task:
+                if task.compliant is True:
+                    item_compliance_status.setText(self.tr("compliant_true", "Compliant"))
+                    item_compliance_status.setBackground(QColor("#d4edda")) # Light green
+                    item_compliance_status.setForeground(QColor("#155724")) # Dark green text
+                elif task.compliant is False:
+                    item_compliance_status.setText(self.tr("compliant_false", "Non-Compliant"))
+                    item_compliance_status.setBackground(QColor("#f8d7da")) # Light red
+                    item_compliance_status.setForeground(QColor("#721c24")) # Dark red text (almost white on very light red)
+                else: # Pending
+                    item_compliance_status.setText(self.tr("compliant_pending", "Pending"))
+                    item_compliance_status.setBackground(QColor("#fff3cd")) # Light yellow
+                    item_compliance_status.setForeground(QColor("#856404")) # Dark yellow/brown text
+            else:
+                item_compliance_status.setText(self.tr("n_a", "N/A"))
+            self.table_widget.setItem(current_row, 4, item_compliance_status)
+            # logger.debug(f"ResultsViewer: Set item for row {current_row}, col 4, text: '{item_compliance_status.text()}'")
 
-                    item_task_id = QTableWidgetItem(task.id)
-                    item_task_id.setData(Qt.UserRole, task.id)
-                    self.table_widget.setItem(current_row, 3, item_task_id)
-
-                    self.table_widget.setItem(current_row, 4, QTableWidgetItem(elide_text(task.sentence, 100)))
-
-                    compliant_text = "N/A"
-                    if task.compliant is True: compliant_text = self.tr("compliant_true", "Compliant")
-                    elif task.compliant is False: compliant_text = self.tr("compliant_false", "Non-Compliant")
-                    else: compliant_text = self.tr("compliant_pending", "Pending")
-                    self.table_widget.setItem(current_row, 5, QTableWidgetItem(compliant_text))
-                    current_row += 1
+            # Col 5: Details Button
+            details_button = QPushButton(self.tr("view_details_button", "View Details"))
+            # details_button.setFont(table_font) # Optionally set font for button text too
+            current_task_id = task.id if task else None
+            details_button.clicked.connect(
+                lambda checked=False, c_id=clause.id, t_id=current_task_id: self._show_evidence_details_dialog(c_id, t_id)
+            )
+            if not task:
+                pass 
+            
+            # logger.debug(f"ResultsViewer: Attempting to set cell widget (details button) for row {current_row}, column 5")
+            self.table_widget.setCellWidget(current_row, 5, details_button)
+            # logger.debug(f"ResultsViewer: Successfully set cell widget for row {current_row}, column 5")
+            
+            # logger.debug(f"ResultsViewer: Finished processing clause {clause.id}, current_row is now {current_row + 1}")
+            current_row += 1
 
         self.table_widget.resizeColumnsToContents()
-        if self.table_widget.columnCount() > 1: # Ensure columns exist
-            self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch) # Clause Title
-        if self.table_widget.columnCount() > 4:
-            self.table_widget.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch) # Task Sentence
-        logger.info(f"ResultsViewer table populated with {current_row} rows.")
+        # logger.debug(f"ResultsViewer: Finished populating. Table actual rowCount: {self.table_widget.rowCount()}, expected rows based on current_row variable: {current_row}")
+        # Adjust column stretching
+        if self.table_widget.columnCount() > 1: # Control Title
+            self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        if self.table_widget.columnCount() > 3: # Audit Task
+            self.table_widget.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        
+        # Update summary labels
+        self.summary_total_controls_label.setText(f"<b>Total Controls:</b> {total_controls}")
+        self.summary_requires_procedure_label.setText(f"<b>Requires Procedure:</b> {requires_procedure_count}")
+        self.summary_compliant_label.setText(f"<b>Compliant:</b> {compliant_count}")
+        self.summary_non_compliant_label.setText(f"<b>Non-Compliant:</b> {non_compliant_count}")
+        self.summary_pending_label.setText(f"<b>Pending:</b> {pending_count}")
+        
+        logger.info(f"ResultsViewer table populated with {current_row} rows. Statistics updated.")
+
+        # self.table_widget.resizeRowsToContents() # Commented out as per requirement
+        self.table_widget.viewport().update()
+        # logger.debug("ResultsViewer: Successfully called viewport().update().") # Removing this specific diagnostic log
 
 
     def _export_result_csv(self):

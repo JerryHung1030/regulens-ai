@@ -426,10 +426,10 @@ def execute_audit_plan_step(
         logger.info(f"Performing Audit-Plan for clause: {clause.id} - {clause.title[:50]}...")
 
         prompt = (
-            f"Generate a list of concise and precise audit tasks (sentences) to verify the implementation of the following control clause. "
-            f"Each task should be suitable for information retrieval against a knowledge base of audit procedures. "
-            f"Return a JSON object containing a single key 'audit_tasks', which is a list of dictionaries. "
-            f"Each dictionary should have an 'id' (a unique string like 'task_001') and a 'sentence' (the audit task text).\n\n"
+            f"Generate **one** concise and precise audit task (sentence) to verify the implementation of the following control clause. "
+            f"The task should be suitable for information retrieval against a knowledge base of audit procedures. "
+            f"Return a JSON object containing a single key 'audit_tasks', which is a list containing **a single dictionary**. "
+            f"The dictionary should have an 'id' (e.g., 'task_001') and a 'sentence' (the audit task text).\n\n"
             f"Control Clause Text: \"{clause.text}\""
         )
 
@@ -437,26 +437,29 @@ def execute_audit_plan_step(
             prompt=prompt,
             model_name=settings.llm_model_audit_plan,
             api_key=settings.openai_api_key,
-            expected_response_type="json_list" 
+            expected_response_type="json_list"  # Keep this as json_list, we'll validate the contents
         )
 
-        new_tasks: List[AuditTask] = []
-        if llm_response and isinstance(llm_response, list):
-            for task_data in llm_response:
-                if isinstance(task_data, dict) and "id" in task_data and "sentence" in task_data:
-                    try:
-                        new_tasks.append(AuditTask(id=str(task_data["id"]), sentence=str(task_data["sentence"])))
-                    except Exception as e: # Pydantic validation error
-                        logger.error(f"Error creating AuditTask from data {task_data} for clause {clause.id}: {e}")
-                else:
-                    logger.warning(f"Skipping invalid task data from LLM for clause {clause.id}: {task_data}")
-            clause.tasks = new_tasks
-            logger.info(f"Audit-Plan for clause {clause.id} generated {len(new_tasks)} tasks.")
+        clause.tasks = [] # Initialize tasks as empty list for this clause
+        if llm_response and isinstance(llm_response, list) and len(llm_response) > 0:
+            if len(llm_response) > 1:
+                logger.warning(f"LLM returned {len(llm_response)} tasks for clause {clause.id}, but expected only one. Using the first task.")
+            
+            first_task_data = llm_response[0]
+            if isinstance(first_task_data, dict) and "id" in first_task_data and "sentence" in first_task_data:
+                try:
+                    single_task = AuditTask(id=str(first_task_data["id"]), sentence=str(first_task_data["sentence"]))
+                    clause.tasks = [single_task] # Assign as a list with one task
+                    logger.info(f"Audit-Plan for clause {clause.id} generated 1 task: {single_task.id}")
+                except Exception as e: # Pydantic validation error
+                    logger.error(f"Error creating AuditTask from data {first_task_data} for clause {clause.id}: {e}")
+                    # clause.tasks remains empty
+            else:
+                logger.error(f"Invalid task data format from LLM for clause {clause.id}: {first_task_data}")
+                # clause.tasks remains empty
         else:
-            # clause.tasks remains empty or as it was (empty in this case)
-            logger.error(f"Failed to generate audit tasks for clause {clause.id}. LLM response: {llm_response}")
-            # Even if task generation failed, send an update for this clause
-            # to show it was processed, perhaps with empty tasks.
+            logger.error(f"Failed to generate audit tasks or empty list returned for clause {clause.id}. LLM response: {llm_response}")
+            # clause.tasks remains empty
             
         # Update and save run.json
         for i, run_clause in enumerate(current_project_run_data.control_clauses):

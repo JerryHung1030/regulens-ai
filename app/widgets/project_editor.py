@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QStringListModel
 from app.models.project import CompareProject
 from app.logger import logger
+from app.utils.font_manager import get_font
 
 
 class ProjectEditor(QWidget):
@@ -184,6 +185,8 @@ class ProjectEditor(QWidget):
         self.controls_json_preview = QTextEdit()
         self.controls_json_preview.setReadOnly(True)
         self.controls_json_preview.setObjectName("controlsJsonPreview")
+        preview_font = get_font(size=10) # Get font for preview panes
+        self.controls_json_preview.setFont(preview_font)
         controls_splitter.addWidget(self.controls_json_preview)
         
         controls_splitter.setSizes([200, 300])  # 設定左右兩側的預設寬度比例
@@ -202,6 +205,8 @@ class ProjectEditor(QWidget):
         self.procedures_text_preview = QTextEdit() # Displays content of selected document
         self.procedures_text_preview.setReadOnly(True)
         self.procedures_text_preview.setObjectName("proceduresTextPreview")
+        # preview_font is already defined above for controls_json_preview
+        self.procedures_text_preview.setFont(preview_font)
         procedures_splitter.addWidget(self.procedures_text_preview)
         procedures_splitter.setSizes([200, 300])
         procedures_tab_layout.addWidget(procedures_splitter)
@@ -347,31 +352,31 @@ class ProjectEditor(QWidget):
             self.controls_json_preview.setText(msg)
             return
         except json.JSONDecodeError as e:
-            msg = f"Invalid JSON: {e}"
+            msg = f"The file '{self.project.controls_json_path.name}' is not a valid JSON file. Please check its format.\n\nDetails: {e}"
             QMessageBox.critical(self, "Validation Error", msg)
             self.controls_json_preview.setText(msg)
             return
         except Exception as e:
-            msg = f"Error reading file: {e}"
+            msg = f"Error reading file '{self.project.controls_json_path.name}'.\n\nDetails: {e}"
             QMessageBox.critical(self, "Validation Error", msg)
             self.controls_json_preview.setText(msg)
             return
 
         # New simplified validation logic
         if not isinstance(data, dict):
-            msg = "JSON must be an object."
+            msg = f"The controls JSON file '{self.project.controls_json_path.name}' must be an object (dictionary)."
             QMessageBox.critical(self, "Validation Error", msg)
             self.controls_json_preview.setText(msg)
             return
 
         if "name" not in data:
-            msg = "Missing 'name' key in JSON."
+            msg = f"The controls JSON file '{self.project.controls_json_path.name}' is missing the 'name' key."
             QMessageBox.critical(self, "Validation Error", msg)
             self.controls_json_preview.setText(msg)
             return
 
         if not isinstance(data["name"], str):
-            msg = "'name' key must be a string."
+            msg = f"In '{self.project.controls_json_path.name}', the 'name' key must correspond to a string value."
             QMessageBox.critical(self, "Validation Error", msg)
             self.controls_json_preview.setText(msg)
             return
@@ -380,7 +385,7 @@ class ProjectEditor(QWidget):
             if key == "name":
                 continue  # Already validated
             if not isinstance(value, str):
-                msg = f"Value for key '{key}' must be a string."
+                msg = f"In '{self.project.controls_json_path.name}', the value for key '{key}' must be a string."
                 QMessageBox.critical(self, "Validation Error", msg)
                 self.controls_json_preview.setText(msg)
                 return
@@ -489,7 +494,7 @@ class ProjectEditor(QWidget):
             self.project.rename(new)
             
     def _delete(self):
-        if QMessageBox.question(self, "Delete", f'Delete "{self.project.name}"?') == QMessageBox.Yes:
+        if QMessageBox.question(self, "Delete project", f'Delete "{self.project.name}"?') == QMessageBox.Yes:
             self.project.deleted.emit()
 
     # ---------- Refresh ----------
