@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
+import threading # Added for pipeline confirmation event
 from pathlib import Path # Added
-# from typing import List, Optional, Dict, Any, Callable # For type hints
+from typing import Union, Any, Optional # Added for progress_updated signal and handler
 
-from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt
+from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt, QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication,
@@ -23,7 +24,7 @@ from .settings_dialog import SettingsDialog
 from .models.project import CompareProject
 from .pipeline import run_pipeline # PipelineSettings is now instantiated within run_pipeline or its callees
 # Import for _compare_done to load ProjectRunData
-from .pipeline.pipeline_v1_1 import _load_run_json, ProjectRunData
+from .pipeline.pipeline_v1_1 import _load_run_json, ProjectRunData, AuditPlanClauseUIData
 # from app.widgets.project_editor import ProjectEditor
 # from app.widgets.results_viewer import ResultsViewer
 from .widgets.intro_page import IntroPage
@@ -38,7 +39,7 @@ from .stores.project_store import ProjectStore
 class _Signals(QObject):
     finished = Signal(object)
     error = Signal(Exception)
-    progress_updated = Signal(float, str) # Signature changed: progress_float (0.0-1.0), message_str
+    progress_updated = Signal(float, object) # Changed str to object for message_data
 
 
 class _Worker(QRunnable):
@@ -71,6 +72,7 @@ class MainWindow(QMainWindow):
         self.translator = translator
         self.project_store = ProjectStore()
         self.threadpool = QThreadPool()
+        self.pipeline_confirm_event = threading.Event() # Added for pipeline pause/resume
         self._cancelled = False  # Added
         self._progress_panel: ProgressPanel | None = None  # Added
 
@@ -239,8 +241,10 @@ class MainWindow(QMainWindow):
         self.apply_theme()
 
         self._cancelled = False  # Reset cancellation flag for new run
+        self.pipeline_confirm_event.clear() # Clear event from previous run, if any
         self._progress_panel = ProgressPanel(self)  # Using new ProgressPanel
         self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)
+        self._progress_panel.audit_plan_confirmed.connect(self._handle_audit_plan_confirmation) # Connect new signal
         self._progress_panel.show()
 
         def task_wrapper(worker_signals: _Signals):
@@ -248,15 +252,16 @@ class MainWindow(QMainWindow):
                 logger.info(f"Starting pipeline for project: {proj.name}")
                 # PipelineSettings instance is now created inside run_pipeline from self.settings
 
-                # Define the progress callback for run_pipeline (float, str)
-                def progress_handler(progress_float: float, message_str: str):
-                    worker_signals.progress_updated.emit(progress_float, message_str)
+                # Define the progress callback, now expecting Union[str, Any] for message_data
+                def progress_handler(progress_float: float, message_data: Union[str, Any]):
+                    worker_signals.progress_updated.emit(progress_float, message_data)
 
                 run_pipeline( # run_pipeline now expects the global self.settings
                     proj,
                     self.settings,
                     progress_callback=progress_handler,
-                    cancel_cb=self._is_pipeline_cancelled
+                    cancel_cb=self._is_pipeline_cancelled,
+                    confirm_event=self.pipeline_confirm_event # Pass the event
                 )
                 # For v1.1, primary output is run.json, not a single report_path from the pipeline function.
                 logger.info(f"Pipeline task finished for {proj.name}. Results are in {proj.run_json_path}")
@@ -271,10 +276,15 @@ class MainWindow(QMainWindow):
         worker.signals.progress_updated.connect(self._update_progress_panel_on_signal)
         self.threadpool.start(worker)
 
-    def _update_progress_panel_on_signal(self, progress_float: float, message: str): # Signature updated
+    def _update_progress_panel_on_signal(self, progress_float: float, message_data: Union[str, AuditPlanClauseUIData]):
         """Slot to update ProgressPanel from worker thread signal."""
         if self._progress_panel:
-            self._progress_panel.update_progress(progress_float, message) # Pass new signature
+            try:
+                self._progress_panel.update_progress(progress_float, message_data)
+            except Exception as e:
+                logger.error(f"Error updating progress panel: {str(e)}")
+                # 如果發生錯誤，至少顯示進度
+                self._progress_panel.progress_bar.setValue(int(progress_float * 100))
 
     def _is_pipeline_cancelled(self) -> bool:
         """Used by run_pipeline to check for cancellation."""
@@ -345,6 +355,11 @@ class MainWindow(QMainWindow):
 
         proj.changed.emit() # Notify that project data (potentially project_run_data) has changed
         self.comparison_finished.emit(proj) # Notify workspace to update its view
+
+    def _handle_audit_plan_confirmation(self):
+        """Slot for ProgressPanel's audit_plan_confirmed signal."""
+        logger.info("Audit plan confirmation received from ProgressPanel. Setting pipeline_confirm_event.")
+        self.pipeline_confirm_event.set()
 
     # ------------------------------------------------------------------
     # closeEvent is removed as Workspace handles its own splitter state.

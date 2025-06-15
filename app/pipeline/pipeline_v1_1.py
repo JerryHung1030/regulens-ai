@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
+import threading # For confirm_event
 from pathlib import Path
-from typing import List, Callable, Dict, Any, Optional
+from typing import List, Callable, Dict, Any, Optional, Union
 
 import shutil # For cleaning up temp directories
 
@@ -20,6 +21,21 @@ from app.pipeline.embed import generate_embeddings
 from app.pipeline.index import create_or_load_index, IndexMeta # Added IndexMeta
 from app.pipeline.retrieve import retrieve_similar_chunks, MatchSet # Added MatchSet
 from app.pipeline.cache import CacheService # For embedding caching if generate_embeddings uses it
+
+# Pydantic models for GUI data structures
+from pydantic import BaseModel # Ensure pydantic.BaseModel is imported
+
+class AuditTaskUIData(BaseModel):
+    id: str
+    sentence: str
+
+class AuditPlanClauseUIData(BaseModel):
+    type: str = "audit_plan" # To help distinguish this message type in the GUI
+    clause_id: str
+    clause_title: Optional[str] = None
+    tasks: List[AuditTaskUIData] = []
+    no_audit_needed: bool = False
+    audit_plan_generation_complete: bool = False # Flag to signal end of audit plan generation phase
 
 def _load_run_json(run_json_path: Path) -> Optional[ProjectRunData]:
     if run_json_path.exists():
@@ -89,10 +105,11 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
     return control_clauses
 
 
-def run_project_pipeline_v1_1(project: CompareProject, 
-                              settings: PipelineSettings, 
-                              progress_callback: Callable[[float, str], None], 
-                              cancel_cb: Callable[[], bool]):
+def run_project_pipeline_v1_1(project: CompareProject,
+                              settings: PipelineSettings,
+                              progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
+                              cancel_cb: Callable[[], bool],
+                              confirm_event: Optional[threading.Event] = None): # New parameter
     """
     Main orchestrator for the V1.1 pipeline.
     """
@@ -202,6 +219,20 @@ def run_project_pipeline_v1_1(project: CompareProject,
     )
     logger.info("Step 2: Audit-Plan completed.")
 
+    # --- Pause for user confirmation before Search step ---
+    if confirm_event:
+        # The audit_plan_generation_complete=True message should have been sent by execute_audit_plan_step
+        # The button in UI should be enabled by that signal.
+        # Now, wait for the user to press it.
+        logger.info("Audit plan generated. Waiting for user confirmation to proceed to Search step...")
+        progress_callback(0.6, "等待使用者確認以開始文件檢索...") # Message indicating waiting state
+        confirm_event.wait()  # Block until main_window sets the event
+        confirm_event.clear() # Clear the event for potential future use
+        logger.info("User confirmed. Proceeding with Search step.")
+        # Optionally, send another progress message that confirmation received, though next step's start message will also show.
+        # progress_callback(0.6, "Confirmation received. Starting Search step...")
+
+
     # --- Future Steps (3 & 4) would follow here ---
     # Step 3: Procedure Association (Search)
     if cancel_cb():
@@ -256,11 +287,11 @@ def run_project_pipeline_v1_1(project: CompareProject,
 # These will be added in subsequent steps.
 
 def execute_need_check_step(
-    control_clauses: List[ControlClause], 
+    control_clauses: List[ControlClause],
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData, # To update and save the overall run.json
-    settings: PipelineSettings, 
-    progress_callback: Callable[[float, str], None], # For detailed progress
+    settings: PipelineSettings,
+    progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None], # For detailed progress
     cancel_cb: Callable[[], bool]
 ) -> List[ControlClause]:
     """
@@ -332,48 +363,67 @@ def execute_need_check_step(
 
 
 def execute_audit_plan_step(
-    control_clauses: List[ControlClause], 
+    control_clauses: List[ControlClause],
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData,
-    settings: PipelineSettings, 
-    progress_callback: Callable[[float, str], None],
+    settings: PipelineSettings,
+    progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
     cancel_cb: Callable[[], bool]
 ) -> List[ControlClause]:
     """
     Executes Step 2: Audit-Plan for each relevant control clause.
     Generates audit tasks and saves to run.json progressively.
     """
-    total_relevant_clauses = sum(1 for c in control_clauses if c.need_procedure)
-    clauses_processed_for_plan = 0
-    
-    if total_relevant_clauses == 0:
-        logger.info("No clauses require audit planning.")
-        # Set progress for this step to complete if no work to do
-        base_progress = 0.3 
-        step_progress_span = 0.3 # Step 2 is 30% to 60%
-        progress_callback(base_progress + step_progress_span, "Audit-Plan: No relevant clauses")
+    base_progress = 0.3  # Progress before this step starts
+    step_progress_span = 0.3  # This step spans from 30% to 60%
+
+    total_clauses_in_step = len(control_clauses)
+    clauses_iterated_in_step = 0
+
+    if total_clauses_in_step == 0:
+        logger.info("No control clauses to process for audit planning.")
+        progress_callback(base_progress + step_progress_span, "Audit-Plan: No control clauses")
+        # Send completion signal even if no clauses
+        final_completion_message = AuditPlanClauseUIData(
+            clause_id="summary",
+            clause_title="Audit Plan Generation Summary",
+            audit_plan_generation_complete=True
+        )
+        progress_callback(base_progress + step_progress_span, final_completion_message)
         return control_clauses
 
-    for idx, clause in enumerate(control_clauses):
+    for clause in control_clauses:
         if cancel_cb():
             logger.info("Audit-Plan step cancelled.")
             break
+        
+        clauses_iterated_in_step += 1
+        current_progress_within_step = (clauses_iterated_in_step / total_clauses_in_step) * step_progress_span
+        overall_progress = base_progress + current_progress_within_step
 
         if not clause.need_procedure:
-            # logger.debug(f"Skipping Audit-Plan for clause {clause.id} as need_procedure is False or None.")
-            continue # Skip if no procedure is needed
-
-        if clause.tasks: # Already has tasks
-            logger.debug(f"Skipping Audit-Plan for clause {clause.id} as tasks already exist.")
-            clauses_processed_for_plan +=1
-            # Update progress
-            base_progress = 0.3
-            step_progress_span = 0.3 
-            current_step_progress = (clauses_processed_for_plan / total_relevant_clauses) * step_progress_span
-            progress_callback(base_progress + current_step_progress, f"Audit-Plan: Clause {clause.id} (skipped, tasks exist)")
+            logger.debug(f"Clause {clause.id} does not require an audit procedure.")
+            message = AuditPlanClauseUIData(
+                clause_id=clause.id,
+                clause_title=clause.title,
+                no_audit_needed=True
+            )
+            progress_callback(overall_progress, message)
             continue
 
-        logger.info(f"Performing Audit-Plan for clause: {clause.id} - {clause.text[:50]}...")
+        if clause.tasks:  # Already has tasks from a previous run
+            logger.debug(f"Skipping Audit-Plan generation for clause {clause.id} as tasks already exist.")
+            ui_tasks = [AuditTaskUIData(id=t.id, sentence=t.sentence) for t in clause.tasks]
+            message = AuditPlanClauseUIData(
+                clause_id=clause.id,
+                clause_title=clause.title,
+                tasks=ui_tasks,
+                no_audit_needed=False
+            )
+            progress_callback(overall_progress, message)
+            continue
+
+        logger.info(f"Performing Audit-Plan for clause: {clause.id} - {clause.title[:50]}...")
 
         prompt = (
             f"Generate a list of concise and precise audit tasks (sentences) to verify the implementation of the following control clause. "
@@ -405,9 +455,9 @@ def execute_audit_plan_step(
         else:
             # clause.tasks remains empty or as it was (empty in this case)
             logger.error(f"Failed to generate audit tasks for clause {clause.id}. LLM response: {llm_response}")
-
-        clauses_processed_for_plan +=1
-        
+            # Even if task generation failed, send an update for this clause
+            # to show it was processed, perhaps with empty tasks.
+            
         # Update and save run.json
         for i, run_clause in enumerate(current_project_run_data.control_clauses):
             if run_clause.id == clause.id:
@@ -415,10 +465,23 @@ def execute_audit_plan_step(
                 break
         _save_run_json(current_project_run_data, project_run_json_path)
 
-        base_progress = 0.3 # Base progress after Need-Check
-        step_progress_span = 0.3 # Step 2 (Audit-Plan) contributes 30% (e.g. from 0.3 to 0.6)
-        current_step_progress = (clauses_processed_for_plan / total_relevant_clauses) * step_progress_span
-        progress_callback(base_progress + current_step_progress, f"Audit-Plan: Clause {clause.id} ({len(new_tasks)} tasks)")
+        ui_tasks = [AuditTaskUIData(id=t.id, sentence=t.sentence) for t in clause.tasks]
+        message = AuditPlanClauseUIData(
+            clause_id=clause.id,
+            clause_title=clause.title,
+            tasks=ui_tasks,
+            no_audit_needed=False # It needed a procedure, tasks may or may not have been generated
+        )
+        progress_callback(overall_progress, message)
+
+    # After the loop, send a final message to indicate audit plan generation phase is complete
+    final_completion_message = AuditPlanClauseUIData(
+        clause_id="summary", # Using "summary" or a special ID for this signal
+        clause_title="Audit Plan Generation Summary", # Optional: A title for this summary message
+        audit_plan_generation_complete=True
+    )
+    # Ensure this final message is sent at the end progress point of this step
+    progress_callback(base_progress + step_progress_span, final_completion_message)
         
     return control_clauses
 
@@ -428,7 +491,7 @@ def execute_search_step(
     project: CompareProject,
     current_project_run_data: ProjectRunData,
     settings: PipelineSettings,
-    progress_callback: Callable[[float, str], None],
+    progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
     cancel_cb: Callable[[], bool]
 ):
     """
@@ -580,7 +643,7 @@ def execute_judge_step(
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData,
     settings: PipelineSettings,
-    progress_callback: Callable[[float, str], None],
+    progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
     cancel_cb: Callable[[], bool]
 ):
     """
@@ -705,8 +768,12 @@ if __name__ == '__main__':
 
     test_settings = MockPipelineSettings()
 
-    def mock_progress_callback(progress: float, message: str):
-        print(f"Progress: {progress*100:.0f}% - {message}")
+    def mock_progress_callback(progress: float, message: Union[str, AuditPlanClauseUIData]):
+        if isinstance(message, str):
+            print(f"Progress: {progress*100:.0f}% - {message}")
+        else: # It's an AuditPlanClauseUIData object
+            print(f"Progress: {progress*100:.0f}% - Audit Plan Data: {message.model_dump_json(indent=2)}")
+
 
     def mock_cancel_cb() -> bool:
         return False
@@ -719,9 +786,45 @@ if __name__ == '__main__':
     if test_project.run_json_path.exists():
         test_project.run_json_path.unlink()
 
-    run_project_pipeline_v1_1(test_project, test_settings, mock_progress_callback, mock_cancel_cb)
+    # For testing the confirmation event, create a dummy event
+    dummy_confirm_event = threading.Event()
+    
+    # To test the blocking, you'd typically run the pipeline in a separate thread
+    # and then set the event from the main thread after a delay.
+    # For this simple __main__, we can just set it immediately after starting if we want it to proceed,
+    # or set up a concurrent way to trigger it.
+    
+    # Example: Start pipeline then set event after a few seconds (requires threading for run_project_pipeline_v1_1)
+    # For non-threaded __main__ test, it will block indefinitely if confirm_event is passed and not set.
+    # So, either pass None, or ensure it's set.
+    
+    # Let's test by passing None first, meaning no blocking.
+    print("--- Running Test Pipeline (no confirmation wait) ---")
+    run_project_pipeline_v1_1(test_project, test_settings, mock_progress_callback, mock_cancel_cb, confirm_event=None)
+    print("--- Test Pipeline Run (no confirmation wait) Finished ---")
 
-    print(f"--- Test Pipeline Run Finished ---")
+    # To test with confirmation:
+    # 1. Re-init run.json if needed
+    if test_project.run_json_path.exists():
+         test_project.run_json_path.unlink()
+    # 2. Define a simple target for a thread
+    pipeline_thread = threading.Thread(target=run_project_pipeline_v1_1, 
+                                       args=(test_project, test_settings, mock_progress_callback, mock_cancel_cb, dummy_confirm_event))
+    
+    print("\n--- Running Test Pipeline (with confirmation wait in 3s) ---")
+    pipeline_thread.start()
+    
+    # Simulate waiting for a bit, then confirming
+    time_to_wait = 3 # seconds
+    print(f"Simulating user action: Confirming in {time_to_wait} seconds...")
+    import time
+    time.sleep(time_to_wait)
+    dummy_confirm_event.set()
+    
+    pipeline_thread.join() # Wait for the pipeline thread to complete
+    print("--- Test Pipeline Run (with confirmation wait) Finished ---")
+
+    # Corrected indentation for this block
     if test_project.run_json_path.exists():
         print("Contents of run.json:")
         print(test_project.run_json_path.read_text())

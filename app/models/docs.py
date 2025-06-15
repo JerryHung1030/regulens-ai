@@ -52,7 +52,8 @@ class AuditTask(BaseModel): # Define AuditTask first as ControlClause references
 
 class ControlClause(BaseModel):
     id: str  # Unique identifier for the control clause
+    title: Optional[str] = None # Title of the control clause
     text: str  # Text of the control clause
-    metadata: Dict[str, Any] = Field(default_factory=dict)  # Additional metadata, e.g., source, section, title
+    metadata: Dict[str, Any] = Field(default_factory=dict)  # Additional metadata, e.g., source, section
     need_procedure: Optional[bool] = None  # To be determined by LLM in Step 1
     tasks: List[AuditTask] = Field(default_factory=list)  # To be populated by LLM in Step 2

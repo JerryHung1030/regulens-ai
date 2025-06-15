@@ -1,7 +1,8 @@
 # Standard Library Imports
+import threading # Added for confirm_event
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Callable, Dict, List, Tuple
+from typing import Optional, Callable, Dict, List, Tuple, Union, Any # Added Union, Any
 import json
 import collections
 
@@ -48,9 +49,10 @@ from .pipeline_v1_1 import run_project_pipeline_v1_1
 def run_pipeline(
     project: CompareProject,
     # The 'settings' parameter here is the global Settings object, not PipelineSettings
-    global_app_settings: Settings, 
-    progress_callback: Optional[Callable[[float, str], None]] = None, # Changed signature for v1.1
-    cancel_cb: Optional[Callable[[], bool]] = None
+    global_app_settings: Settings,
+    progress_callback: Optional[Callable[[float, Any], None]] = None, # Message type changed to Any
+    cancel_cb: Optional[Callable[[], bool]] = None,
+    confirm_event: Optional[threading.Event] = None  # Added confirm_event
 ) -> Optional[Path]: # Return type might change depending on what v1.1 returns (e.g., path to run.json or report)
     """
     Runs the full compliance assessment pipeline.
@@ -77,8 +79,11 @@ def run_pipeline(
         run_project_pipeline_v1_1(
             project=project,
             settings=pipeline_settings, # Pass the Pydantic model instance
+            # The progress_callback here is passed to pipeline_v1_1, which expects Union[str, AuditPlanClauseUIData] for 'm'.
+            # The 'Any' type hint for run_pipeline's progress_callback is compatible with this.
             progress_callback=progress_callback if progress_callback else lambda p, m: print(f"Progress: {p*100:.0f}% - {m}"),
-            cancel_cb=cancel_cb if cancel_cb else lambda: False
+            cancel_cb=cancel_cb if cancel_cb else lambda: False,
+            confirm_event=confirm_event # Pass the confirm_event
         )
         # pipeline_v1_1 manages its own run.json and doesn't return a report path directly in the same way.
         # The 'report_path' on the project might be set by other means or a future step in v1.1.
