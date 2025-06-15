@@ -95,13 +95,13 @@ class CompareProject(QObject):
 
     @property
     def ready(self) -> bool:
-        # Updated readiness check
+        # 如果是範例專案，直接返回 True
+        if self.is_sample:
+            return True
+            
+        # 一般專案的檢查邏輯
         controls_ready = self.controls_json_path is not None and self.controls_json_path.exists() and self.controls_json_path.is_file()
         procedures_ready = bool(self.procedure_pdf_paths) and all(p.exists() and p.is_file() for p in self.procedure_pdf_paths)
-        # run_json_path is optional for readiness, so we don't check for its existence here.
-        # If it becomes mandatory, add:
-        # run_json_ready = self.run_json_path is not None and self.run_json_path.exists() and self.run_json_path.is_file()
-        # and include run_json_ready in the return statement.
         return controls_ready and procedures_ready
 
     @property

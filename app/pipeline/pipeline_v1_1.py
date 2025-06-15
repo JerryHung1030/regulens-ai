@@ -6,11 +6,11 @@ from typing import List, Callable, Dict, Any, Optional
 
 import shutil # For cleaning up temp directories
 
+from app.logger import logger
 from app.models.project import CompareProject
 from app.models.docs import ControlClause, AuditTask, RawDoc, NormDoc, EmbedSet # Added RawDoc, NormDoc, EmbedSet
 from app.models.run_data import ProjectRunData # Import from new module
 from app.pipeline_settings import PipelineSettings # Corrected import to app.pipeline_settings
-from app.logger import logger
 from app.pipeline.llm_utils import call_llm_api
 
 # Import necessary functions from other pipeline modules
@@ -34,7 +34,7 @@ def _load_run_json(run_json_path: Path) -> Optional[ProjectRunData]:
 def _save_run_json(run_data: ProjectRunData, run_json_path: Path) -> None:
     try:
         run_json_path.parent.mkdir(parents=True, exist_ok=True)
-        run_json_path.write_text(json.dumps(run_data.to_dict(), indent=4), encoding='utf-8')
+        run_json_path.write_text(json.dumps(run_data.to_dict(), indent=4, ensure_ascii=False), encoding='utf-8')
         logger.info(f"Project run data saved to {run_json_path}")
     except IOError as e:
         logger.error(f"Error saving run.json to {run_json_path}: {e}")
@@ -46,13 +46,10 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
     The JSON structure is expected to be:
     {
         "name": "Project Name",
-        "clauses": [
-            { "id": "CL001", "title": "Clause 1 Title", "text": "Clause 1 Text", 
-              "subclauses": [ { "id": "SCL001.1", ... } ] },
-            ...
-        ]
+        "C001": "第一條 目的\n條文內容...",
+        "C002": "第二條 適用範圍\n條文內容...",
+        ...
     }
-    Subclauses are recursively processed and flattened into the main list.
     """
     control_clauses: List[ControlClause] = []
     if not controls_json_path.exists():
@@ -60,57 +57,34 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
         return control_clauses
 
     try:
-        data = json.loads(controls_json_path.read_text(encoding='utf-8'))
+        # 確保使用 UTF-8 編碼讀取檔案
+        with open(controls_json_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            data = json.loads(content)
         
-        def extract_clauses_recursive(clauses_data: List[Dict[str, Any]], parent_id: Optional[str] = None) -> List[ControlClause]:
-            extracted: List[ControlClause] = []
-            for clause_data in clauses_data:
-                # Basic validation
-                if not all(k in clause_data for k in ["id", "text"]): # Title is optional at subclause level
-                    logger.warning(f"Skipping clause due to missing 'id' or 'text': {clause_data.get('id', 'N/A')}")
-                    continue
-
-                # Create ControlClause object. Pydantic will validate fields.
-                # Metadata can store original structure if needed, e.g., parent_id
-                metadata = {"original_data": clause_data}
-                if parent_id:
-                    metadata["parent_id"] = parent_id
+        # 處理每個條文
+        for clause_id, content in data.items():
+            if clause_id == "name":  # 跳過專案名稱
+                continue
                 
-                # Ensure all fields expected by ControlClause are present or have defaults
-                # For now, ControlClause only has id, text, metadata. Add title if it exists.
-                # And need_procedure, tasks will be added by pipeline steps.
-                clause_obj_data = {
-                    "id": clause_data["id"],
-                    "text": clause_data["text"],
-                    "metadata": metadata,
-                    # Ensure default values for fields to be populated by pipeline
-                    "need_procedure": None, 
-                    "tasks": [] 
-                }
-                # Add title if present in JSON
-                if "title" in clause_data:
-                    clause_obj_data["metadata"]["title"] = clause_data["title"]
-
-
-                try:
-                    clause = ControlClause(**clause_obj_data)
-                    extracted.append(clause)
-                except Exception as e: # Catch Pydantic validation errors or other issues
-                    logger.error(f"Error creating ControlClause for id {clause_data.get('id')}: {e}")
-                    continue
-
-                if "subclauses" in clause_data and isinstance(clause_data["subclauses"], list):
-                    extracted.extend(extract_clauses_recursive(clause_data["subclauses"], parent_id=clause.id))
-            return extracted
-
-        project_clauses_data = data.get("clauses", [])
-        control_clauses.extend(extract_clauses_recursive(project_clauses_data))
-        logger.info(f"Successfully loaded {len(control_clauses)} control clauses from {controls_json_path}")
-
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON in controls file: {controls_json_path}")
+            # 分割標題和內容
+            lines = content.split('\n', 1)
+            title = lines[0]
+            text = lines[1] if len(lines) > 1 else ""
+            
+            # 創建 ControlClause 物件，包含所有必要的欄位
+            clause = ControlClause(
+                id=clause_id,
+                title=title,
+                text=text,
+                need_procedure=None,  # 初始值設為 None，將由 pipeline 決定
+                tasks=[],  # 初始為空列表，將由 pipeline 填充
+                subclauses=[]  # 初始為空列表
+            )
+            control_clauses.append(clause)
+            
     except Exception as e:
-        logger.error(f"Error processing controls file {controls_json_path}: {e}")
+        logger.error(f"Error loading controls JSON: {e}")
         
     return control_clauses
 
@@ -696,17 +670,11 @@ if __name__ == '__main__':
     
     mock_controls_data = {
         "name": "Test Controls",
-        "clauses": [
-            {"id": "CTRL001", "title": "Access Control", "text": "Systems must have access control mechanisms."},
-            {"id": "CTRL002", "title": "Data Backup", "text": "Regular data backups must be performed."},
-            {"id": "CTRL003", "title": "Password Policy", "text": "Strong password policies must be enforced.", 
-             "subclauses": [
-                 {"id": "CTRL003.1", "text": "Passwords must be at least 12 characters."}
-             ]}
-        ]
+        "C001": "第一條 目的\n條文內容...",
+        "C002": "第二條 適用範圍\n條文內容..."
     }
     controls_json_file = mock_project_dir / "controls.json"
-    controls_json_file.write_text(json.dumps(mock_controls_data, indent=4))
+    controls_json_file.write_text(json.dumps(mock_controls_data, indent=4, ensure_ascii=False), encoding='utf-8')
 
     # Dummy run.json (optional, to test loading)
     # mock_run_data = {

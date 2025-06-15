@@ -173,15 +173,20 @@ class ProjectEditor(QWidget):
         controls_tab_layout = QVBoxLayout(controls_tab_content_widget)
         controls_tab_layout.setContentsMargins(0,0,0,0)
         controls_splitter = QSplitter(Qt.Horizontal)
-        self.controls_json_preview = QTextEdit() # Displays formatted JSON
+        
+        # 左側：檔案名稱列表
+        self.controls_list_view = QListView()
+        self.controls_list_view.setObjectName("controlsListView")
+        self.controls_list_view.clicked.connect(self._on_control_file_selected)
+        controls_splitter.addWidget(self.controls_list_view)
+        
+        # 右側：檔案內容預覽
+        self.controls_json_preview = QTextEdit()
         self.controls_json_preview.setReadOnly(True)
         self.controls_json_preview.setObjectName("controlsJsonPreview")
         controls_splitter.addWidget(self.controls_json_preview)
-        self.controls_text_preview = QTextEdit() # Displays validation messages or errors
-        self.controls_text_preview.setReadOnly(True)
-        self.controls_text_preview.setObjectName("controlsTextPreview")
-        controls_splitter.addWidget(self.controls_text_preview)
-        controls_splitter.setSizes([300, 200])
+        
+        controls_splitter.setSizes([200, 300])  # 設定左右兩側的預設寬度比例
         controls_tab_layout.addWidget(controls_splitter)
         self.preview_tab_widget.addTab(controls_tab_content_widget, "Controls JSON")
 
@@ -329,7 +334,7 @@ class ProjectEditor(QWidget):
     def _validate_controls_json(self):
         if not self.project.controls_json_path or not self.project.controls_json_path.exists():
             QMessageBox.warning(self, "Validation Error", "Controls JSON file not selected or does not exist.")
-            self.controls_text_preview.setText("Controls JSON file not selected or does not exist.")
+            self.controls_json_preview.setText("Controls JSON file not selected or does not exist.")
             return
 
         try:
@@ -339,17 +344,17 @@ class ProjectEditor(QWidget):
         except FileNotFoundError:
             msg = f"File not found: {self.project.controls_json_path}"
             QMessageBox.critical(self, "Validation Error", msg)
-            self.controls_text_preview.setText(msg)
+            self.controls_json_preview.setText(msg)
             return
         except json.JSONDecodeError as e:
             msg = f"Invalid JSON: {e}"
             QMessageBox.critical(self, "Validation Error", msg)
-            self.controls_text_preview.setText(msg)
+            self.controls_json_preview.setText(msg)
             return
         except Exception as e:
             msg = f"Error reading file: {e}"
             QMessageBox.critical(self, "Validation Error", msg)
-            self.controls_text_preview.setText(msg)
+            self.controls_json_preview.setText(msg)
             return
 
         # Schema validation
@@ -358,7 +363,7 @@ class ProjectEditor(QWidget):
         if not isinstance(data, dict) or "name" not in data or "clauses" not in data:
              msg = "JSON must be an object with 'name' and 'clauses' keys."
              QMessageBox.critical(self, "Validation Error", msg)
-             self.controls_text_preview.setText(msg)
+             self.controls_json_preview.setText(msg)
              return
 
         # Recursive validation for clauses and subclauses
@@ -385,19 +390,19 @@ class ProjectEditor(QWidget):
         if not isinstance(data.get("clauses"), list):
             msg = "'clauses' must be an array."
             QMessageBox.critical(self, "Validation Error", msg)
-            self.controls_text_preview.setText(msg)
+            self.controls_json_preview.setText(msg)
             return
 
         for i, clause in enumerate(data["clauses"]):
             error = validate_clause_structure(clause, f"clauses[{i}]")
             if error:
                 QMessageBox.critical(self, "Validation Error", error)
-                self.controls_text_preview.setText(error)
+                self.controls_json_preview.setText(error)
                 return
 
         success_msg = "Controls JSON structure is valid."
         QMessageBox.information(self, "Validation Successful", success_msg)
-        self.controls_text_preview.setText(success_msg)
+        self.controls_json_preview.setText(success_msg)
         # self._update_controls_preview() # Already called by _refresh after project.changed
 
     def _pick_proc(self):
@@ -419,20 +424,24 @@ class ProjectEditor(QWidget):
 
     # ---------- Preview Update Methods ----------
     def _update_controls_preview(self):
+        """更新 Controls 預覽區域的內容"""
         if self.project.controls_json_path and self.project.controls_json_path.exists():
+            # 更新左側列表
+            model = QStringListModel([self.project.controls_json_path.name])
+            self.controls_list_view.setModel(model)
+            
+            # 更新右側內容
             try:
                 with open(self.project.controls_json_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 parsed_json = json.loads(content)
-                formatted_json = json.dumps(parsed_json, indent=4)
+                formatted_json = json.dumps(parsed_json, indent=4, ensure_ascii=False)
                 self.controls_json_preview.setText(formatted_json)
-                # self.controls_text_preview might show validation status from _validate_controls_json
             except Exception as e:
                 self.controls_json_preview.setText(f"Error loading JSON: {e}")
-                self.controls_text_preview.setText(f"Error loading JSON: {e}") # Also show error here
         else:
+            self.controls_list_view.setModel(QStringListModel([]))
             self.controls_json_preview.clear()
-            self.controls_text_preview.clear() # Clear validation messages too
 
     def _update_procedures_preview(self):
         if self.project.procedure_pdf_paths:
@@ -456,6 +465,22 @@ class ProjectEditor(QWidget):
             self.procedures_text_preview.setText(f"Selected: {pdf_path}\n\n(PDF content preview not yet implemented)")
         else:
             self.procedures_text_preview.clear()
+
+    def _on_control_file_selected(self, index):
+        """當選擇左側列表中的檔案時，在右側顯示其內容"""
+        if not index.isValid():
+            return
+            
+        file_path = self.project.controls_json_path
+        if file_path and file_path.exists():
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                parsed_json = json.loads(content)
+                formatted_json = json.dumps(parsed_json, indent=4, ensure_ascii=False)
+                self.controls_json_preview.setText(formatted_json)
+            except Exception as e:
+                self.controls_json_preview.setText(f"Error loading JSON: {e}")
 
     # ---------- Project operations ----------
     def _rename(self):

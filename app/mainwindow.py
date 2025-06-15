@@ -193,11 +193,12 @@ class MainWindow(QMainWindow):
         ]
         # If specific models are not set, the general "llm_model" might be used as a fallback.
         # Check if all specific new LLM models are configured.
-        specific_models_set = all(
+        specific_models = [
             self.settings.get("llm.model_need_check"),
             self.settings.get("llm.model_audit_plan"),
             self.settings.get("llm.model_judge")
-        )
+        ]
+        specific_models_set = all(specific_models)
         if not specific_models_set:
             # If specific ones aren't fully set, ensure 'llm_model' (general fallback) is checked.
             if not self.settings.get("llm_model") and "llm_model" not in required_fields:

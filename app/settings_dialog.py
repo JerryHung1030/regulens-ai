@@ -278,11 +278,18 @@ class SettingsDialog(QDialog):
         selected_theme = self.theme_combo.currentText().lower()
         s.set("theme", selected_theme)
 
-        # Models Tab (Adjusted: key and timeout are now in Models tab as per existing code)
+        # Models Tab
         s.set("openai_api_key", self.key_edit.text().strip())
         s.set("openai_client_timeout", self.timeout_spin.value())
         s.set("embedding_model", self.embedding_model_combo.currentText())
-        s.set("llm_model", self.llm_model_combo.currentText())
+        
+        # 設定所有 LLM 模型
+        selected_llm = self.llm_model_combo.currentText()
+        s.set("llm_model", selected_llm)
+        s.set("llm.model_need_check", selected_llm)
+        s.set("llm.model_audit_plan", selected_llm)
+        s.set("llm.model_judge", selected_llm)
+        
         s.set("local_model_path", self.local_model_path_edit.text().strip())
 
         # Retrieval Tab

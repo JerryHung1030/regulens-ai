@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     # from app.models.assessments import TripleAssessment, PairAssessment, MatchSet
     pass
 
+# Import logger
+from app.logger import logger
 
 # Pipeline Modules (These are fine as they are submodules)
 from .ingestion import ingest_documents 

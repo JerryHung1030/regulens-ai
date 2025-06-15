@@ -58,17 +58,15 @@ class ProjectStore(QObject):
         sample_base_dir = current_dir / "sample_data"
 
         project1 = CompareProject(
-            name="ISO27k-A.9.4.2_強密碼合規稽核範例", # Keeping original name for now, paths updated
+            name="資通安全情資分享辦法 (Demo)",
             controls_json_path=sample_base_dir / "sample1" / "controls" / "external.json",
             procedure_pdf_paths=[sample_base_dir / "sample1" / "evidences" / "internal.pdf"],
-            # controls_dir, procedures_dir, evidences_dir removed
-            run_json_path=sample_base_dir / "sample1" / "run.json", # Set run.json path
+            run_json_path=sample_base_dir / "sample1" / "run.json",
             is_sample=True
         )
-        # project2 removed
 
         # Ensure self.projects is an empty list before adding samples
-        self.projects = [project1] # Only project1 now
+        self.projects = [project1]
         self._save()  # Save projects.json
 
     def _save(self):
