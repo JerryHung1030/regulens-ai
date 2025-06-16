@@ -5,6 +5,7 @@ import csv # For CSV export
 from pathlib import Path
 from typing import Optional # For type hinting
 import re # Keep re for now, might be useful for _get_display_name if that's kept/adapted
+import json # Added for placeholder theme colors
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -581,6 +582,26 @@ class ResultsViewer(QWidget):
         logger.info("Refreshing ResultsViewer (Table Display)")
         self._retranslate_ui() # Ensure all static texts are up-to-date with current language
 
+        # Placeholder for fetching theme colors - This will be refined later
+        # In a real scenario, this would involve calling theme_manager or accessing shared theme data
+        def get_placeholder_theme_colors():
+            # This is a simplified way to get some colors for the subtask.
+            # It doesn't represent the final mechanism for theme color access.
+            # We'll just pick one theme's values (e.g., dark) as stand-ins.
+            # The actual theme manager will provide the correct one at runtime.
+            return {
+                "status_compliant_color": "#28a745",
+                "text_color_on_primary": "#ffffff",
+                "status_non_compliant_color": "#dc3545",
+                "text_color_on_danger": "#ffffff",
+                "status_pending_color": "#ffc107",
+                "text_color_on_warning": "#212529", # Dark text on yellow
+                "status_na_color": "#6c757d",
+                "text_color_on_disabled": "#ffffff"
+            }
+        theme_colors = get_placeholder_theme_colors()
+        # End of placeholder
+
         self.table_widget.setRowCount(0)
 
         if not self.project or not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
@@ -636,19 +657,21 @@ class ResultsViewer(QWidget):
             item_compliance_status.setFont(table_font)
             if task:
                 if task.compliant is True:
-                    item_compliance_status.setText(self.translator.get("compliant_true_long", "Compliant")) # Using a potentially longer version for table
-                    item_compliance_status.setBackground(QColor("#d4edda"))
-                    item_compliance_status.setForeground(QColor("#155724"))
+                    item_compliance_status.setText(self.translator.get("compliant_true_long", "Compliant"))
+                    item_compliance_status.setBackground(QColor(theme_colors.get("status_compliant_color", "#d4edda")))
+                    item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_primary", "#155724")))
                 elif task.compliant is False:
                     item_compliance_status.setText(self.translator.get("compliant_false_long", "Non-Compliant"))
-                    item_compliance_status.setBackground(QColor("#f8d7da"))
-                    item_compliance_status.setForeground(QColor("#721c24"))
-                else:
+                    item_compliance_status.setBackground(QColor(theme_colors.get("status_non_compliant_color", "#f8d7da")))
+                    item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_danger", "#721c24")))
+                else: # Pending
                     item_compliance_status.setText(self.translator.get("compliant_pending_long", "Pending"))
-                    item_compliance_status.setBackground(QColor("#fff3cd"))
-                    item_compliance_status.setForeground(QColor("#856404"))
-            else:
+                    item_compliance_status.setBackground(QColor(theme_colors.get("status_pending_color", "#fff3cd")))
+                    item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_warning", "#856404")))
+            else: # N/A for compliance status
                 item_compliance_status.setText(self.translator.get("n_a", "N/A"))
+                item_compliance_status.setBackground(QColor(theme_colors.get("status_na_color", "#f0f0f0"))) # Default to a light gray if not in theme
+                item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_disabled", "#000000"))) # Default to black if not in theme
             self.table_widget.setItem(current_row, 4, item_compliance_status)
 
             details_button = QPushButton(self.translator.get("view_details_button", "View Details"))
