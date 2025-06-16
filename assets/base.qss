@@ -278,46 +278,90 @@ QWidget#introPage {
     background-color: @intro_page_background;
 }
 
+/* General QLabel styling within IntroPage, can be overridden by more specific selectors */
 QWidget#introPage QLabel {
     color: @intro_page_label_text;
-    background-color: transparent;
+    background-color: transparent; /* Ensure labels don't have their own background unless specified */
 }
 
-QWidget#introPage QLabel h1, QWidget#introPage QLabel h2, QWidget#introPage QLabel h3 {
-    color: @intro_page_title_text;
+/* Styling for the main title and subtitle using their new object names */
+#introPageTitleLabel {
+    color: @intro_page_title_text; /* Uses existing variable for h1 */
+    /* Rich text <h1> tag already handles font size/weight. Add margin if needed. */
+    margin-bottom: 4px; /* Reduced from 8px for tighter default look */
 }
 
-QWidget#introPage QLabel p {
-    color: @intro_page_subtitle_text;
+#introPageSubtitleLabel {
+    color: @intro_page_subtitle_text; /* Uses existing variable for p */
+    /* Rich text <p> tag. Add margin if needed. */
+    margin-bottom: 16px; /* Reduced from 20px */
 }
 
-QFrame#pipelineCard, QFrame#dataJourneyCard, QFrame#trustCard {
+/* Updated card styling for Core Pipeline and Key Features */
+QFrame#corePipelineCard, QFrame#keyFeaturesCard {
     background-color: @intro_card_background;
     border: 1px solid @intro_card_border;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: @medium_border_radius; /* Assuming 8px, consistent with old #pipelineCard */
+    padding: 20px; /* Existing padding */
+    margin-bottom: 10px; /* Add some space below cards if they stack or before CTA */
 }
 
-QFrame#pipelineCard QLabel, QFrame#dataJourneyCard QLabel, QFrame#trustCard QLabel {
-    color: @intro_card_label_text;
+/* Titles within the cards */
+#corePipelineTitleLabel, #keyFeaturesTitleLabel {
+    font-size: 16pt; /* Reduced from 18pt for a slightly less dominant header */
+    font-weight: bold;
+    margin-bottom: 12px; /* Increased slightly for more space below title */
+    color: @intro_strong_text_color; /* Using existing variable, assumes it's suitable for titles */
 }
 
-QFrame#pipelineCard QLabel[text="📄"], QFrame#pipelineCard QLabel[text="⚙️"], QFrame#pipelineCard QLabel[text="🤖"], QFrame#pipelineCard QLabel[text="📝"] {
-    font-size: 16pt;
+/* General text styling within cards */
+QFrame#corePipelineCard QLabel, QFrame#keyFeaturesCard QLabel {
+    color: @intro_card_label_text; /* Default text color for content within cards */
 }
 
-QFrame#pipelineCard QLabel[text="⬇️"] {
-    font-size: 18pt;
-    color: @intro_arrow_icon_color;
-    margin: 8px 0;
+/* Styling for icons in Core Pipeline steps */
+#corePipelineCard QLabel[text="📄"], 
+#corePipelineCard QLabel[text="⚙️"], 
+#corePipelineCard QLabel[text="🤖"], 
+#corePipelineCard QLabel[text="📝"] {
+    font-size: 16pt; /* Restoring font size previously set by inline style */
+    color: @icon_color_primary; /* Using a placeholder, ideally defined in theme.json, e.g., @text_accent_primary */
+    /* Consider min-width or alignment if icons look off */
 }
 
-QFrame#pipelineCard QLabel strong {
-    color: @intro_strong_text_color;
+/* Styling for arrow icon in Core Pipeline, existing style seems fine */
+QFrame#corePipelineCard QLabel[text="⬇️"] { /* Corrected selector from pipelineCard to corePipelineCard */
+    font-size: 18pt; /* Retained from existing */
+    color: @intro_arrow_icon_color; /* Retained from existing */
+    margin: 8px 0; /* Retained from existing */
 }
 
-QFrame#pipelineCard QLabel small {
-    color: @intro_small_text_color;
+/* Styling for strong and small text within Core Pipeline, existing styles seem fine */
+QFrame#corePipelineCard QLabel strong { /* Updated selector */
+    color: @intro_strong_text_color; /* Retained from existing */
+}
+
+QFrame#corePipelineCard QLabel small { /* Updated selector */
+    color: @intro_small_text_color; /* Retained from existing */
+}
+
+/* Styling for icons in Key Features section */
+#keyFeaturesCard QLabel[text~="✨"],
+#keyFeaturesCard QLabel[text~="📚"],
+#keyFeaturesCard QLabel[text~="🔍"],
+#keyFeaturesCard QLabel[text~="🛡️"],
+#keyFeaturesCard QLabel[text~="⚙️"] {
+    font-size: 16pt; /* Restoring font size previously set by inline style */
+    color: @icon_color_primary; /* Using a placeholder, ideally defined in theme.json */
+    margin-right: 5px; /* Add a bit of space between icon and text */
+}
+
+/* Specific styling for text part of feature items if needed, e.g., to ensure consistent line height */
+#keyFeaturesCard QHBoxLayout QLabel:last-child { 
+    /* This selector might be too broad if other QHBoxLayouts are added.
+       A more robust way would be to add a property to these labels in Python if needed.
+       For now, assuming general QLabel styling from #keyFeaturesCard QLabel is enough.
+    */
 }
 
 QPushButton#getStartedButton {
@@ -338,35 +382,42 @@ QPushButton#getStartedButton:pressed {
     background-color: @button_get_started_pressed_background;
 }
 
-/* Status Indicators */
-.status-compliant-bar, QFrame[status="compliant"] {
-    background-color: #28a745; /* Green */
-    color: white; /* Text color for on the bar segment */
-}
-QLabel.status-compliant-text {
-    color: #28a745; /* Green text for labels next to or outside bars */
+/* StatsBarChart Status Indicators */
+/* Remove old generic status rules if they were solely for StatsBarChart */
+/* e.g., .status-compliant-bar, QFrame[status="compliant"], QLabel.status-compliant-text etc. are replaced by the following specific rules: */
+
+StatsBarChart QFrame { /* Default for frames within StatsBarChart if needed */
+    border: none; /* Ensure no borders for bar segments */
 }
 
-.status-non-compliant-bar, QFrame[status="non-compliant"] {
-    background-color: #dc3545; /* Red */
-    color: white;
+StatsBarChart QFrame[status="compliant"] {
+    background-color: @status_compliant_color;
 }
-QLabel.status-non-compliant-text {
-    color: #dc3545; /* Red text */
-}
-
-.status-pending-bar, QFrame[status="pending"] {
-    background-color: #ffc107; /* Orange/Yellow */
-    color: black; /* Darker text for better contrast on yellow */
-}
-QLabel.status-pending-text {
-    color: #ffc107; /* Orange/Yellow text */
+StatsBarChart QFrame[status="compliant"] QLabel {
+    color: @text_color_on_primary;
+    font-weight: bold;
 }
 
-.status-na-bar, QFrame[status="na"] {
-    background-color: #6c757d; /* Gray for N/A */
-    color: white;
+StatsBarChart QFrame[status="non-compliant"] {
+    background-color: @status_non_compliant_color;
 }
-QLabel.status-na-text {
-    color: #6c757d; /* Gray text */
+StatsBarChart QFrame[status="non-compliant"] QLabel {
+    color: @text_color_on_danger;
+    font-weight: bold;
+}
+
+StatsBarChart QFrame[status="pending"] {
+    background-color: @status_pending_color;
+}
+StatsBarChart QFrame[status="pending"] QLabel {
+    color: @text_color_on_warning;
+    font-weight: bold;
+}
+
+StatsBarChart QFrame[status="na"] {
+    background-color: @status_na_color;
+}
+StatsBarChart QFrame[status="na"] QLabel {
+    color: @text_color_on_disabled;
+    font-weight: bold;
 }

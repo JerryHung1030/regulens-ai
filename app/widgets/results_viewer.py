@@ -22,7 +22,8 @@ from PySide6.QtWidgets import (
     QDialog,
     QPlainTextEdit,
     QSizePolicy,
-    QFrame # Added for StatsBarChart
+    QFrame, # Added for StatsBarChart
+    QScrollArea # Added for RunEvidenceDetailsDialog
 )
 from PySide6.QtCore import Signal, Qt, QSize # Added QSize
 from PySide6.QtGui import QTextOption, QColor, QFontMetrics # Added QColor and QFontMetrics
@@ -167,55 +168,70 @@ class RunEvidenceDetailsDialog(QDialog):
         self.clause_title_display = clause.metadata.get('title', clause.id) # Store for retranslate
         # Title set in _retranslate_ui
         self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setFixedSize(700, 550) # Set fixed dialog size
 
-        layout = QVBoxLayout(self)
+        main_dialog_layout = QVBoxLayout(self) # This is the dialog's main layout
+
+        # Scroll Area Setup
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        content_widget = QWidget() # Widget to hold all scrollable content
+        content_layout = QVBoxLayout(content_widget) # Layout for the content_widget
 
         # Control Clause Text
         self.clause_label = QLabel() # Text set in _retranslate_ui
-        layout.addWidget(self.clause_label)
+        content_layout.addWidget(self.clause_label)
         self.clause_text_edit = QPlainTextEdit(clause.text)
         self.clause_text_edit.setReadOnly(True)
-        self.clause_text_edit.setFixedHeight(100)
-        layout.addWidget(self.clause_text_edit)
+        self.clause_text_edit.setFixedHeight(100) # Keep fixed height, it has its own scroll
+        content_layout.addWidget(self.clause_text_edit)
 
         if self.task:
             self.task_label = QLabel() # Text set in _retranslate_ui
-            layout.addWidget(self.task_label)
+            content_layout.addWidget(self.task_label)
             self.task_sentence_edit = QPlainTextEdit(self.task.sentence)
             self.task_sentence_edit.setReadOnly(True)
-            self.task_sentence_edit.setFixedHeight(80)
-            layout.addWidget(self.task_sentence_edit)
+            self.task_sentence_edit.setFixedHeight(80) # Keep fixed height
+            content_layout.addWidget(self.task_sentence_edit)
 
             if self.task.top_k:
                 self.evidence_heading_label = QLabel() # Text set in _retranslate_ui
-                layout.addWidget(self.evidence_heading_label)
+                content_layout.addWidget(self.evidence_heading_label)
                 self.evidence_display_label = QLabel() # Content set in _retranslate_ui
                 self.evidence_display_label.setTextFormat(Qt.RichText)
                 self.evidence_display_label.setWordWrap(True)
                 self.evidence_display_label.setAlignment(Qt.AlignTop)
-                layout.addWidget(self.evidence_display_label)
+                content_layout.addWidget(self.evidence_display_label)
             else:
                 self.no_evidence_label = QLabel() # Text set in _retranslate_ui
                 self.no_evidence_label.setTextFormat(Qt.RichText)
-                layout.addWidget(self.no_evidence_label)
+                content_layout.addWidget(self.no_evidence_label)
 
             self.reasoning_label = QLabel() # Content set in _retranslate_ui
             self.reasoning_label.setTextFormat(Qt.RichText)
             self.reasoning_label.setWordWrap(True)
             self.reasoning_label.setAlignment(Qt.AlignTop)
-            layout.addWidget(self.reasoning_label)
+            content_layout.addWidget(self.reasoning_label)
 
-        layout.addStretch()
+        content_layout.addStretch(1) # Add stretch to push content to top of scroll area
+        content_widget.setLayout(content_layout) # Set the layout for the content_widget
+        scroll_area.setWidget(content_widget) # Put the content_widget into the scroll_area
 
+        main_dialog_layout.addWidget(scroll_area, 1) # Add scroll_area to the main dialog layout, allowing it to stretch
+
+        # OK Button (outside scroll area)
         self.ok_button = QPushButton() # Text set in _retranslate_ui
         self.ok_button.clicked.connect(self.accept)
 
         btn_h_layout = QHBoxLayout()
         btn_h_layout.addStretch()
         btn_h_layout.addWidget(self.ok_button)
-        layout.addLayout(btn_h_layout)
+        main_dialog_layout.addLayout(btn_h_layout) # Add button layout to main_dialog_layout
 
-        self.resize(700, 600)
+        # self.resize(700, 600) # Removed as setFixedSize is used
         
         self.translator.language_changed.connect(self._retranslate_ui)
         self._retranslate_ui() # Initial translation

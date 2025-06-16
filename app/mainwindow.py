@@ -100,7 +100,13 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'exit_action') and hasattr(self, 'exit_action_text_key'):
             self.exit_action.setText(self.translator.get(self.exit_action_text_key, "E&xit"))
         
-        logger.debug("MainWindow UI retranslated (title and menu)")
+        # Retranslate Help Menu
+        if hasattr(self, 'help_menu') and hasattr(self, 'help_menu_title_key'):
+            self.help_menu.setTitle(self.translator.get(self.help_menu_title_key, "&Help"))
+        if hasattr(self, 'show_introduction_action') and hasattr(self, 'show_introduction_action_text_key'):
+            self.show_introduction_action.setText(self.translator.get(self.show_introduction_action_text_key, "Show &Introduction"))
+
+        logger.debug("MainWindow UI retranslated (title and menus)") # Updated log message
 
     def _enter_workspace(self):
         if not self.workspace:  # Create workspace only if it doesn't exist
@@ -133,6 +139,22 @@ class MainWindow(QMainWindow):
         self.exit_action.setShortcut("Ctrl+Q")
         self.exit_action.triggered.connect(QApplication.instance().quit)
         self.file_menu.addAction(self.exit_action)
+
+        # Help Menu
+        self.help_menu_title_key = "main_menu_help"
+        self.help_menu = menu_bar.addMenu(self.translator.get(self.help_menu_title_key, "&Help"))
+
+        self.show_introduction_action_text_key = "main_action_show_introduction"
+        self.show_introduction_action = QAction(self.translator.get(self.show_introduction_action_text_key, "Show &Introduction"), self)
+        self.show_introduction_action.triggered.connect(self._show_intro_page)
+        self.help_menu.addAction(self.show_introduction_action)
+
+    def _show_intro_page(self):
+        # 每次都創建新的 IntroPage 實例
+        self.intro_page = IntroPage(self.translator)
+        self.intro_page.start_requested.connect(self._enter_workspace)
+        self.setCentralWidget(self.intro_page)
+        logger.debug("IntroPage recreated and shown")
 
     def _open_settings(self):
         d = SettingsDialog(self.settings, self.translator, self)

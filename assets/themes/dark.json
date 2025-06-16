@@ -82,5 +82,13 @@
   "button_get_started_text": "#ffffff",
   "button_get_started_background": "#1a73e8",
   "button_get_started_hover_background": "#1765cc",
-  "button_get_started_pressed_background": "#1459b3"
+  "button_get_started_pressed_background": "#1459b3",
+  "status_compliant_color": "#28a745", 
+  "status_non_compliant_color": "#dc3545",
+  "status_pending_color": "#ffc107", 
+  "status_na_color": "#6c757d", 
+  "text_color_on_primary": "#ffffff",
+  "text_color_on_danger": "#ffffff",
+  "text_color_on_warning": "#212529", 
+  "text_color_on_disabled": "#ffffff" 
 }

@@ -71,26 +71,51 @@ MESSAGES = {
         "main_menu_file": "&File",
         "main_action_settings": "Settings…",
         "main_action_exit": "E&xit",
-        "intro_subtitle": "<p style='margin:0px;'>Compliance document comparison, one-click audit report generation</p>",
-        "intro_workflow_title": "<h2>Workflow</h2>",
-        "intro_workflow_step1_title": "Controls, Procedures, Evidence",
-        "intro_workflow_step1_desc": "Upload your compliance documents",
-        "intro_workflow_step2_title": "Processing",
-        "intro_workflow_step2_desc": "Normalization, Vectorization, Indexing",
-        "intro_workflow_step3_title": "LLM Assessment",
-        "intro_workflow_step3_desc": "AI-powered evaluation",
-        "intro_workflow_step4_title": "Audit Report",
-        "intro_workflow_step4_desc": "Markdown & PDF output",
-        "intro_data_journey_title": "<h3>Data Journey</h3>",
-        "intro_data_journey_item1": "<strong>Ingestion:</strong> Supports TXT (PDF/CSV TBC)",
-        "intro_data_journey_item2": "<strong>Embedding:</strong> OpenAI text-embedding-3-large",
-        "intro_data_journey_item3": "<strong>Retrieval:</strong> FAISS k-NN similarity search",
-        "intro_data_journey_item4": "<strong>Assessment:</strong> GPT-4o for Pass / Partial / Fail",
-        "intro_data_journey_item5": "<strong>Report:</strong> Markdown → Optional PDF",
-        "intro_trust_title": "<h3>Why Trust Regulens-AI?</h3>",
-        "intro_trust_item1": "✅ <strong>Offline Capability:</strong> Supports pipeline and can run offline.",
-        "intro_trust_item2": "🔒 <strong>Robust Caching:</strong> Content hashing & vector indexing.",
-        "intro_trust_item3": "🔍 <strong>Full Traceability:</strong> Detailed logs in logs/ and output/.",
+        "main_menu_help": "&Help",
+        "main_action_show_introduction": "Show &Introduction",
+        # Introduction Page (New Translations)
+        "intro_subtitle_v2": "Harness the power of AI to navigate, understand, and manage complex regulatory landscapes with unparalleled efficiency and precision.",
+        "intro_core_pipeline_title": "Core Pipeline",
+        "intro_pipeline_step1_title_v2": "1. Secure Document Upload",
+        "intro_pipeline_step1_desc_v2": "Initiate the process by securely uploading your regulatory documents in various formats (PDF, DOCX, TXT). Our system ensures data integrity and confidentiality from the very first step.",
+        "intro_pipeline_step2_title_v2": "2. Intelligent AI Analysis",
+        "intro_pipeline_step2_desc_v2": "Leverage advanced AI algorithms for in-depth text extraction, structural identification, and semantic analysis of your documents. Regulens-AI pinpoints critical information, saving you valuable time.",
+        "intro_pipeline_step3_title_v2": "3. Actionable Insight Generation",
+        "intro_pipeline_step3_desc_v2": "Receive AI-powered summaries, extracted obligations, potential risks, and key definitions. Our system translates complex jargon into clear, actionable insights.",
+        "intro_pipeline_step4_title_v2": "4. Interactive Review & Export",
+        "intro_pipeline_step4_desc_v2": "Engage with the analyzed content through an intuitive interface. Review AI-generated insights, utilize Q&A features for clarification, and export your findings in convenient formats.",
+        "intro_key_features_title": "Key Features",
+        "intro_feature1_icon": "✨",
+        "intro_feature1_text": "Automated Compliance Checks: Identify potential compliance gaps and risks quickly.",
+        "intro_feature2_icon": "📚",
+        "intro_feature2_text": "Regulatory Summarization: Condense lengthy documents into concise summaries.",
+        "intro_feature3_icon": "🔍",
+        "intro_feature3_text": "Semantic Search & Q&A: Find specific information and get answers about regulations.",
+        "intro_feature4_icon": "🛡️",
+        "intro_feature4_text": "Data Security & Privacy: Your documents are processed locally, ensuring confidentiality.",
+        "intro_feature5_icon": "⚙️",
+        "intro_feature5_text": "Customizable Analysis: Tailor the AI analysis to focus on specific regulatory aspects.",
+        # Old intro keys
+        "intro_subtitle": "<p style='margin:0px;'>Compliance document comparison, one-click audit report generation</p>", # Old
+        "intro_workflow_title": "<h2>Workflow</h2>", # Old
+        "intro_workflow_step1_title": "Controls, Procedures, Evidence", # Old
+        "intro_workflow_step1_desc": "Upload your compliance documents", # Old
+        "intro_workflow_step2_title": "Processing", # Old
+        "intro_workflow_step2_desc": "Normalization, Vectorization, Indexing", # Old
+        "intro_workflow_step3_title": "LLM Assessment", # Old
+        "intro_workflow_step3_desc": "AI-powered evaluation", # Old
+        "intro_workflow_step4_title": "Audit Report", # Old
+        "intro_workflow_step4_desc": "Markdown & PDF output", # Old
+        "intro_data_journey_title": "<h3>Data Journey</h3>", # Old
+        "intro_data_journey_item1": "<strong>Ingestion:</strong> Supports TXT (PDF/CSV TBC)", # Old
+        "intro_data_journey_item2": "<strong>Embedding:</strong> OpenAI text-embedding-3-large", # Old
+        "intro_data_journey_item3": "<strong>Retrieval:</strong> FAISS k-NN similarity search", # Old
+        "intro_data_journey_item4": "<strong>Assessment:</strong> GPT-4o for Pass / Partial / Fail", # Old
+        "intro_data_journey_item5": "<strong>Report:</strong> Markdown → Optional PDF", # Old
+        "intro_trust_title": "<h3>Why Trust Regulens-AI?</h3>", # Old
+        "intro_trust_item1": "✅ <strong>Offline Capability:</strong> Supports pipeline and can run offline.", # Old
+        "intro_trust_item2": "🔒 <strong>Robust Caching:</strong> Content hashing & vector indexing.", # Old
+        "intro_trust_item3": "🔍 <strong>Full Traceability:</strong> Detailed logs in logs/ and output/.", # Old
         "intro_get_started_button": "Get Started",
         "config_incomplete_title": "Configuration Incomplete",
         "config_incomplete_text": "Please set OpenAI API Key and model parameters to proceed.",
@@ -307,26 +332,49 @@ MESSAGES = {
         "main_menu_file": "&檔案",
         "main_action_settings": "設定…",
         "main_action_exit": "結束（&X）",
-        "intro_subtitle": "<p style='margin:0px;'>合規文件比對，一鍵產出稽核報告</p>",
-        "intro_workflow_title": "<h2>工作流程</h2>",
-        "intro_workflow_step1_title": "控制、程序、證據",
-        "intro_workflow_step1_desc": "上傳您的合規文件",
-        "intro_workflow_step2_title": "處理中",
-        "intro_workflow_step2_desc": "標準化、向量化、索引化",
-        "intro_workflow_step3_title": "LLM 評估",
-        "intro_workflow_step3_desc": "AI 驅動的評估",
-        "intro_workflow_step4_title": "稽核報告",
-        "intro_workflow_step4_desc": "Markdown 及 PDF 輸出",
-        "intro_data_journey_title": "<h3>資料流程</h3>",
-        "intro_data_journey_item1": "<strong>擷取：</strong>支援 TXT（PDF/CSV 後續支援）",
-        "intro_data_journey_item2": "<strong>嵌入：</strong>OpenAI text-embedding-3-large",
-        "intro_data_journey_item3": "<strong>檢索：</strong>FAISS k-NN 相似性搜尋",
-        "intro_data_journey_item4": "<strong>評估：</strong>GPT-4 進行 通過 / 部分符合 / 失敗 判斷",
-        "intro_data_journey_item5": "<strong>報告：</strong>Markdown → 選填 PDF",
-        "intro_trust_title": "<h3>為什麼信任 Regulens-AI？</h3>",
-        "intro_trust_item1": "✅ <strong>離線能力：</strong>支援 pipeline 並可離線執行。",
-        "intro_trust_item2": "🔒 <strong>穩健快取：</strong>內容雜湊與向量索引。",
-        "intro_trust_item3": "🔍 <strong>完整可追溯性：</strong>logs/ 與 output/ 中的詳細日誌。",
+        # Introduction Page (New Translations) - Chinese
+        "intro_subtitle_v2": "利用人工智能的力量，以前所未有的效率和精度導航、理解和管理複雜的監管環境。",
+        "intro_core_pipeline_title": "核心管道",
+        "intro_pipeline_step1_title_v2": "1. 安全文件上傳",
+        "intro_pipeline_step1_desc_v2": "通過安全上傳各種格式（PDF、DOCX、TXT）的法規文件來啟動流程。我們的系統從第一步就確保數據完整性和機密性。",
+        "intro_pipeline_step2_title_v2": "2. 智能AI分析",
+        "intro_pipeline_step2_desc_v2": "利用先進的AI算法對您的文件進行深入的文本提取、結構識別和語義分析。Regulens-AI能夠精確定位關鍵信息，為您節省寶貴時間。",
+        "intro_pipeline_step3_title_v2": "3. 可行性洞察生成",
+        "intro_pipeline_step3_desc_v2": "接收AI驅動的摘要、提取的義務、潛在風險和關鍵定義。我們的系統將複雜的專業術語轉化為清晰、可操作的見解。",
+        "intro_pipeline_step4_title_v2": "4. 交互式審查與導出",
+        "intro_pipeline_step4_desc_v2": "通過直觀的界面與分析過的內容進行互動。審查AI生成的見解，利用問答功能進行澄清，並以方便的格式導出您的發現。",
+        "intro_key_features_title": "主要特點",
+        "intro_feature1_icon": "✨",
+        "intro_feature1_text": "自動化合規檢查：快速識別潛在的合規差距和風險。",
+        "intro_feature2_icon": "📚",
+        "intro_feature2_text": "法規摘要：將冗長的文件精簡為簡潔的摘要。",
+        "intro_feature3_icon": "🔍",
+        "intro_feature3_text": "語義搜索與問答：查找特定信息並獲得有關法規的答案。",
+        "intro_feature4_icon": "🛡️",
+        "intro_feature4_text": "數據安全與隱私：您的文件在本地處理，確保機密性。",
+        "intro_feature5_icon": "⚙️",
+        "intro_feature5_text": "可定制分析：定制AI分析以專注於特定的法規方面。",
+        # Old intro keys - Chinese
+        "intro_subtitle": "<p style='margin:0px;'>合規文件比對，一鍵產出稽核報告</p>", # Old
+        "intro_workflow_title": "<h2>工作流程</h2>", # Old
+        "intro_workflow_step1_title": "控制、程序、證據", # Old
+        "intro_workflow_step1_desc": "上傳您的合規文件", # Old
+        "intro_workflow_step2_title": "處理中", # Old
+        "intro_workflow_step2_desc": "標準化、向量化、索引化", # Old
+        "intro_workflow_step3_title": "LLM 評估", # Old
+        "intro_workflow_step3_desc": "AI 驅動的評估", # Old
+        "intro_workflow_step4_title": "稽核報告", # Old
+        "intro_workflow_step4_desc": "Markdown 及 PDF 輸出", # Old
+        "intro_data_journey_title": "<h3>資料流程</h3>", # Old
+        "intro_data_journey_item1": "<strong>擷取：</strong>支援 TXT（PDF/CSV 後續支援）", # Old
+        "intro_data_journey_item2": "<strong>嵌入：</strong>OpenAI text-embedding-3-large", # Old
+        "intro_data_journey_item3": "<strong>檢索：</strong>FAISS k-NN 相似性搜尋", # Old
+        "intro_data_journey_item4": "<strong>評估：</strong>GPT-4 進行 通過 / 部分符合 / 失敗 判斷", # Old
+        "intro_data_journey_item5": "<strong>報告：</strong>Markdown → 選填 PDF", # Old
+        "intro_trust_title": "<h3>為什麼信任 Regulens-AI？</h3>", # Old
+        "intro_trust_item1": "✅ <strong>離線能力：</strong>支援 pipeline 並可離線執行。", # Old
+        "intro_trust_item2": "🔒 <strong>穩健快取：</strong>內容雜湊與向量索引。", # Old
+        "intro_trust_item3": "🔍 <strong>完整可追溯性：</strong>logs/ 與 output/ 中的詳細日誌。", # Old
         "intro_get_started_button": "開始使用",
         "config_incomplete_title": "組態設定不完整",
         "config_incomplete_text": "請先設定 OpenAI API Key 與模型參數，才能執行比較",
