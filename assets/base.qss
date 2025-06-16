@@ -275,26 +275,56 @@ QSplitter::handle:pressed {
 /* IntroPage and its components */
 
 QWidget#introPage {
-    background-color: @intro_page_background;
+    background-color: @background_primary;
 }
 
-/* General QLabel styling within IntroPage, can be overridden by more specific selectors */
+/* General QLabel styling within IntroPage */
 QWidget#introPage QLabel {
-    color: @intro_page_label_text;
-    background-color: transparent; /* Ensure labels don't have their own background unless specified */
+    color: @intro_page_card_content_text;
+    background-color: transparent;
 }
 
-/* Styling for the main title and subtitle using their new object names */
+/* Styling for the main title and subtitle */
 #introPageTitleLabel {
-    color: @intro_page_title_text; /* Uses existing variable for h1 */
-    /* Rich text <h1> tag already handles font size/weight. Add margin if needed. */
-    margin-bottom: 4px; /* Reduced from 8px for tighter default look */
+    color: @intro_page_title_text;
+    font-size: 20pt;
+    font-weight: bold;
+    margin-bottom: 2px;
 }
 
 #introPageSubtitleLabel {
-    color: @intro_page_subtitle_text; /* Uses existing variable for p */
-    /* Rich text <p> tag. Add margin if needed. */
-    margin-bottom: 16px; /* Reduced from 20px */
+    color: @intro_page_subtitle_text;
+    font-size: 14pt;
+    margin-top: 2px;
+    margin-bottom: 16px;
+}
+
+/* Card titles */
+#corePipelineTitleLabel, #keyFeaturesTitleLabel, #howToUseTitleLabel {
+    color: @intro_page_section_title_text;
+    font-size: 16pt;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* Card content */
+QFrame#corePipelineCard QLabel, QFrame#keyFeaturesCard QLabel {
+    color: @intro_page_card_content_text;
+}
+
+/* Icons */
+#corePipelineCard QLabel[text~="📄"], 
+#corePipelineCard QLabel[text~="⚙️"], 
+#corePipelineCard QLabel[text~="🤖"], 
+#corePipelineCard QLabel[text~="📝"],
+#keyFeaturesCard QLabel[text~="✨"],
+#keyFeaturesCard QLabel[text~="📚"],
+#keyFeaturesCard QLabel[text~="🔍"],
+#keyFeaturesCard QLabel[text~="🛡️"],
+#keyFeaturesCard QLabel[text~="⚙️"] {
+    color: @intro_page_icon_color;
+    font-size: 16pt;
+    margin-right: 5px;
 }
 
 /* Updated card styling for Core Pipeline and Key Features */
@@ -304,14 +334,6 @@ QFrame#corePipelineCard, QFrame#keyFeaturesCard {
     border-radius: @medium_border_radius; /* Assuming 8px, consistent with old #pipelineCard */
     padding: 20px; /* Existing padding */
     margin-bottom: 10px; /* Add some space below cards if they stack or before CTA */
-}
-
-/* Titles within the cards */
-#corePipelineTitleLabel, #keyFeaturesTitleLabel {
-    font-size: 16pt; /* Reduced from 18pt for a slightly less dominant header */
-    font-weight: bold;
-    margin-bottom: 12px; /* Increased slightly for more space below title */
-    color: @intro_strong_text_color; /* Using existing variable, assumes it's suitable for titles */
 }
 
 /* General text styling within cards */

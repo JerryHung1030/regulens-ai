@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> None:
 
     # MainWindow no longer takes CompareManager
     main_window = MainWindow(settings, translator)
-    main_window.resize(1100, 720)
+    main_window.resize(1100, 900)
     main_window.show()
 
     sys.exit(qapp.exec())

@@ -90,5 +90,13 @@
   "text_color_on_primary": "#ffffff",
   "text_color_on_danger": "#ffffff",
   "text_color_on_warning": "#212529", 
-  "text_color_on_disabled": "#ffffff" 
+  "text_color_on_disabled": "#ffffff",
+  "intro_page": {
+    "title_text": "#FFFFFF",
+    "subtitle_text": "#B0B0B0",
+    "section_title_text": "#FFFFFF",
+    "card_title_text": "#FFFFFF",
+    "card_content_text": "#B0B0B0",
+    "icon_color": "#8BE9FD"
+  }
 }

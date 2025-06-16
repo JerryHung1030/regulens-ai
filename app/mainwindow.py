@@ -109,10 +109,16 @@ class MainWindow(QMainWindow):
         logger.debug("MainWindow UI retranslated (title and menus)") # Updated log message
 
     def _enter_workspace(self):
-        if not self.workspace:  # Create workspace only if it doesn't exist
-            self.workspace = Workspace(self.project_store, self)
-            self.comparison_finished.connect(self.workspace.show_project_results)
+        # 確保舊的 Workspace 已經被清理
+        if self.workspace:
+            self.workspace.deleteLater()
+            self.workspace = None
+            
+        # 創建新的 Workspace 實例
+        self.workspace = Workspace(self.project_store, self)
+        self.comparison_finished.connect(self.workspace.show_project_results)
         self.setCentralWidget(self.workspace)
+        logger.debug("New Workspace created and shown")
 
     # ------------------------------------------------------------------
     # Menubar + settings
@@ -150,6 +156,11 @@ class MainWindow(QMainWindow):
         self.help_menu.addAction(self.show_introduction_action)
 
     def _show_intro_page(self):
+        # 在切換到 IntroPage 之前，先清理 Workspace
+        if self.workspace:
+            self.workspace.deleteLater()
+            self.workspace = None
+        
         # 每次都創建新的 IntroPage 實例
         self.intro_page = IntroPage(self.translator)
         self.intro_page.start_requested.connect(self._enter_workspace)
@@ -416,6 +427,6 @@ if __name__ == "__main__":  # pragma: no cover
     translator = Translator(initial_language=initial_lang)
 
     win = MainWindow(sett, translator)
-    win.resize(1100, 720)
+    win.resize(1100, 900)
     win.show()
     sys.exit(qapp.exec())

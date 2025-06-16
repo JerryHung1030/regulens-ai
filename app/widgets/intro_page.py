@@ -1,6 +1,7 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
+    QSizePolicy
 )
 from PySide6.QtCore import Qt, Signal
 from ..translator import Translator # Assuming translator.py is in app/
@@ -24,11 +25,11 @@ class IntroPage(QWidget):
     def _retranslate_ui(self):
         # Update subtitle
         if hasattr(self, 'subtitle_label'):
-            self.subtitle_label.setText(self.translator.get("intro_subtitle_v2", "Harness the power of AI to navigate, understand, and manage complex regulatory landscapes with unparalleled efficiency and precision.")) # Updated key
+            self.subtitle_label.setText(self.translator.get("intro_slogan", "Default Slogan"))
         
         # Update core pipeline section title (renamed from pipeline_card_title_label)
         if hasattr(self, 'core_pipeline_title_label'): # Renamed attribute
-            self.core_pipeline_title_label.setText(self.translator.get("intro_core_pipeline_title", "Core Pipeline")) # Updated key
+            self.core_pipeline_title_label.setText(self.translator.get("intro_core_pipeline_title", "Core Process Flow"))
 
         # Update Get Started button
         if hasattr(self, 'get_started_button'):
@@ -40,21 +41,21 @@ class IntroPage(QWidget):
 
         # Update Core Pipeline Section (previously Pipeline Card)
         # self.core_pipeline_title_label is already updated above
-        if hasattr(self, 'pipeline_step_labels'): # Name retained for simplicity, though section is renamed
-            steps_data_keys = [ # Updated keys
-                ("intro_pipeline_step1_title_v2", "intro_pipeline_step1_desc_v2"),
-                ("intro_pipeline_step2_title_v2", "intro_pipeline_step2_desc_v2"),
-                ("intro_pipeline_step3_title_v2", "intro_pipeline_step3_desc_v2"),
-                ("intro_pipeline_step4_title_v2", "intro_pipeline_step4_desc_v2")
+        if hasattr(self, 'pipeline_step_labels'):
+            steps_data_keys = [
+                ("intro_process_step_A_title", "intro_process_step_A_desc"),
+                ("intro_process_step_B_title", "intro_process_step_B_desc"),
+                ("intro_process_step_C_title", "intro_process_step_C_desc"),
+                ("intro_process_step_D_title", "intro_process_step_D_desc"),
             ]
-            default_steps_text = [ # Updated default texts to match new content
-                ("<strong>1. Secure Document Upload</strong>", "<small>Initiate the process by securely uploading your regulatory documents...</small>"),
-                ("<strong>2. Intelligent AI Analysis</strong>", "<small>Leverage advanced AI algorithms for in-depth text extraction...</small>"),
-                ("<strong>3. Actionable Insight Generation</strong>", "<small>Receive AI-powered summaries, extracted obligations...</small>"),
-                ("<strong>4. Interactive Review & Export</strong>", "<small>Engage with the analyzed content through an intuitive interface...</small>")
+            default_steps_text = [
+                ("<strong>Step A Title</strong>", "<small>Step A Description</small>"),
+                ("<strong>Step B Title</strong>", "<small>Step B Description</small>"),
+                ("<strong>Step C Title</strong>", "<small>Step C Description</small>"),
+                ("<strong>Step D Title</strong>", "<small>Step D Description</small>"),
             ]
             for i, label_pair in enumerate(self.pipeline_step_labels):
-                icon_label, text_label = label_pair
+                icon_label, text_label = label_pair # Assuming structure (icon_label, text_label)
                 title_key, desc_key = steps_data_keys[i]
                 default_title, default_desc = default_steps_text[i]
                 # Icon is not translated
@@ -89,7 +90,23 @@ class IntroPage(QWidget):
                 icon_label.setText(self.translator.get(icon_key, default_icon))
                 text_label.setText(self.translator.get(text_key, default_text))
 
-        # Remove Data Journey and Trust card updates as they are removed
+        # Update How to Use Section Title (used in top section)
+        if hasattr(self, 'how_to_use_title_label'): # This label is part of _create_how_to_use_top_section
+            self.how_to_use_title_label.setText(self.translator.get("intro_how_to_use_title", "4 Steps to Use"))
+
+        # Update How to Use Step Titles (the small boxes in the top section)
+        if hasattr(self, 'how_to_use_step_title_labels'):
+            htu_steps_title_keys = [
+                "intro_how_to_use_step1_title",
+                "intro_how_to_use_step2_title",
+                "intro_how_to_use_step3_title",
+                "intro_how_to_use_step4_title",
+            ]
+            default_htu_steps_titles = [
+                "1. Upload", "2. Analyze", "3. Review", "4. Act"
+            ]
+            for i, label in enumerate(self.how_to_use_step_title_labels):
+                label.setText(self.translator.get(htu_steps_title_keys[i], default_htu_steps_titles[i]))
             
         logger.debug("IntroPage UI retranslated")
 
@@ -98,23 +115,38 @@ class IntroPage(QWidget):
         # Main Layout
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        main_layout.setContentsMargins(40, 40, 40, 40)
-        main_layout.setSpacing(24)
+        main_layout.setContentsMargins(40, 20, 40, 40)  # 減少上方間距從 40 改為 20
+        main_layout.setSpacing(15)  # 減少間距從 20 改為 15
         self.setLayout(main_layout)
 
-        # Header Section
+        # Header Section (Title + Slogan)
         header_section = self._create_header_section()
         main_layout.addLayout(header_section)
 
-        # Core Info Section
-        core_info_section = self._create_core_info_section()
-        main_layout.addLayout(core_info_section)
+        # NEW LAYOUT: Top Section (How to Use Titles)
+        how_to_use_top_section = self._create_how_to_use_top_section()
+        main_layout.addWidget(how_to_use_top_section)
 
-        # CTA Section
+        # NEW LAYOUT: Bottom Section (Core Pipeline + Key Features)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setSpacing(20)
+        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        core_pipeline_bl_section = self._create_core_pipeline_bottom_left_section()
+        core_pipeline_bl_section.setMinimumHeight(400)  # 增加最小高度
+        bottom_layout.addWidget(core_pipeline_bl_section, 1)
+
+        key_features_br_section = self._create_key_features_bottom_right_section()
+        key_features_br_section.setMinimumHeight(400)  # 增加最小高度
+        bottom_layout.addWidget(key_features_br_section, 1)
+        
+        main_layout.addLayout(bottom_layout)
+
+        # CTA Section (Get Started Button)
         cta_section = self._create_cta_section()
         main_layout.addLayout(cta_section)
         
-        main_layout.addStretch(1)  # Add stretch to push content to the top
+        main_layout.addStretch(1)
 
     def _create_header_section(self):
         header_layout = QVBoxLayout()
@@ -129,7 +161,7 @@ class IntroPage(QWidget):
         header_layout.addWidget(self.title_label)
 
         # Subtitle
-        self.subtitle_label = QLabel(self.translator.get("intro_subtitle_v2", "Harness the power of AI to navigate, understand, and manage complex regulatory landscapes with unparalleled efficiency and precision."))
+        self.subtitle_label = QLabel(self.translator.get("intro_slogan", "Default Slogan"))
         self.subtitle_label.setObjectName("introPageSubtitleLabel") # Added object name
         self.subtitle_label.setTextFormat(Qt.TextFormat.RichText)
         self.subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -137,121 +169,97 @@ class IntroPage(QWidget):
 
         return header_layout
 
-    def _create_core_info_section(self):
-        core_info_layout = QHBoxLayout()
-        core_info_layout.setSpacing(32)
-        core_info_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+    # This method is removed as its logic is now in _init_ui's bottom_layout
+    # def _create_core_info_section(self):
+    #     pass 
 
-        # Left Column: Core Pipeline
-        left_column_layout = QVBoxLayout()
-        core_pipeline_section = self._create_core_pipeline_section() # Renamed method
-        left_column_layout.addWidget(core_pipeline_section, alignment=Qt.AlignmentFlag.AlignTop)
-        left_column_layout.addStretch(1) 
-        core_info_layout.addLayout(left_column_layout, 2) # Adjusted stretch factor to 2 (approx 2/5)
-
-        # Right Column: Key Features
-        right_column_layout = QVBoxLayout()
-        right_column_layout.setSpacing(24)
-        key_features_section = self._create_key_features_section() 
-        right_column_layout.addWidget(key_features_section, alignment=Qt.AlignmentFlag.AlignTop)
-        right_column_layout.addStretch(1)
-        core_info_layout.addLayout(right_column_layout, 3) # Adjusted stretch factor to 3 (approx 3/5)
-
-        return core_info_layout
-
-    def _create_core_pipeline_section(self): # Renamed from _create_pipeline_card
+    def _create_core_pipeline_bottom_left_section(self): 
         card = QFrame()
-        card.setObjectName("corePipelineCard") # Renamed object name
+        card.setObjectName("corePipelineBottomCard") 
         card.setFrameShape(QFrame.Shape.StyledPanel)
-        card.setContentsMargins(0, 0, 0, 0)
-        card.setMaximumWidth(400) # Retain max width or adjust as needed
+        card.setFrameShadow(QFrame.Shadow.Raised)
+        # card.setContentsMargins(0, 0, 0, 0) # Margins are now set on the layout
         
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(0, 0, 0, 0) # Use stylesheet for padding
-        card_layout.setSpacing(15)
+        card_layout.setContentsMargins(10, 10, 10, 10) # Consistent card padding
+        card_layout.setSpacing(8) # Adjusted main card spacing
         card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # Use new key for title, and rename label attribute
-        self.core_pipeline_title_label = QLabel(self.translator.get("intro_core_pipeline_title", "Core Pipeline"))
-        self.core_pipeline_title_label.setObjectName("corePipelineTitleLabel") # Added object name
+        self.core_pipeline_title_label = QLabel(self.translator.get("intro_core_pipeline_title", "Core Process Flow"))
+        self.core_pipeline_title_label.setObjectName("corePipelineTitleLabel")
         self.core_pipeline_title_label.setTextFormat(Qt.TextFormat.RichText) 
         self.core_pipeline_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        # Removed inline stylesheet: "font-size: 18pt; font-weight: bold; margin-bottom: 10px;"
-
         card_layout.addWidget(self.core_pipeline_title_label)
 
         pipeline_steps_layout = QVBoxLayout()
-        pipeline_steps_layout.setSpacing(12)
+        pipeline_steps_layout.setSpacing(18) # Adjusted spacing for steps
 
-        self.pipeline_step_labels = [] # Retain this for retranslation (list of (icon_label, text_label) tuples)
+        self.pipeline_step_labels = [] 
 
-        # Updated keys and default texts for steps
-        steps_data_keys = [
-            ("intro_pipeline_step1_title_v2", "intro_pipeline_step1_desc_v2"),
-            ("intro_pipeline_step2_title_v2", "intro_pipeline_step2_desc_v2"),
-            ("intro_pipeline_step3_title_v2", "intro_pipeline_step3_desc_v2"),
-            ("intro_pipeline_step4_title_v2", "intro_pipeline_step4_desc_v2")
+        steps_data = [
+            ("intro_process_step_A_title", "intro_process_step_A_desc"),
+            ("intro_process_step_B_title", "intro_process_step_B_desc"),
+            ("intro_process_step_C_title", "intro_process_step_C_desc"),
+            ("intro_process_step_D_title", "intro_process_step_D_desc"),
         ]
-        default_steps_text = [ # Default texts should match the new content structure
-            ("<strong>1. Secure Document Upload</strong>", "<small>Initiate the process by securely uploading your regulatory documents...</small>"),
-            ("<strong>2. Intelligent AI Analysis</strong>", "<small>Leverage advanced AI algorithms for in-depth text extraction...</small>"),
-            ("<strong>3. Actionable Insight Generation</strong>", "<small>Receive AI-powered summaries, extracted obligations...</small>"),
-            ("<strong>4. Interactive Review & Export</strong>", "<small>Engage with the analyzed content through an intuitive interface...</small>")
+        default_steps_text = [
+            ("<strong>Step A Title</strong>", "<small>Step A Description</small>"),
+            ("<strong>Step B Title</strong>", "<small>Step B Description</small>"),
+            ("<strong>Step C Title</strong>", "<small>Step C Description</small>"),
+            ("<strong>Step D Title</strong>", "<small>Step D Description</small>"),
         ]
-        step_icons = ["📄", "⚙️", "🤖", "📝"] # Icons can remain the same or be updated
+        step_icons = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
 
-        for i in range(len(steps_data_keys)):
+        for i in range(len(steps_data)):
             icon_char = step_icons[i]
-            title_key, desc_key = steps_data_keys[i]
+            title_key, desc_key = steps_data[i]
             default_title, default_desc = default_steps_text[i]
 
             step_layout = QHBoxLayout()
             step_layout.setSpacing(12)
             step_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-
             step_icon_label = QLabel(icon_char)
-            step_icon_label.setFixedWidth(30) # Icon width
-            # Removed inline stylesheet: "font-size: 16pt;"
+            step_icon_label.setMinimumWidth(30) # Ensure icon width
+            step_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Center icon
 
-            # Get translated text without HTML tags for title if preferred, then format description
             translated_title = self.translator.get(title_key, default_title)
             translated_desc = self.translator.get(desc_key, default_desc)
             
-            # Combine title and description, possibly with different styling
-            # Using QLabel's rich text for simplicity here
-            combined_text = f"<div style='font-weight:bold;'>{translated_title}</div><small>{translated_desc}</small>"
+            combined_text = f"{translated_title}<br>{translated_desc}" # Keep title bold via default text
             step_text_label = QLabel(combined_text)
             step_text_label.setTextFormat(Qt.TextFormat.RichText)
             step_text_label.setWordWrap(True)
-            step_text_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-
+            step_text_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding) # Allow vertical expansion
+            # step_text_label.setAlignment(Qt.AlignmentFlag.AlignTop) # Default alignment should be fine
 
             step_layout.addWidget(step_icon_label)
-            step_layout.addWidget(step_text_label, 1) # Give text label more stretch factor
+            step_layout.addWidget(step_text_label, 1)
             pipeline_steps_layout.addLayout(step_layout)
             
-            self.pipeline_step_labels.append((step_icon_label, step_text_label)) # Store for retranslation
+            self.pipeline_step_labels.append((step_icon_label, step_text_label))
 
-            if i < len(steps_data_keys) - 1:
-                arrow_label = QLabel("⬇️") 
-                arrow_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                pipeline_steps_layout.addWidget(arrow_label)
+            if i < len(steps_data) - 1: # No arrow for the last item
+                # If you want arrows between steps, add them here.
+                # For this version, we'll omit the arrows between A, B, C, D steps
+                # to simplify and differentiate from the previous design.
+                pass
+
 
         card_layout.addLayout(pipeline_steps_layout)
         card_layout.addStretch(1)
         card.setLayout(card_layout)
         return card
 
-    def _create_key_features_section(self):
+    def _create_key_features_bottom_right_section(self):
         card = QFrame()
-        card.setObjectName("keyFeaturesCard")
+        card.setObjectName("keyFeaturesBottomCard")
         card.setFrameShape(QFrame.Shape.StyledPanel)
-        card.setContentsMargins(0,0,0,0) # Use stylesheet for padding
-        # card.setMaximumWidth(450) # Optional: set max width if needed
+        card.setFrameShadow(QFrame.Shadow.Raised)
+        # card.setContentsMargins(0,0,0,0) # Margins are now set on the layout
 
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(0,0,0,0) # Use stylesheet for padding
+        card_layout.setContentsMargins(10, 10, 10, 10) # Consistent card padding
         card_layout.setSpacing(15)
         card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
@@ -281,13 +289,14 @@ class IntroPage(QWidget):
             feature_item_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
             icon_label = QLabel(self.translator.get(icon_key, default_icon))
-            icon_label.setFixedWidth(30) # Adjust as needed
-            # Removed inline stylesheet: "font-size: 16pt;"
+            icon_label.setMinimumWidth(30) # Ensure icon width
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Center icon
 
             text_label = QLabel(self.translator.get(text_key, default_text))
             text_label.setWordWrap(True)
             text_label.setTextFormat(Qt.TextFormat.RichText) # Allow rich text for feature descriptions
-            text_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+            text_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding) # Allow vertical expansion
+            # text_label.setAlignment(Qt.AlignmentFlag.AlignTop) # Default alignment should be fine
 
 
             feature_item_layout.addWidget(icon_label)
@@ -300,9 +309,75 @@ class IntroPage(QWidget):
         card.setLayout(card_layout)
         return card
 
+    def _create_how_to_use_top_section(self):
+        top_card = QFrame()
+        top_card.setObjectName("howToUseTopCard")
+        top_card.setFrameShape(QFrame.Shape.StyledPanel) # Ensure it can be styled by QFrame rules
+        top_card.setFrameShadow(QFrame.Shadow.Raised) # Keep consistent shadow
+        # top_card.setContentsMargins(0,0,0,0)
+
+        top_card_layout = QVBoxLayout(top_card)
+        top_card_layout.setContentsMargins(10, 10, 10, 10) # Consistent card padding
+        top_card_layout.setSpacing(10) # Spacing between title and step boxes
+        top_card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # This title label is now part of this top card
+        self.how_to_use_title_label = QLabel(self.translator.get("intro_how_to_use_title", "How to Use"))
+        self.how_to_use_title_label.setObjectName("howToUseTitleLabel")
+        self.how_to_use_title_label.setTextFormat(Qt.TextFormat.RichText) 
+        self.how_to_use_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        top_card_layout.addWidget(self.how_to_use_title_label, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        # Title for Core Pipeline
+        self.core_pipeline_title_label = QLabel(self.translator.get("intro_core_pipeline_title", "Core Process Flow"))
+        self.core_pipeline_title_label.setObjectName("corePipelineTitleLabel")
+        self.core_pipeline_title_label.setTextFormat(Qt.TextFormat.RichText)
+        self.core_pipeline_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        # Title for Key Features
+        self.key_features_title_label = QLabel(self.translator.get("intro_key_features_title", "Key Features"))
+        self.key_features_title_label.setObjectName("keyFeaturesTitleLabel")
+        self.key_features_title_label.setTextFormat(Qt.TextFormat.RichText)
+        self.key_features_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        htu_steps_title_layout = QHBoxLayout() # Titles will be in a horizontal row
+        htu_steps_title_layout.setSpacing(15) # Spacing between the title boxes
+
+        self.how_to_use_step_title_labels = [] # Store these new labels
+
+        htu_steps_title_keys = [
+            "intro_how_to_use_step1_title",
+            "intro_how_to_use_step2_title",
+            "intro_how_to_use_step3_title",
+            "intro_how_to_use_step4_title",
+        ]
+        default_htu_steps_titles = [
+             "1. Upload Docs", "2. Initiate Analysis", "3. Review Insights", "4. Export & Act" # Shortened for boxes
+        ]
+        
+        for i in range(len(htu_steps_title_keys)):
+            title_key = htu_steps_title_keys[i]
+            default_title = default_htu_steps_titles[i]
+            
+            step_title_label = QLabel(self.translator.get(title_key, default_title))
+            step_title_label.setObjectName(f"htuStepTitleLabel{i+1}")
+            step_title_label.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
+            step_title_label.setWordWrap(True)
+            step_title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            step_title_label.setMinimumHeight(50)
+            # step_title_label.setStyleSheet("padding: 5px; background-color: #f0f0f0;") # Removed inline style
+            step_title_label.setProperty("class", "howToUseStepBox") # Added class for QSS
+
+            htu_steps_title_layout.addWidget(step_title_label, 1) # Equal stretch
+            self.how_to_use_step_title_labels.append(step_title_label)
+
+        top_card_layout.addLayout(htu_steps_title_layout)
+        top_card.setLayout(top_card_layout)
+        return top_card
+
     def _create_cta_section(self):
         cta_layout = QVBoxLayout()
-        cta_layout.setContentsMargins(0, 40, 0, 0)
+        cta_layout.setContentsMargins(0, 20, 0, 0)  # 減少上方間距從 40 改為 20
         cta_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.get_started_button = QPushButton(self.translator.get("intro_get_started_button", "Get Started"))
