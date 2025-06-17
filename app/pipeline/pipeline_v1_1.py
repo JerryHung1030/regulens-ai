@@ -425,10 +425,14 @@ def execute_audit_plan_step(
         logger.info(f"Performing Audit-Plan for clause: {clause.id} - {clause.title[:50]}...")
 
         prompt = (
-            f"Generate **one** concise and precise audit task (sentence) to verify the implementation of the following control clause. "
-            f"The task should be suitable for information retrieval against a knowledge base of audit procedures. "
-            f"Return a JSON object containing a single key 'audit_tasks', which is a list containing **a single dictionary**. "
-            f"The dictionary should have an 'id' (e.g., 'task_001') and a 'sentence' (the audit task text).\n\n"
+            f"Act as an auditor validating compliance for the control clause: '{clause.text}'.\n"
+            f"Your goal is to generate **a single, effective search query (audit task sentence)** to find supporting evidence in internal documentation.\n"
+            f"The query should be precise enough to target text that directly confirms, defines, or exemplifies the core assertion of the control clause.\n"
+            f"If the clause is a simple statement, the query should aim to find where this statement is reflected or put into practice.\n"
+            f"Avoid overly broad queries asking for general policies if the clause is specific.\n"
+            f"Focus on keywords and concepts central to the control clause.\n\n"
+            f"Return a JSON object containing a single key 'audit_tasks', which is a list containing a single dictionary.\n"
+            f"The dictionary should have an 'id' (e.g., 'task_001') and a 'sentence' (your generated search query).\n\n"
             f"Control Clause Text: \"{clause.text}\""
         )
 
@@ -681,12 +685,17 @@ def execute_judge_step(
         evidence_prompt_str = "\n\n".join(evidence_texts) if evidence_texts else "No evidence found."
 
         prompt = (
-            f"Assess compliance for the given control clause and audit task, based on the provided evidence excerpts.\n\n"
+            f"Assess compliance for the given control clause and audit task, **strictly based on the provided evidence excerpts only.** Do not make assumptions or infer information not present in the evidence.\n\n"
             f"Control Clause: \"{clause.text}\"\n\n"
             f"Audit Task: \"{task.sentence}\"\n\n"
             f"Evidence:\n{evidence_prompt_str}\n\n"
-            f"Is the control effectively implemented as verified by the audit task and supported by the evidence? "
-            f"Respond with a JSON object containing a 'compliant' (boolean) key and an optional 'reasoning' (string) key."
+            f"Determine if the control is effectively implemented as verified by the audit task and supported by the evidence. "
+            f"Respond with a JSON object containing a 'compliant' (boolean) key and a 'reasoning' (string) key.\n"
+            f"**Your entire reasoning must be derived SOLELY from the text presented in the 'Evidence' section above.**\n"
+            f"If the provided evidence is insufficient to confirm compliance, set 'compliant' to false.\n"
+            f"For any 'compliant: false' determination (including cases of insufficient evidence), the 'reasoning' must specifically identify (based *only* on the provided evidence or its absence): "
+            f"1. Potential gaps in the documentation or specific missing evidence needed for confirmation. "
+            f"2. Concrete suggestions for improvements or amendments (to internal procedures or interpretation of external regulations) to address these gaps."
         )
 
         llm_response = call_llm_api(

@@ -51,7 +51,7 @@ def generate_embeddings(
     cache_service: CacheService, 
     openai_api_key: Optional[str] = None,
     embedding_model_name: str = "text-embedding-3-large",  # Default from settings
-    max_tokens_per_chunk: int = 400  # Default from requirements
+    max_tokens_per_chunk: int = 200  # Changed default
 ) -> List[EmbedSet]:
     
     # Generate a cache key for the entire norm_doc's set of embeddings,
