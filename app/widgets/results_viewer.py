@@ -270,15 +270,23 @@ class RunEvidenceDetailsDialog(QDialog):
                 if hasattr(self, 'no_evidence_label'): # Check if the label was created
                     self.no_evidence_label.setText(f"<i>{self.translator.get('no_evidence_found_message', 'No evidence found for this task.')}</i>")
 
-            reasoning = self.task.metadata.get('judge_reasoning', self.translator.get('reasoning_not_available', 'N/A'))
+            # Fetch new structured reasoning
+            compliance_desc = self.task.metadata.get('compliance_description', self.translator.get('reasoning_not_available', 'N/A'))
+            improvement_sugg = self.task.metadata.get('improvement_suggestions', self.translator.get('reasoning_not_available', 'N/A'))
+
             compliant_status_text = "N/A" # Default, should be overwritten
             if self.task.compliant is True: compliant_status_text = self.translator.get("compliant_true_status", "Compliant")
             elif self.task.compliant is False: compliant_status_text = self.translator.get("compliant_false_status", "Non-Compliant")
             else: compliant_status_text = self.translator.get("compliant_pending_status", "Pending")
             
+            reasoning_html = (
+                f"<b>{self.translator.get('compliance_status_heading', 'Compliance Status:')}</b> {compliant_status_text}<br><br>"
+                f"<b>{self.translator.get('compliance_description_heading', 'Compliance Description:')}</b><br><i>{compliance_desc}</i><br><br>"
+                f"<b>{self.translator.get('improvement_suggestions_heading', 'Improvement Suggestions:')}</b><br><i>{improvement_sugg}</i>"
+            )
+            
             if hasattr(self, 'reasoning_label'): # Check if the label was created
-                self.reasoning_label.setText(f"<b>{self.translator.get('compliance_status_heading', 'Compliance Status:')}</b> {compliant_status_text}<br>"
-                                         f"<b>{self.translator.get('llm_reasoning_heading', 'LLM Reasoning:')}</b><br><i>{reasoning}</i>")
+                self.reasoning_label.setText(reasoning_html)
         
         self.ok_button.setText(self.translator.get("ok_button_text", "OK"))
         logger.debug("RunEvidenceDetailsDialog UI retranslated")
@@ -769,7 +777,9 @@ class ResultsViewer(QWidget):
                                     "audit_task_id": task.id,
                                     "audit_task_sentence": task.sentence,
                                     "compliant": str(task.compliant) if task.compliant is not None else "",
-                                    "judge_reasoning": task.metadata.get("judge_reasoning", ""),
+                                    # "judge_reasoning": task.metadata.get("judge_reasoning", ""), # Old key
+                                    "compliance_description": task.metadata.get("compliance_description", ""),
+                                    "improvement_suggestions": task.metadata.get("improvement_suggestions", ""),
                                 })
                                 if not task.top_k:
                                     for key_ev in ["evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"]:

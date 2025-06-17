@@ -426,13 +426,13 @@ def execute_audit_plan_step(
 
         prompt = (
             f"Act as an auditor validating compliance for the control clause: '{clause.text}'.\n"
-            f"Your goal is to generate **a single, effective search query (audit task sentence)** to find supporting evidence in internal documentation.\n"
-            f"The query should be precise enough to target text that directly confirms, defines, or exemplifies the core assertion of the control clause.\n"
-            f"If the clause is a simple statement, the query should aim to find where this statement is reflected or put into practice.\n"
-            f"Avoid overly broad queries asking for general policies if the clause is specific.\n"
-            f"Focus on keywords and concepts central to the control clause.\n\n"
-            f"Return a JSON object containing a single key 'audit_tasks', which is a list containing a single dictionary.\n"
-            f"The dictionary should have an 'id' (e.g., 'task_001') and a 'sentence' (your generated search query).\n\n"
+            f"Your goal is to generate **one or more effective search queries (audit task sentences)** to find supporting evidence in internal documentation.\n"
+            f"Each query should be precise and target text that directly confirms, defines, or exemplifies a specific aspect of the control clause.\n"
+            f"If the control clause has multiple distinct components or requirements, generate a separate, focused query for each.\n"
+            f"For example, if a clause states 'A is X and B is Y', you might generate one query for 'A is X' and another for 'B is Y'.\n"
+            f"Return a JSON object containing a single key 'audit_tasks'. The value of 'audit_tasks' must be a list of dictionaries.\n"
+            f"Each dictionary in the list must have an 'id' (e.g., 'task_001', 'task_002', ...) and a 'sentence' (your generated search query for that specific aspect).\n"
+            f"Ensure IDs are unique for tasks generated for the same clause (e.g., task_001, task_002).\n\n"
             f"Control Clause Text: \"{clause.text}\""
         )
 
@@ -440,28 +440,39 @@ def execute_audit_plan_step(
             prompt=prompt,
             model_name=settings.llm_model_audit_plan,
             api_key=settings.openai_api_key,
-            expected_response_type="json_list"  # Keep this as json_list, we'll validate the contents
+            expected_response_type="json_object" # Expecting a JSON object with 'audit_tasks' key
         )
 
-        clause.tasks = [] # Initialize tasks as empty list for this clause
-        if llm_response and isinstance(llm_response, list) and len(llm_response) > 0:
-            if len(llm_response) > 1:
-                logger.warning(f"LLM returned {len(llm_response)} tasks for clause {clause.id}, but expected only one. Using the first task.")
-            
-            first_task_data = llm_response[0]
-            if isinstance(first_task_data, dict) and "id" in first_task_data and "sentence" in first_task_data:
-                try:
-                    single_task = AuditTask(id=str(first_task_data["id"]), sentence=str(first_task_data["sentence"]))
-                    clause.tasks = [single_task] # Assign as a list with one task
-                    logger.info(f"Audit-Plan for clause {clause.id} generated 1 task: {single_task.id}")
-                except Exception as e: # Pydantic validation error
-                    logger.error(f"Error creating AuditTask from data {first_task_data} for clause {clause.id}: {e}")
-                    # clause.tasks remains empty
+        clause.tasks = [] # Initialize/clear tasks for this clause before processing LLM response
+
+        if llm_response and isinstance(llm_response, dict) and 'audit_tasks' in llm_response:
+            tasks_data = llm_response['audit_tasks']
+            if isinstance(tasks_data, list):
+                if not tasks_data: # LLM returned an empty list of tasks
+                    logger.info(f"LLM returned an empty list of audit tasks for clause {clause.id}.")
+                    # clause.tasks remains empty, which is the correct state.
+                else:
+                    for task_idx, task_data in enumerate(tasks_data):
+                        if isinstance(task_data, dict) and "id" in task_data and "sentence" in task_data:
+                            try:
+                                audit_task = AuditTask(id=str(task_data["id"]), sentence=str(task_data["sentence"]))
+                                clause.tasks.append(audit_task)
+                            except Exception as e: # Pydantic validation error or other issues
+                                logger.error(f"Error creating AuditTask from data {task_data} for clause {clause.id}, task index {task_idx}: {e}")
+                        else:
+                            logger.error(f"Invalid task data format in list for clause {clause.id}, task index {task_idx}: {task_data}")
+                    
+                    if clause.tasks: # Log only if tasks were successfully created
+                        task_ids = ", ".join([t.id for t in clause.tasks])
+                        logger.info(f"Audit-Plan for clause {clause.id} generated {len(clause.tasks)} tasks: {task_ids}")
+                    else: # Tasks list is empty due to errors in processing individual task data
+                        logger.error(f"No valid audit tasks were processed for clause {clause.id} from LLM response, though tasks data was present.")
+
             else:
-                logger.error(f"Invalid task data format from LLM for clause {clause.id}: {first_task_data}")
+                logger.error(f"LLM response for clause {clause.id} has 'audit_tasks' but it's not a list: {tasks_data}")
                 # clause.tasks remains empty
         else:
-            logger.error(f"Failed to generate audit tasks or empty list returned for clause {clause.id}. LLM response: {llm_response}")
+            logger.error(f"Failed to generate audit tasks or invalid JSON object structure for clause {clause.id}. LLM response: {llm_response}")
             # clause.tasks remains empty
             
         # Update and save run.json
@@ -653,49 +664,75 @@ def execute_judge_step(
     cancel_cb: Callable[[], bool]
 ):
     """
-    Executes Step 4: Judge compliance for each audit task with evidence.
+    Executes Step 4: Judge compliance for each ControlClause based on aggregated evidence from its tasks.
     """
-    logger.info("Starting Judge Step...")
+    logger.info("Starting Judge Step (Clause-level)...")
     
-    tasks_to_judge = []
+    clauses_to_judge = []
     for clause in control_clauses:
-        if clause.need_procedure and clause.tasks:
-            for task in clause.tasks:
-                # Only judge if top_k evidence exists and compliance not yet determined
-                if task.top_k and task.compliant is None: 
-                    tasks_to_judge.append((clause, task)) # Store as (clause, task) tuple
+        # Only judge if it needs a procedure, has tasks, and hasn't been judged at clause-level yet.
+        if clause.need_procedure and clause.tasks and clause.metadata.get('clause_compliant') is None:
+            # Further check if there's any evidence in any task.
+            # If all tasks have no top_k, we might still "judge" it as non-compliant due to lack of evidence.
+            clauses_to_judge.append(clause)
 
-    if not tasks_to_judge:
-        logger.info("No tasks require judging.")
-        progress_callback(1.0, "Judge: No tasks to judge.") # Assuming Judge is 80-100%
+    if not clauses_to_judge:
+        logger.info("No clauses require judging.")
+        progress_callback(1.0, "Judge: No clauses to judge.") # Assuming Judge is 80-100%
         return
 
-    judged_tasks_count = 0
-    total_tasks_to_judge_count = len(tasks_to_judge)
+    judged_clauses_count = 0
+    total_clauses_to_judge_count = len(clauses_to_judge)
+    base_progress = 0.8  # Judge step starts at 80%
+    step_progress_span = 0.2 # Judge step spans 20% of total progress
 
-    for clause_idx_in_main_list, (clause, task) in enumerate(tasks_to_judge): # Iterate over a copy
+    for clause_idx_in_main_list, clause in enumerate(current_project_run_data.control_clauses): # Iterate with index for saving
+        # Find the clause in our filtered list
+        current_clause_to_process = next((c for c in clauses_to_judge if c.id == clause.id), None)
+        if not current_clause_to_process:
+            # This clause from the main list either didn't need judging or wasn't in clauses_to_judge
+            continue
+
         if cancel_cb():
             logger.info("Judge step cancelled.")
             break
         
-        logger.info(f"Judging task: {task.id} for clause {clause.id} - {task.sentence[:50]}...")
+        logger.info(f"Judging clause: {clause.id} - {clause.title[:50]}...")
 
-        evidence_texts = [f"Evidence {i+1} (Source: {ev.get('source_txt', 'N/A')}, Page: {ev.get('page_no', 'N/A')}):\n{ev.get('excerpt', '')}" 
-                          for i, ev in enumerate(task.top_k or [])]
-        evidence_prompt_str = "\n\n".join(evidence_texts) if evidence_texts else "No evidence found."
+        # 1. Collect all evidence for the clause
+        all_evidence_texts = []
+        for task_idx, task in enumerate(clause.tasks):
+            if task.top_k:
+                for ev_idx, ev_item in enumerate(task.top_k):
+                    # Using a more detailed evidence header
+                    evidence_header = f"Evidence for Task '{task.id}' ({task.sentence[:30]}...), Snippet {ev_idx+1}"
+                    evidence_detail = f"(Source: {ev_item.get('source_txt', 'N/A')}, Page: {ev_item.get('page_no', 'N/A')}, Score: {ev_item.get('score', 0.0):.2f})"
+                    all_evidence_texts.append(f"{evidence_header} {evidence_detail}:\n{ev_item.get('excerpt', '')}")
+        
+        if not all_evidence_texts:
+            evidence_prompt_str = "No evidence was retrieved for this control clause through any of its audit tasks."
+            logger.info(f"No evidence found for clause {clause.id}. Proceeding with judgment based on lack of evidence.")
+        else:
+            evidence_prompt_str = "\n\n".join(all_evidence_texts)
 
+        # 2. Construct Clause-Level Prompt
         prompt = (
-            f"Assess compliance for the given control clause and audit task, **strictly based on the provided evidence excerpts only.** Do not make assumptions or infer information not present in the evidence.\n\n"
-            f"Control Clause: \"{clause.text}\"\n\n"
-            f"Audit Task: \"{task.sentence}\"\n\n"
-            f"Evidence:\n{evidence_prompt_str}\n\n"
-            f"Determine if the control is effectively implemented as verified by the audit task and supported by the evidence. "
-            f"Respond with a JSON object containing a 'compliant' (boolean) key and a 'reasoning' (string) key.\n"
-            f"**Your entire reasoning must be derived SOLELY from the text presented in the 'Evidence' section above.**\n"
-            f"If the provided evidence is insufficient to confirm compliance, set 'compliant' to false.\n"
-            f"For any 'compliant: false' determination (including cases of insufficient evidence), the 'reasoning' must specifically identify (based *only* on the provided evidence or its absence): "
-            f"1. Potential gaps in the documentation or specific missing evidence needed for confirmation. "
-            f"2. Concrete suggestions for improvements or amendments (to internal procedures or interpretation of external regulations) to address these gaps."
+            f"Your task is to determine if the provided 'Aggregated Evidence' (extracted from internal company documents) adequately demonstrates "
+            f"that the company has a documented procedure or policy in place that corresponds to the 'Control Clause' (from external regulations). "
+            f"Focus strictly on whether the internal documentation addresses the requirements of the control clause from a documentation standpoint, "
+            f"not on whether the procedures are perfectly implemented in practice.\n\n"
+            
+            f"Control Clause ID: {clause.id}\n"
+            f"Control Clause Text (External Regulation): \"{clause.text}\"\n\n"
+            f"Aggregated Evidence (from Internal Company Documents):\n{evidence_prompt_str}\n\n"
+            
+            f"Respond with a JSON object containing the following keys:\n"
+            f"1. 'compliant': boolean (Set to true if the internal documentation, as shown in the 'Aggregated Evidence', adequately documents a procedure or policy that addresses the 'Control Clause'. Set to false otherwise, including if evidence is insufficient or irrelevant).\n"
+            f"2. 'compliance_description': string (Explain how the provided 'Aggregated Evidence' demonstrates documented compliance or where the internal documentation falls short in addressing the 'Control Clause'. Quote or refer to specific parts of the evidence if helpful to illustrate the connection or gap).\n"
+            f"3. 'improvement_suggestions': string (If 'compliant' is false, or if documentation only partially addresses the clause, suggest specific additions or changes to the internal documentation to make it fully address the 'Control Clause'. If 'compliant' is true and documentation is comprehensive for this clause, state that no further documentation improvements are suggested based on the provided evidence for this specific clause.)\n\n"
+            
+            f"**Your entire assessment for the Control Clause must be derived SOLELY from the text presented in the 'Aggregated Evidence' section above.**\n"
+            f"Based *only* on the provided 'Aggregated Evidence', does the internal documentation show a corresponding procedure or policy for the 'Control Clause'? Provide your assessment in the specified JSON format."
         )
 
         llm_response = call_llm_api(
@@ -705,33 +742,44 @@ def execute_judge_step(
             expected_response_type="json_object"
         )
 
-        if llm_response and isinstance(llm_response, dict) and "compliant" in llm_response:
-            task.compliant = llm_response["compliant"]
-            if "reasoning" in llm_response:
-                task.metadata["judge_reasoning"] = llm_response["reasoning"]
-            logger.info(f"Judgment for task {task.id}: Compliant={task.compliant}")
-        else:
-            task.compliant = None # Mark as undetermined on error
-            logger.error(f"Failed to judge compliance for task {task.id}. LLM response: {llm_response}")
+        # 3. Process LLM Response and Store Judgment
+        clause_compliant_status = None
+        clause_compliance_desc = "Error: Failed to get valid compliance description from LLM for clause."
+        clause_improvement_sugg = "Error: Failed to get valid improvement suggestions from LLM for clause."
 
-        judged_tasks_count += 1
+        if llm_response and isinstance(llm_response, dict) and "compliant" in llm_response:
+            clause_compliant_status = llm_response.get("compliant")
+            clause_compliance_desc = llm_response.get("compliance_description", "")
+            clause_improvement_sugg = llm_response.get("improvement_suggestions", "")
+
+            if not clause_compliance_desc:
+                logger.warning(f"LLM response for clause {clause.id} is missing 'compliance_description'. Storing as empty string.")
+            if not clause_improvement_sugg:
+                logger.warning(f"LLM response for clause {clause.id} is missing 'improvement_suggestions'. Storing as empty string.")
+            
+            logger.info(f"Judgment for clause {clause.id}: Compliant={clause_compliant_status}")
+            logger.debug(f"Clause {clause.id} - Compliance Description: {clause_compliance_desc[:100]}...")
+            logger.debug(f"Clause {clause.id} - Improvement Suggestions: {clause_improvement_sugg[:100]}...")
+        else:
+            logger.error(f"Failed to judge compliance for clause {clause.id}. LLM response: {llm_response}")
+
+        clause.metadata['clause_compliant'] = clause_compliant_status
+        clause.metadata['clause_compliance_description'] = clause_compliance_desc
+        clause.metadata['clause_improvement_suggestions'] = clause_improvement_sugg
+
+        # 4. Propagate Judgment to Tasks
+        for task in clause.tasks:
+            task.compliant = clause_compliant_status
+            task.metadata["compliance_description"] = clause_compliance_desc
+            task.metadata["improvement_suggestions"] = clause_improvement_sugg
+            task.metadata.pop("judge_reasoning", None) # Remove old task-specific key if it exists
         
-        # Update original clause in current_project_run_data by finding it (or its task)
-        # This is a bit complex if the list passed to this function is not the one in current_project_run_data
-        # Assuming current_project_run_data.control_clauses is the source of truth that needs updating.
-        for i_main, main_clause in enumerate(current_project_run_data.control_clauses):
-            if main_clause.id == clause.id:
-                for j_main, main_task in enumerate(main_clause.tasks):
-                    if main_task.id == task.id:
-                        current_project_run_data.control_clauses[i_main].tasks[j_main] = task
-                        break
-                break
+        current_project_run_data.control_clauses[clause_idx_in_main_list] = clause # Update in main list
         _save_run_json(current_project_run_data, project_run_json_path)
         
-        base_progress = 0.8 # Judge step is 80-100%
-        step_progress_span = 0.2
-        current_task_progress = (judged_tasks_count / total_tasks_to_judge_count) * step_progress_span
-        progress_callback(base_progress + current_task_progress, f"Judge: Task {task.id} -> Compliant={task.compliant}")
+        judged_clauses_count += 1
+        current_clause_progress = (judged_clauses_count / total_clauses_to_judge_count) * step_progress_span
+        progress_callback(base_progress + current_clause_progress, f"Judge: Clause {clause.id} -> Compliant={clause_compliant_status}")
 
 
 if __name__ == '__main__':
