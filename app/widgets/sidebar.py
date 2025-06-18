@@ -20,14 +20,12 @@ from app.logger import logger  # 新增 logger 導入
 class Sidebar(QWidget):
     project_selected = Signal(CompareProject)
     add_project_requested = Signal()
-    toggled = Signal()
 
     def __init__(self, project_store: ProjectStore, splitter: QSplitter, translator, parent: QWidget | None = None): # Added translator
         super().__init__(parent)
         self.project_store = project_store
         self._splitter = splitter
         self.translator = translator # Store translator
-        self.COLLAPSED_WIDTH = 60
 
         self.list_projects = QListWidget()
         self.list_projects.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -43,34 +41,8 @@ class Sidebar(QWidget):
         top_row_layout = QHBoxLayout()
         top_row_layout.setSpacing(2)
 
-        # Toggle Button
-        self._btn_toggle = QToolButton()  # Create the button before using it
-        self._btn_toggle.setStyleSheet("""
-            QToolButton {
-                border: none;
-                padding: 6px; /* Slightly increased padding */
-                border-radius: 4px;
-                background-color: transparent; /* Make background transparent initially */
-            }
-            QToolButton:hover {
-                background-color: #dddddd; /* Slightly darker gray for hover */
-            }
-            QToolButton:pressed {
-                background-color: #cccccc; /* Even darker for pressed state */
-            }
-        """)
-        self._btn_toggle.setFont(get_display_font(size=10))  # 設定按鈕字體
-        self._btn_toggle.clicked.connect(self._toggle)
-        top_row_layout.addWidget(self._btn_toggle)
-        
-        # Set initial icon and tooltip based on splitter state (defaulting to expanded) - Handled by setup_initial_toggle_state / _retranslate_ui
-        # self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
-        # self._btn_toggle.setToolTip("Collapse sidebar")
-
         # Add project button
         self.btn_add_project = QToolButton()
-        # self.btn_add_project.setText("＋") # Set in _retranslate_ui
-        # self.btn_add_project.setToolTip("Create a new project") # Set in _retranslate_ui
         self.btn_add_project.setStyleSheet("""
             QToolButton {
                 border: none;
@@ -104,61 +76,12 @@ class Sidebar(QWidget):
         self.refresh_project_list() # Initial population
 
     def _retranslate_ui(self):
-        # Update toggle button tooltip based on current state
-        if not self.list_projects.isVisible() or (self._splitter.sizes() and self._splitter.sizes()[0] == self.COLLAPSED_WIDTH):
-            self._btn_toggle.setToolTip(self.translator.get("sidebar_expand_tooltip", "Expand sidebar"))
-        else:
-            self._btn_toggle.setToolTip(self.translator.get("sidebar_collapse_tooltip", "Collapse sidebar"))
-        
         self.btn_add_project.setText(self.translator.get("sidebar_add_project_button", "＋"))
         self.btn_add_project.setToolTip(self.translator.get("sidebar_add_project_tooltip", "Create a new project"))
         
         # Refresh project list to update sample tags if language changed
         self.refresh_project_list()
         logger.debug("Sidebar UI retranslated")
-
-    def setup_initial_toggle_state(self):
-        if not self._splitter or not self._splitter.sizes():
-            return
-
-        initial_width = self._splitter.sizes()[0]
-        if initial_width <= self.COLLAPSED_WIDTH:
-            self.list_projects.hide()
-            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
-            self._btn_toggle.setToolTip(self.translator.get("sidebar_expand_tooltip", "Expand sidebar"))
-            current_sizes = self._splitter.sizes()
-            if len(current_sizes) > 1 and current_sizes[0] != self.COLLAPSED_WIDTH:
-                self._splitter.setSizes([self.COLLAPSED_WIDTH, current_sizes[1]])
-            self.setMinimumWidth(self.COLLAPSED_WIDTH)
-        else:
-            self.list_projects.show()
-            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
-            self._btn_toggle.setToolTip(self.translator.get("sidebar_collapse_tooltip", "Collapse sidebar"))
-            self.setMinimumWidth(200)
-
-    def _toggle(self):
-        current_width = self._splitter.sizes()[0]
-        current_sizes = self._splitter.sizes()
-
-        if not self.list_projects.isVisible() or current_width == self.COLLAPSED_WIDTH:
-            expanded_width = self._splitter.property("last_expanded_width") or 220
-            self.list_projects.show()
-            if len(current_sizes) > 1: current_sizes[0] = expanded_width
-            else: current_sizes = [expanded_width, 0] 
-            self._splitter.setSizes(current_sizes)
-            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowLeft))
-            self._btn_toggle.setToolTip(self.translator.get("sidebar_collapse_tooltip", "Collapse sidebar"))
-            self.setMinimumWidth(200)
-        else:
-            self._splitter.setProperty("last_expanded_width", current_width)
-            self.list_projects.hide()
-            if len(current_sizes) > 1: current_sizes[0] = self.COLLAPSED_WIDTH
-            else: current_sizes = [self.COLLAPSED_WIDTH, 0]
-            self._splitter.setSizes(current_sizes)
-            self._btn_toggle.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
-            self._btn_toggle.setToolTip(self.translator.get("sidebar_expand_tooltip", "Expand sidebar"))
-            self.setMinimumWidth(self.COLLAPSED_WIDTH)
-        self.toggled.emit()
 
     def _on_project_clicked(self, item: QListWidgetItem):
         project = item.data(Qt.UserRole) 

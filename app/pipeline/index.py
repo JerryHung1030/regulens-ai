@@ -175,14 +175,14 @@ if __name__ == '__main__':
     dummy_embed_sets_list: List[EmbedSet] = []
     test_dimension = 8  # Small dimension for testing
     num_dummy_vectors = 20
-    doc_type_test = "control_test"
+    doc_type_test = "external_regulation_test"
     model_name_test = "test-embedding-model/v1"  # With slash for sanitizer testing
 
     for i in range(num_dummy_vectors):
         dummy_embed_sets_list.append(EmbedSet(
-            id=f"embed_set_control_{i}",
-            norm_doc_id=f"norm_doc_control_{i // 3}",
-            chunk_text=f"This is chunk text for control document {i // 3}, chunk index {i % 3}.",
+            id=f"embed_set_external_regulation_{i}",
+            norm_doc_id=f"norm_doc_external_regulation_{i // 3}",
+            chunk_text=f"This is chunk text for external_regulation document {i // 3}, chunk index {i % 3}.",
             embedding=list(np.random.rand(test_dimension).astype('float32')),
             chunk_index=i % 3,
             total_chunks=3,

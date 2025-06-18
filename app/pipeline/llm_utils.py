@@ -156,7 +156,7 @@ if __name__ == '__main__':
         mock_response.choices[0].message.content = json.dumps({"requires_procedure": True})
         mock_create_completion.return_value = mock_response
 
-        prompt_need_check = "Control Clause: Systems must have access control mechanisms."
+        prompt_need_check = "External Regulation Clause: Systems must have access external_regulation mechanisms."
         # Using a model name that might support JSON mode for testing that path if applicable
         need_check_result = call_llm_api(
             prompt_need_check, 
@@ -189,7 +189,7 @@ if __name__ == '__main__':
         mock_response.choices[0].message.content = json.dumps(mock_response_data)
         mock_create_completion.return_value = mock_response
 
-        prompt_audit_plan = "Control Clause: Systems must have access control mechanisms."
+        prompt_audit_plan = "External Regulation Clause: Systems must have access external_regulation mechanisms."
         audit_plan_result = call_llm_api(
             prompt_audit_plan, 
             "gpt-4-turbo-preview", 
@@ -217,7 +217,7 @@ if __name__ == '__main__':
         mock_response.choices[0].message.content = json.dumps(mock_response_data)
         mock_create_completion.return_value = mock_response
 
-        prompt_judge = "Control: Backups. Task: Inspect logs. Evidence: Logs missing."
+        prompt_judge = "External Regulation: Backups. Task: Inspect logs. Evidence: Logs missing."
         judge_result = call_llm_api(
             prompt_judge, 
             "gpt-3.5-turbo", # Older model name, JSON mode might not be used
@@ -287,7 +287,7 @@ Some concluding text.
         mock_response.choices[0].message.content = mock_response_content
         mock_create_completion.return_value = mock_response
 
-        prompt_need_check = "Control Clause: Systems must have access control mechanisms."
+        prompt_need_check = "External Regulation Clause: Systems must have access external_regulation mechanisms."
         need_check_result = call_llm_api(
             prompt_need_check,
             "gpt-3.5-turbo", # Model where this behavior might be seen

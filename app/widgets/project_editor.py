@@ -34,8 +34,8 @@ class ProjectEditor(QWidget):
         # """
         # self.setStyleSheet(self._base_css) # Remove this line
 
-        # QFileSystemModels are no longer used for controls/procedures previews directly
-        # self.controls_fs_model = QFileSystemModel() ... removed
+        # QFileSystemModels are no longer used for external_regulations/procedures previews directly
+        # self.external_regulations_fs_model = QFileSystemModel() ... removed
         # self.procedures_fs_model = QFileSystemModel() ... removed
         # self.evidences_fs_model = QFileSystemModel() ... removed
 
@@ -75,32 +75,32 @@ class ProjectEditor(QWidget):
         for edit in [self._ctrl_edit, self._proc_edit]:
             edit.setFont(get_display_font(size=10))  # 設定輸入框字體
 
-        # Controls Row
-        controls_row_layout = QHBoxLayout()
-        controls_row_layout.setAlignment(Qt.AlignVCenter)
-        self.controls_label = QLabel() # Text set in _retranslate_ui
-        self.controls_label.setObjectName("controls_json_file_label")
-        self.controls_label.setFixedWidth(180)
-        self.controls_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.controls_label.setFont(get_display_font(size=10))  # 設定標籤字體
-        controls_row_layout.addWidget(self.controls_label)
+        # External Regulations Row
+        external_regulations_row_layout = QHBoxLayout()
+        external_regulations_row_layout.setAlignment(Qt.AlignVCenter)
+        self.external_regulations_label = QLabel() # Text set in _retranslate_ui
+        self.external_regulations_label.setObjectName("external_regulations_json_file_label")
+        self.external_regulations_label.setFixedWidth(180)
+        self.external_regulations_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.external_regulations_label.setFont(get_display_font(size=10))  # 設定標籤字體
+        external_regulations_row_layout.addWidget(self.external_regulations_label)
 
         self.browse_ctrl_button = QPushButton() # Text set in _retranslate_ui
-        self.browse_ctrl_button.setObjectName("controls_json_file_browse_button")
+        self.browse_ctrl_button.setObjectName("external_regulations_json_file_browse_button")
         self.browse_ctrl_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.browse_ctrl_button.clicked.connect(self._pick_ctrl)
         self.browse_ctrl_button.setFont(get_display_font(size=10))  # 設定按鈕字體
-        controls_row_layout.addWidget(self.browse_ctrl_button)
-        controls_row_layout.addWidget(self._ctrl_edit)
+        external_regulations_row_layout.addWidget(self.browse_ctrl_button)
+        external_regulations_row_layout.addWidget(self._ctrl_edit)
         
         self.validate_json_button = QPushButton() # Text set in _retranslate_ui
         self.validate_json_button.setObjectName("validate_json_button")
         self.validate_json_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        self.validate_json_button.clicked.connect(self._validate_controls_json)
+        self.validate_json_button.clicked.connect(self._validate_external_regulations_json)
         self.validate_json_button.setEnabled(False)
         self.validate_json_button.setFont(get_display_font(size=10))  # 設定按鈕字體
-        controls_row_layout.addWidget(self.validate_json_button)
-        folder_selection_layout.addLayout(controls_row_layout)
+        external_regulations_row_layout.addWidget(self.validate_json_button)
+        folder_selection_layout.addLayout(external_regulations_row_layout)
 
         # Procedures Row
         procedures_row_layout = QHBoxLayout()
@@ -149,24 +149,24 @@ class ProjectEditor(QWidget):
         self.preview_tab_widget.setFont(get_display_font(size=10))  # 設定分頁字體
         preview_content_layout.addWidget(self.preview_tab_widget)
 
-        # Controls Tab
-        self.controls_tab_content_widget = QWidget()
-        controls_tab_layout = QVBoxLayout(self.controls_tab_content_widget)
-        controls_tab_layout.setContentsMargins(0,0,0,0)
-        controls_splitter = QSplitter(Qt.Horizontal)
-        controls_splitter.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
-        self.controls_list_view = QListView()
-        self.controls_list_view.setObjectName("controlsListView")
-        self.controls_list_view.clicked.connect(self._on_control_file_selected)
-        self.controls_list_view.setFont(get_display_font(size=10))  # 設定列表字體
-        controls_splitter.addWidget(self.controls_list_view)
-        self.controls_json_preview = QTextEdit()
-        self.controls_json_preview.setReadOnly(True)
-        self.controls_json_preview.setObjectName("controlsJsonPreview")
-        self.controls_json_preview.setFont(get_display_font(size=10))  # 設定預覽字體
-        controls_splitter.addWidget(self.controls_json_preview)
-        controls_splitter.setSizes([200, 300])
-        controls_tab_layout.addWidget(controls_splitter)
+        # External Regulations Tab
+        self.external_regulations_tab_content_widget = QWidget()
+        external_regulations_tab_layout = QVBoxLayout(self.external_regulations_tab_content_widget)
+        external_regulations_tab_layout.setContentsMargins(0,0,0,0)
+        external_regulations_splitter = QSplitter(Qt.Horizontal)
+        external_regulations_splitter.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
+        self.external_regulations_list_view = QListView()
+        self.external_regulations_list_view.setObjectName("external_regulationsListView")
+        self.external_regulations_list_view.clicked.connect(self._on_external_regulation_file_selected)
+        self.external_regulations_list_view.setFont(get_display_font(size=10))  # 設定列表字體
+        external_regulations_splitter.addWidget(self.external_regulations_list_view)
+        self.external_regulations_json_preview = QTextEdit()
+        self.external_regulations_json_preview.setReadOnly(True)
+        self.external_regulations_json_preview.setObjectName("external_regulationsJsonPreview")
+        self.external_regulations_json_preview.setFont(get_display_font(size=10))  # 設定預覽字體
+        external_regulations_splitter.addWidget(self.external_regulations_json_preview)
+        external_regulations_splitter.setSizes([200, 300])
+        external_regulations_tab_layout.addWidget(external_regulations_splitter)
 
         # Procedures Tab
         self.procedures_tab_content_widget = QWidget()
@@ -219,8 +219,8 @@ class ProjectEditor(QWidget):
         self.delete_button.setToolTip(self.translator.get("project_editor_delete_tooltip", "Delete project"))
 
         # Update labels and apply fonts
-        self.controls_label.setText(self.translator.get("project_editor_controls_json_label", "Controls JSON File:"))
-        self.controls_label.setFont(get_display_font(size=10))
+        self.external_regulations_label.setText(self.translator.get("project_editor_external_regulations_json_label", "External Regulations JSON File:"))
+        self.external_regulations_label.setFont(get_display_font(size=10))
         self.procedures_label.setText(self.translator.get("project_editor_procedure_docs_label", "Procedure Documents:"))
         self.procedures_label.setFont(get_display_font(size=10))
 
@@ -243,10 +243,10 @@ class ProjectEditor(QWidget):
         self.preview_tab_widget.setFont(get_display_font(size=10)) # Sets font for the tab text
         current_tab_count = self.preview_tab_widget.count()
         if current_tab_count == 0 : # Add tabs only if they don't exist
-            self.preview_tab_widget.addTab(self.controls_tab_content_widget, self.translator.get("project_editor_controls_tab", "Controls JSON"))
+            self.preview_tab_widget.addTab(self.external_regulations_tab_content_widget, self.translator.get("project_editor_external_regulations_tab", "External Regulations JSON"))
             self.preview_tab_widget.addTab(self.procedures_tab_content_widget, self.translator.get("project_editor_procedures_tab", "Procedure Documents"))
         else: # Update existing tab titles
-            self.preview_tab_widget.setTabText(0, self.translator.get("project_editor_controls_tab", "Controls JSON"))
+            self.preview_tab_widget.setTabText(0, self.translator.get("project_editor_external_regulations_tab", "External Regulations JSON"))
             if current_tab_count > 1: # Check if procedure tab exists before trying to set text
                  self.preview_tab_widget.setTabText(1, self.translator.get("project_editor_procedures_tab", "Procedure Documents"))
 
@@ -327,87 +327,87 @@ class ProjectEditor(QWidget):
 
     # ---------- File/Folder Pickers and Validation ----------
     def _pick_ctrl(self):
-        # Pick a single JSON file for controls
-        start_dir = str(self.project.controls_json_path.parent if self.project.controls_json_path and self.project.controls_json_path.exists() else Path.home())
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select Controls JSON File", start_dir, "JSON Files (*.json)")
+        # Pick a single JSON file for external_regulations
+        start_dir = str(self.project.external_regulations_json_path.parent if self.project.external_regulations_json_path and self.project.external_regulations_json_path.exists() else Path.home())
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select External Regulations JSON File", start_dir, "JSON Files (*.json)")
         if file_path:
-            self.project.controls_json_path = Path(file_path)
+            self.project.external_regulations_json_path = Path(file_path)
             self.project.changed.emit() # Triggers _refresh
             self._ctrl_edit.setFocus()
-            # _update_controls_preview() will be called by _refresh
+            # _update_external_regulations_preview() will be called by _refresh
 
-    def _validate_controls_json(self):
+    def _validate_external_regulations_json(self):
         # TODO: Internationalize QMessageBox messages and preview text messages
         # This requires defining keys and using self.translator.get()
         # Example for one message:
         # title = self.translator.get("validation_error_title", "Validation Error")
-        # text = self.translator.get("controls_json_not_selected_text", "Controls JSON file not selected or does not exist.")
+        # text = self.translator.get("external_regulations_json_not_selected_text", "External Regulations JSON file not selected or does not exist.")
         # QMessageBox.warning(self, title, text)
-        # self.controls_json_preview.setText(text)
+        # self.external_regulations_json_preview.setText(text)
 
-        if not self.project.controls_json_path or not self.project.controls_json_path.exists():
+        if not self.project.external_regulations_json_path or not self.project.external_regulations_json_path.exists():
             title = self.translator.get("validation_error_title", "Validation Error")
-            text = self.translator.get("controls_json_not_selected_text", "Controls JSON file not selected or does not exist.")
+            text = self.translator.get("external_regulations_json_not_selected_text", "External Regulations JSON file not selected or does not exist.")
             QMessageBox.warning(self, title, text)
-            self.controls_json_preview.setText(text)
+            self.external_regulations_json_preview.setText(text)
             return
 
         try:
-            with open(self.project.controls_json_path, 'r', encoding='utf-8') as f:
+            with open(self.project.external_regulations_json_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 data = json.loads(content)
         except FileNotFoundError:
-            msg = self.translator.get("file_not_found_error", "File not found: {path}").format(path=self.project.controls_json_path)
+            msg = self.translator.get("file_not_found_error", "File not found: {path}").format(path=self.project.external_regulations_json_path)
             QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-            self.controls_json_preview.setText(msg)
+            self.external_regulations_json_preview.setText(msg)
             return
         except json.JSONDecodeError as e:
-            msg = self.translator.get("json_decode_error", "The file '{filename}' is not a valid JSON file. Please check its format.\n\nDetails: {error_details}").format(filename=self.project.controls_json_path.name, error_details=e)
+            msg = self.translator.get("json_decode_error", "The file '{filename}' is not a valid JSON file. Please check its format.\n\nDetails: {error_details}").format(filename=self.project.external_regulations_json_path.name, error_details=e)
             QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-            self.controls_json_preview.setText(msg)
+            self.external_regulations_json_preview.setText(msg)
             return
         except Exception as e:
-            msg = self.translator.get("file_read_error", "Error reading file '{filename}'.\n\nDetails: {error_details}").format(filename=self.project.controls_json_path.name, error_details=e)
+            msg = self.translator.get("file_read_error", "Error reading file '{filename}'.\n\nDetails: {error_details}").format(filename=self.project.external_regulations_json_path.name, error_details=e)
             QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-            self.controls_json_preview.setText(msg)
+            self.external_regulations_json_preview.setText(msg)
             return
 
         if not isinstance(data, dict):
-            msg = self.translator.get("json_must_be_object_error", "The controls JSON file '{filename}' must be an object (dictionary).").format(filename=self.project.controls_json_path.name)
+            msg = self.translator.get("json_must_be_object_error", "The external_regulations JSON file '{filename}' must be an object (dictionary).").format(filename=self.project.external_regulations_json_path.name)
             QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-            self.controls_json_preview.setText(msg)
+            self.external_regulations_json_preview.setText(msg)
             return
 
         if "name" not in data:
-            msg = self.translator.get("json_missing_name_key_error", "The controls JSON file '{filename}' is missing the 'name' key.").format(filename=self.project.controls_json_path.name)
+            msg = self.translator.get("json_missing_name_key_error", "The external_regulations JSON file '{filename}' is missing the 'name' key.").format(filename=self.project.external_regulations_json_path.name)
             QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-            self.controls_json_preview.setText(msg)
+            self.external_regulations_json_preview.setText(msg)
             return
 
         if not isinstance(data["name"], str):
-            msg = self.translator.get("json_name_must_be_string_error", "In '{filename}', the 'name' key must correspond to a string value.").format(filename=self.project.controls_json_path.name)
+            msg = self.translator.get("json_name_must_be_string_error", "In '{filename}', the 'name' key must correspond to a string value.").format(filename=self.project.external_regulations_json_path.name)
             QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-            self.controls_json_preview.setText(msg)
+            self.external_regulations_json_preview.setText(msg)
             return
 
         for key, value in data.items():
             if key == "name":
                 continue
             if not isinstance(value, str):
-                msg = self.translator.get("json_value_must_be_string_error", "In '{filename}', the value for key '{key_name}' must be a string.").format(filename=self.project.controls_json_path.name, key_name=key)
+                msg = self.translator.get("json_value_must_be_string_error", "In '{filename}', the value for key '{key_name}' must be a string.").format(filename=self.project.external_regulations_json_path.name, key_name=key)
                 QMessageBox.critical(self, self.translator.get("validation_error_title", "Validation Error"), msg)
-                self.controls_json_preview.setText(msg)
+                self.external_regulations_json_preview.setText(msg)
                 return
         
         success_title = self.translator.get("validation_successful_title", "Validation Successful")
-        success_msg = self.translator.get("json_valid_schema_message", "Controls JSON structure is valid according to the new simplified schema.")
+        success_msg = self.translator.get("json_valid_schema_message", "External Regulations JSON structure is valid according to the new simplified schema.")
         QMessageBox.information(self, success_title, success_msg)
         try:
             formatted_json = json.dumps(data, indent=4, ensure_ascii=False)
-            self.controls_json_preview.setText(formatted_json)
+            self.external_regulations_json_preview.setText(formatted_json)
         except Exception as e:
              logger.error(f"Error formatting validated JSON for preview: {e}")
-             self.controls_json_preview.setText(success_msg)
+             self.external_regulations_json_preview.setText(success_msg)
 
 
     def _pick_proc(self):
@@ -438,25 +438,25 @@ class ProjectEditor(QWidget):
     # _pick_evid and old _pick methods are removed.
 
     # ---------- Preview Update Methods ----------
-    def _update_controls_preview(self):
-        """更新 Controls 預覽區域的內容"""
-        if self.project.controls_json_path and self.project.controls_json_path.exists():
+    def _update_external_regulations_preview(self):
+        """更新 External Regulations 預覽區域的內容"""
+        if self.project.external_regulations_json_path and self.project.external_regulations_json_path.exists():
             # 更新左側列表
-            model = QStringListModel([self.project.controls_json_path.name])
-            self.controls_list_view.setModel(model)
+            model = QStringListModel([self.project.external_regulations_json_path.name])
+            self.external_regulations_list_view.setModel(model)
             
             # 更新右側內容
             try:
-                with open(self.project.controls_json_path, 'r', encoding='utf-8') as f:
+                with open(self.project.external_regulations_json_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 parsed_json = json.loads(content)
                 formatted_json = json.dumps(parsed_json, indent=4, ensure_ascii=False)
-                self.controls_json_preview.setText(formatted_json)
+                self.external_regulations_json_preview.setText(formatted_json)
             except Exception as e:
-                self.controls_json_preview.setText(f"Error loading JSON: {e}")
+                self.external_regulations_json_preview.setText(f"Error loading JSON: {e}")
         else:
-            self.controls_list_view.setModel(QStringListModel([]))
-            self.controls_json_preview.clear()
+            self.external_regulations_list_view.setModel(QStringListModel([]))
+            self.external_regulations_json_preview.clear()
 
     def _update_procedures_preview(self):
         if self.project.procedure_doc_paths:
@@ -484,20 +484,20 @@ class ProjectEditor(QWidget):
         else:
             self.procedures_text_preview.clear()
 
-    def _on_control_file_selected(self, index):
+    def _on_external_regulation_file_selected(self, index):
         if not index.isValid():
             return
             
-        file_path = self.project.controls_json_path
+        file_path = self.project.external_regulations_json_path
         if file_path and file_path.exists():
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 parsed_json = json.loads(content)
                 formatted_json = json.dumps(parsed_json, indent=4, ensure_ascii=False)
-                self.controls_json_preview.setText(formatted_json)
+                self.external_regulations_json_preview.setText(formatted_json)
             except Exception as e:
-                self.controls_json_preview.setText(self.translator.get("error_loading_json_preview", "Error loading JSON: {error}").format(error=e))
+                self.external_regulations_json_preview.setText(self.translator.get("error_loading_json_preview", "Error loading JSON: {error}").format(error=e))
 
     # ---------- Project operations ----------
     def _rename(self):
@@ -525,19 +525,19 @@ class ProjectEditor(QWidget):
         self._retranslate_ui() 
 
         # Update path edits (these are file paths, not typically translated) and apply fonts
-        controls_path_str = str(self.project.controls_json_path or "")
-        self._ctrl_edit.setText(controls_path_str)
+        external_regulations_path_str = str(self.project.external_regulations_json_path or "")
+        self._ctrl_edit.setText(external_regulations_path_str)
         self._ctrl_edit.setFont(get_display_font(size=10))
-        self.validate_json_button.setEnabled(bool(self.project.controls_json_path and self.project.controls_json_path.exists()))
+        self.validate_json_button.setEnabled(bool(self.project.external_regulations_json_path and self.project.external_regulations_json_path.exists()))
 
         # _refresh_dynamic_texts handles the procedure edit text for multiple files.
         # Apply font to _proc_edit here, as its text content might have been updated by _refresh_dynamic_texts (called by _retranslate_ui above)
         self._proc_edit.setFont(get_display_font(size=10))
 
         # Update Previews
-        # Fonts for preview panes (controls_json_preview, procedures_text_preview) and 
-        # list views (controls_list_view, procedures_list_view) are set in _build_ui.
-        self._update_controls_preview()
+        # Fonts for preview panes (external_regulations_json_preview, procedures_text_preview) and 
+        # list views (external_regulations_list_view, procedures_list_view) are set in _build_ui.
+        self._update_external_regulations_preview()
         self._update_procedures_preview()
         
         self.btn_compare.setEnabled(self.project.ready)

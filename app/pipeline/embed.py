@@ -176,7 +176,7 @@ if __name__ == '__main__':
         text_content=sample_norm_doc_content,
         sections=["Intro", "Body"], 
         metadata={"source": "test_data"}, 
-        doc_type="control"
+        doc_type="external_regulation"
     )
     
     sample_empty_norm_doc = NormDoc(

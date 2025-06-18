@@ -6,7 +6,7 @@ from pathlib import Path # Added
 from typing import Union, Any, Optional # Added for progress_updated signal and handler
 
 from PySide6.QtCore import QThreadPool, QRunnable, QObject, Signal, Qt, QTimer
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -30,6 +30,7 @@ from .pipeline.pipeline_v1_1 import _load_run_json, ProjectRunData, AuditPlanCla
 from .widgets.intro_page import IntroPage
 from .views.workspace import Workspace
 from .stores.project_store import ProjectStore
+from .utils.icon_manager import get_window_icon
 
 # ----------------------------------------------------------------------------
 # Worker (unchanged in spirit) - This can stay as it's a generic worker
@@ -76,6 +77,9 @@ class MainWindow(QMainWindow):
         self._cancelled = False  # Added
         self._progress_panel: ProgressPanel | None = None  # Added
 
+        # 設定主視窗圖示
+        self._set_window_icon()
+
         self._build_menubar()
 
         self.intro_page = IntroPage(self.translator) # Pass translator
@@ -88,6 +92,18 @@ class MainWindow(QMainWindow):
         # Connect translator signal and set initial translation
         self.translator.language_changed.connect(self._retranslate_ui)
         self._retranslate_ui()
+
+    def _set_window_icon(self):
+        """設定主視窗圖示"""
+        try:
+            window_icon = get_window_icon()
+            if not window_icon.isNull():
+                self.setWindowIcon(window_icon)
+                logger.debug("MainWindow icon set successfully")
+            else:
+                logger.warning("Failed to load window icon")
+        except Exception as e:
+            logger.warning(f"Failed to set window icon: {e}")
 
     def _retranslate_ui(self):
         # This method will be expanded in later steps to update menus, etc.
@@ -405,19 +421,19 @@ class MainWindow(QMainWindow):
                 else:
                     # _load_run_json logs errors, but we can add a specific message here too
                     logger.error(f"Failed to parse run.json for {proj.name}, project_run_data will be empty or stale.")
-                    proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[]) # Ensure it's not None
+                    proj.project_run_data = ProjectRunData(project_name=proj.name, external_regulation_clauses=[]) # Ensure it's not None
                     QMessageBox.warning(self,
                                         self.translator.get("result_loading_error_title", "Result Loading Error"),
                                         self.translator.get("result_loading_error_text", "Could not load or parse results from {path}. Display may be empty or outdated.").format(path=proj.run_json_path))
             except Exception as e: # Catch any other unexpected error during load
                 logger.error(f"Unexpected error loading run.json for project {proj.name}: {e}", exc_info=True)
-                proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[])
+                proj.project_run_data = ProjectRunData(project_name=proj.name, external_regulation_clauses=[])
                 QMessageBox.critical(self,
                                      self.translator.get("result_loading_error_title", "Result Loading Error"),
                                      self.translator.get("result_loading_unexpected_error_text", "An unexpected error occurred while loading results: {error}").format(error=e))
         else:
             logger.warning(f"No run.json path found for project {proj.name} at {proj.run_json_path}, or file does not exist. Cannot load results into UI.")
-            proj.project_run_data = ProjectRunData(project_name=proj.name, control_clauses=[]) # Ensure it's not None and empty
+            proj.project_run_data = ProjectRunData(project_name=proj.name, external_regulation_clauses=[]) # Ensure it's not None and empty
             QMessageBox.warning(self,
                                 self.translator.get("result_file_missing_title", "Result File Missing"),
                                 self.translator.get("result_file_missing_text", "Result file (run.json) not found for project {name}. Display may be empty.").format(name=proj.name))

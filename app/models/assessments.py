@@ -3,10 +3,10 @@ from pydantic import BaseModel
 
 
 class TripleAssessment(BaseModel):
-    control_doc_id: str
+    external_regulation_doc_id: str
     procedure_doc_id: str
     evidence_doc_id: str
-    control_chunk_id: Optional[str] = None  # if matching at chunk level
+    external_regulation_chunk_id: Optional[str] = None  # if matching at chunk level
     procedure_chunk_id: Optional[str] = None
     evidence_chunk_id: Optional[str] = None
     status: str  # e.g., "Pass", "Partial", "Fail", "Inconclusive"
@@ -17,7 +17,7 @@ class TripleAssessment(BaseModel):
 
 
 class PairAssessment(BaseModel):
-    control_doc_id: str
+    external_regulation_doc_id: str
     procedure_doc_id: str
     aggregated_status: str
     summary_analysis: str
@@ -38,6 +38,6 @@ class MatchSet(BaseModel):
     # Optional: raw L2 distance if needed for fine-tuning thresholds later
     raw_faiss_distance: Optional[float] = None
 
-    # To identify the relationship (e.g. Control -> Procedure)
+    # To identify the relationship (e.g. External Regulation -> Procedure)
     query_doc_type: str 
     matched_doc_type: str

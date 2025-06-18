@@ -33,7 +33,7 @@ from PySide6.QtGui import QTextOption, QColor, QFontMetrics # Added QColor and Q
 from app.models.project import CompareProject
 # Models from assessments and old pipeline structure are no longer directly used here
 # from app.models.assessments import PairAssessment, TripleAssessment # Removed
-from app.models.docs import ControlClause, AuditTask # For type hinting in new dialog
+from app.models.docs import ExternalRegulationClause, AuditTask # For type hinting in new dialog
 from app.pipeline.pipeline_v1_1 import ProjectRunData, _load_run_json # For loading results
 from app.logger import logger
 from app.utils.font_manager import get_font, get_display_font
@@ -163,9 +163,9 @@ class StatsBarChart(QWidget):
 class RunEvidenceDetailsDialog(QDialog):
     """
     New dialog to display details from ProjectRunData:
-    ControlClause text, AuditTask sentence, top_k evidence, and judge reasoning.
+    ExternalRegulationClause text, AuditTask sentence, top_k evidence, and judge reasoning.
     """
-    def __init__(self, clause: ControlClause, task: Optional[AuditTask], translator, parent: QWidget | None = None): # Added translator
+    def __init__(self, clause: ExternalRegulationClause, task: Optional[AuditTask], translator, parent: QWidget | None = None): # Added translator
         super().__init__(parent)
         self.clause = clause
         self.task = task
@@ -187,7 +187,7 @@ class RunEvidenceDetailsDialog(QDialog):
         content_widget = QWidget() # Widget to hold all scrollable content
         content_layout = QVBoxLayout(content_widget) # Layout for the content_widget
 
-        # Control Clause Text
+        # ExternalRegulation Clause Text
         self.clause_label = QLabel() # Text set in _retranslate_ui
         self.clause_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
         content_layout.addWidget(self.clause_label)
@@ -244,6 +244,7 @@ class RunEvidenceDetailsDialog(QDialog):
 
         # OK Button (outside scroll area)
         self.ok_button = QPushButton() # Text set in _retranslate_ui
+        self.ok_button.setObjectName("okButton")
         self.ok_button.setFont(get_display_font(size=10))
         self.ok_button.clicked.connect(self.accept)
 
@@ -278,7 +279,7 @@ class RunEvidenceDetailsDialog(QDialog):
             default_title += f" / Task: {self.task.id}" # Task ID is not translated
         self.setWindowTitle(self.translator.get(dialog_title_key, default_title).format(clause_title=self.clause_title_display, task_id=self.task.id if self.task else ""))
 
-        self.clause_label.setText(f"<b>{self.translator.get('control_clause_heading', 'Control Clause:')} {self.clause.id} - {self.clause_title_display}</b>")
+        self.clause_label.setText(f"<b>{self.translator.get('external_regulation_clause_heading', 'ExternalRegulation Clause:')} {self.clause.id} - {self.clause_title_display}</b>")
 
         if self.task:
             self.task_label.setText(f"<b>{self.translator.get('audit_task_heading', 'Audit Task:')} {self.task.id}</b>")
@@ -401,6 +402,7 @@ class EvidenceDetailsDialog(QDialog): # Old dialog
         layout.addWidget(self.txt_suggestion)
 
         self.btn_ok = QPushButton() # Text set in _retranslate_ui
+        self.btn_ok.setObjectName("okButton")
         self.btn_ok.setFont(get_display_font(size=10))
         self.btn_ok.clicked.connect(self.accept)
         
@@ -439,7 +441,7 @@ class ResultsViewer(QWidget):
         logger.debug("ResultsViewer initialization completed")
 
     def _show_evidence_details_dialog(self, clause_id: str, task_id: Optional[str]):
-        logger.debug(f"Showing details for Control Clause ID: {clause_id}, Task ID: {task_id}")
+        logger.debug(f"Showing details for ExternalRegulation Clause ID: {clause_id}, Task ID: {task_id}")
         
         if not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
             QMessageBox.warning(self, 
@@ -447,8 +449,8 @@ class ResultsViewer(QWidget):
                                 self.translator.get("project_run_data_not_loaded_text", "Project run data not loaded."))
             return
 
-        target_clause: Optional[ControlClause] = None
-        for c_idx, c_val in enumerate(self.project.project_run_data.control_clauses):
+        target_clause: Optional[ExternalRegulationClause] = None
+        for c_idx, c_val in enumerate(self.project.project_run_data.external_regulation_clauses):
             if c_val.id == clause_id:
                 target_clause = c_val
                 break
@@ -456,7 +458,7 @@ class ResultsViewer(QWidget):
         if not target_clause:
             QMessageBox.warning(self, 
                                 self.translator.get("data_error_title", "Data Error"), 
-                                self.translator.get("control_clause_not_found_text", "Control Clause {clause_id} not found.").format(clause_id=clause_id))
+                                self.translator.get("external_regulation_clause_not_found_text", "ExternalRegulation Clause {clause_id} not found.").format(clause_id=clause_id))
             return
 
         target_task: Optional[AuditTask] = None
@@ -495,11 +497,13 @@ class ResultsViewer(QWidget):
         title_row.addStretch(1)
 
         self.btn_export_csv = QPushButton() # Text/Icon set in _retranslate_ui
+        self.btn_export_csv.setObjectName("btnExportCsv")
         self.btn_export_csv.setFont(get_display_font(size=10))
         self.btn_export_csv.clicked.connect(self._export_result_csv)
         title_row.addWidget(self.btn_export_csv)
 
         self.btn_back = QPushButton() # Text/Icon set in _retranslate_ui
+        self.btn_back.setObjectName("btnBack")
         self.btn_back.setFont(get_display_font(size=10))
         self.btn_back.clicked.connect(self._go_back)
         title_row.addWidget(self.btn_back)
@@ -508,11 +512,11 @@ class ResultsViewer(QWidget):
         # Statistics Summary Section
         summary_section_layout = QVBoxLayout() # Main container for stats rows
         
-        # Row 1: Total Controls and Requires Procedure (existing labels) - TO BE REMOVED
+        # Row 1: Total ExternalRegulations and Requires Procedure (existing labels) - TO BE REMOVED
         # top_summary_row_layout = QHBoxLayout()
-        # self.summary_total_controls_label = QLabel() 
+        # self.summary_total_external_regulations_label = QLabel() 
         # self.summary_requires_procedure_label = QLabel()
-        # top_summary_row_layout.addWidget(self.summary_total_controls_label)
+        # top_summary_row_layout.addWidget(self.summary_total_external_regulations_label)
         # top_summary_row_layout.addSpacing(20)
         # top_summary_row_layout.addWidget(self.summary_requires_procedure_label)
         # top_summary_row_layout.addStretch(1)
@@ -565,11 +569,11 @@ class ResultsViewer(QWidget):
 
         # Column headers set in _retranslate_ui
         self.column_headers_keys = [
-            "col_control_id", "col_control_title", "col_requires_procedure",
+            "col_external_regulation_id", "col_external_regulation_title", "col_requires_procedure",
             "col_audit_task", "col_compliance_status", "col_details"
         ]
         self.column_headers_defaults = [
-            "Control ID", "Control Title", "Requires Procedure?",
+            "ExternalRegulation ID", "ExternalRegulation Title", "Requires Procedure?",
             "Audit Task", "Compliance Status", "Details"
         ]
         self.table_widget.setColumnCount(len(self.column_headers_keys))
@@ -614,15 +618,15 @@ class ResultsViewer(QWidget):
     def _refresh_summary_labels(self):
         # This is called by _retranslate_ui and _refresh
         # It updates labels based on current data and current language
-        total_controls = 0
+        total_external_regulations = 0
         requires_procedure_count = 0
         compliant_count = 0
         non_compliant_count = 0
         pending_count = 0
 
         if self.project and hasattr(self.project, 'project_run_data') and self.project.project_run_data:
-            for clause in self.project.project_run_data.control_clauses:
-                total_controls += 1
+            for clause in self.project.project_run_data.external_regulation_clauses:
+                total_external_regulations += 1
                 if clause.need_procedure:
                     requires_procedure_count += 1
                 if clause.tasks:
@@ -637,13 +641,13 @@ class ResultsViewer(QWidget):
             self._title.setText(f"<h2>{self.translator.get('analysis_results_title', 'Analysis Results')}</h2>")
 
         # Removed: Old text summary labels
-        # self.summary_total_controls_label.setText(f"<b>{self.translator.get('summary_total_controls', 'Total Controls')}:</b> {total_controls}")
+        # self.summary_total_external_regulations_label.setText(f"<b>{self.translator.get('summary_total_external_regulations', 'Total ExternalRegulations')}:</b> {total_external_regulations}")
         # self.summary_requires_procedure_label.setText(f"<b>{self.translator.get('summary_requires_procedure', 'Requires Procedure')}:</b> {requires_procedure_count}")
         
-        na_count = total_controls - (compliant_count + non_compliant_count + pending_count)
+        na_count = total_external_regulations - (compliant_count + non_compliant_count + pending_count)
         if na_count < 0: na_count = 0 
 
-        # total_for_bar = total_controls # No longer needed for bar chart
+        # total_for_bar = total_external_regulations # No longer needed for bar chart
         # self.stats_bar_chart.setData(compliant_count, non_compliant_count, pending_count, na_count, total_for_bar) # Removed
 
         self.summary_compliant_label.setText(f"<b>{self.translator.get('summary_compliant_status', 'Compliant:')}</b> {compliant_count}")
@@ -708,7 +712,9 @@ class ResultsViewer(QWidget):
                 "status_pending_color": "#ffc107",
                 "text_color_on_warning": "#212529", # Dark text on yellow
                 "status_na_color": "#6c757d",
-                "text_color_on_disabled": "#ffffff"
+                "text_color_on_disabled": "#ffffff",
+                "requires_procedure_yes_color": "#28a745",
+                "requires_procedure_no_color": "#6c757d"
             }
         theme_colors = get_placeholder_theme_colors()
         # End of placeholder
@@ -730,29 +736,29 @@ class ResultsViewer(QWidget):
 
         table_font = get_display_font(size=10) # Ensure this uses display_font for all items
         current_row = 0
-        for clause in self.project.project_run_data.control_clauses:
+        for clause in self.project.project_run_data.external_regulation_clauses:
             self.table_widget.insertRow(current_row)
             
             item_clause_id = QTableWidgetItem(clause.id) # ID is not translated
             item_clause_id.setFont(table_font) # Font set by table_widget default or explicitly here
             self.table_widget.setItem(current_row, 0, item_clause_id)
 
-            control_title_text = clause.title if clause.title else clause.text # Title/text not translated here
-            item_control_title = QTableWidgetItem(elide_text(control_title_text, max_length=70))
-            item_control_title.setFont(table_font)
-            self.table_widget.setItem(current_row, 1, item_control_title)
+            external_regulation_title_text = clause.title if clause.title else clause.text # Title/text not translated here
+            item_external_regulation_title = QTableWidgetItem(elide_text(external_regulation_title_text, max_length=70))
+            item_external_regulation_title.setFont(table_font)
+            self.table_widget.setItem(current_row, 1, item_external_regulation_title)
 
             item_requires_proc = QTableWidgetItem()
             item_requires_proc.setTextAlignment(Qt.AlignCenter)
             item_requires_proc.setFont(table_font)
             if clause.need_procedure is True:
                 item_requires_proc.setText(self.translator.get("yes", "Yes"))
-                item_requires_proc.setBackground(QColor("#e6f7ff"))
-                item_requires_proc.setForeground(QColor("black"))
+                item_requires_proc.setBackground(QColor(theme_colors.get("requires_procedure_yes_color", "#28a745")))
+                item_requires_proc.setForeground(QColor(theme_colors.get("text_color_on_primary", "#ffffff")))
             elif clause.need_procedure is False:
                 item_requires_proc.setText(self.translator.get("no", "No"))
-                item_requires_proc.setBackground(QColor("#f0f0f0"))
-                item_requires_proc.setForeground(QColor("black"))
+                item_requires_proc.setBackground(QColor(theme_colors.get("requires_procedure_no_color", "#6c757d")))
+                item_requires_proc.setForeground(QColor(theme_colors.get("text_color_on_primary", "#ffffff")))
             else:
                 item_requires_proc.setText(self.translator.get("n_a", "N/A")) # n_a already exists
                 # Apply badge styling for N/A
@@ -789,6 +795,7 @@ class ResultsViewer(QWidget):
             self.table_widget.setItem(current_row, 4, item_compliance_status)
 
             details_button = QPushButton(self.translator.get("view_details_button", "View Details"))
+            details_button.setObjectName("viewDetailsButton")
             details_button.setFont(get_display_font(size=10)) # Apply font to button in table
             current_task_id = task.id if task else None # Task ID not translated
             details_button.clicked.connect(
@@ -848,9 +855,9 @@ class ResultsViewer(QWidget):
         # However, for data exchange, non-translated headers are common. Assuming non-translated for now.
         headers = [
             self.translator.get("csv_header_project_name", "Project Name"),
-            self.translator.get("csv_header_control_clause_id", "Control Clause ID"),
-            self.translator.get("csv_header_control_clause_title", "Control Clause Title"),
-            self.translator.get("csv_header_control_clause_text", "Control Clause Text"),
+            self.translator.get("csv_header_external_regulation_clause_id", "ExternalRegulation Clause ID"),
+            self.translator.get("csv_header_external_regulation_clause_title", "ExternalRegulation Clause Title"),
+            self.translator.get("csv_header_external_regulation_clause_text", "ExternalRegulation Clause Text"),
             self.translator.get("csv_header_requires_procedure", "Requires Procedure"),
             self.translator.get("csv_header_audit_task_id", "Audit Task ID"),
             self.translator.get("csv_header_audit_task_sentence", "Audit Task Sentence"),
@@ -871,14 +878,14 @@ class ResultsViewer(QWidget):
                 with open(target_file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=headers, quoting=csv.QUOTE_ALL)
                     writer.writeheader()
-                    for clause in self.project.project_run_data.control_clauses:
+                    for clause in self.project.project_run_data.external_regulation_clauses:
                         clause_title = clause.title if clause.title else clause.text
                         requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
                         base_row_data = {
                             self.translator.get("csv_header_project_name", "Project Name"): self.project.name,
-                            self.translator.get("csv_header_control_clause_id", "Control Clause ID"): clause.id,
-                            self.translator.get("csv_header_control_clause_title", "Control Clause Title"): clause_title,
-                            self.translator.get("csv_header_control_clause_text", "Control Clause Text"): clause.text,
+                            self.translator.get("csv_header_external_regulation_clause_id", "ExternalRegulation Clause ID"): clause.id,
+                            self.translator.get("csv_header_external_regulation_clause_title", "ExternalRegulation Clause Title"): clause_title,
+                            self.translator.get("csv_header_external_regulation_clause_text", "ExternalRegulation Clause Text"): clause.text,
                             self.translator.get("csv_header_requires_procedure", "Requires Procedure"): requires_procedure,
                         }
                         if not clause.tasks:

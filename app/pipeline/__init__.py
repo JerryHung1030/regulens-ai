@@ -64,9 +64,9 @@ def run_pipeline(
     pipeline_settings = PipelineSettings.from_settings(global_app_settings)
 
     # Decision logic for pipeline version can be added here.
-    # For now, directly calling pipeline_v1_1 if controls_json_path is set.
-    if project.controls_json_path and project.run_json_path:
-        logger.info(f"Detected controls_json_path, running pipeline_v1_1 for project: {project.name}")
+    # For now, directly calling pipeline_v1_1 if external_regulations_json_path is set.
+    if project.external_regulations_json_path and project.run_json_path:
+        logger.info(f"Detected external_regulations_json_path, running pipeline_v1_1 for project: {project.name}")
         
         # Adapt progress_callback if necessary or pass directly
         # The new pipeline_v1_1 expects progress_callback: Callable[[float, str], None]
@@ -118,7 +118,7 @@ def run_pipeline(
         # index_root_dir = cache_service.cache_dir / "indexes"
         # index_root_dir.mkdir(parents=True, exist_ok=True)
         # ... (rest of the old pipeline stages: Ingestion, Normalization, Embedding, Indexing, etc.) ...
-        # ... This would involve using project.controls_dir, project.procedures_dir etc. ...
+        # ... This would involve using project.external_regulations_dir, project.procedures_dir etc. ...
         # ... and the original `ingest_documents` that takes a directory.
         # _legacy_update_progress(total_pipeline_stages, total_pipeline_stages, "Legacy pipeline finished (mocked).")
         # return output_dir / "some_legacy_report.md" # Example

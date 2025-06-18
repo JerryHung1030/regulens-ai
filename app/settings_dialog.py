@@ -237,6 +237,7 @@ class SettingsDialog(QDialog):
         self.local_model_path_edit = QLineEdit()
         local_model_layout.addWidget(self.local_model_path_edit)
         self.local_model_button = QPushButton(self.translator.get("settings_button_browse", "Browse..."))
+        self.local_model_button.setObjectName("settingsButtonBrowse")
         self.local_model_button.clicked.connect(self._browse_local_model_path)
         local_model_layout.addWidget(self.local_model_button)
         self.models_local_path_label = QLabel(self.translator.get("settings_label_local_model_path", "Local Model Path (Optional):"))

@@ -59,7 +59,7 @@ class ProjectStore(QObject):
 
         project2 = CompareProject(
             name="符合規範案例 (Demo)",
-            controls_json_path=sample_base_dir / "sample2_符合規範Demo" / "controls" / "external.json",
+            external_regulations_json_path=sample_base_dir / "sample2_符合規範Demo" / "external_regulations" / "external.json",
             procedure_doc_paths=[sample_base_dir / "sample2_符合規範Demo" / "procedures" / "internal.txt"],
             run_json_path=sample_base_dir / "sample2_符合規範Demo" / "run.json",
             is_sample=True
@@ -67,7 +67,7 @@ class ProjectStore(QObject):
 
         project3 = CompareProject(
             name="不符合規範案例 (Demo)",
-            controls_json_path=sample_base_dir / "sample3_不符合規範Demo" / "controls" / "external.json",
+            external_regulations_json_path=sample_base_dir / "sample3_不符合規範Demo" / "external_regulations" / "external.json",
             procedure_doc_paths=[sample_base_dir / "sample3_不符合規範Demo" / "procedures" / "internal.txt"],
             run_json_path=sample_base_dir / "sample3_不符合規範Demo" / "run.json",
             is_sample=True

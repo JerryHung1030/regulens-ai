@@ -403,62 +403,106 @@ QFrame#corePipelineCard QLabel small { /* Updated selector */
     */
 }
 
-/* === Grouped Color Styling for specified buttons === */
-/* These buttons will share the primary action color scheme */
+/* === Primary Action Button Styling === */
+/* These are the main action buttons that should be prominent */
 QPushButton#getStartedButton, /* From intro_page */
-QPushButton#controls_json_file_browse_button, /* From project_editor */
-QPushButton#procedure_doc_files_browse_button, /* From project_editor */
-QPushButton#validate_json_button, /* From project_editor */
-QPushButton#btnCompare { /* From project_editor */
-    color: @text_color_on_primary; /* Text color for primary buttons */
-    background-color: @button_primary_background; /* Primary button background */
+QPushButton#btnCompare, /* From project_editor - main compare button */
+QPushButton#btnExportCsv, /* From results_viewer - export CSV button */
+QPushButton#btnBack { /* From results_viewer - back button */
+    color: @button_get_started_text; /* Text color for primary buttons */
+    background-color: @button_get_started_background; /* Primary button background */
     border: none; /* Primary buttons are borderless */
     border-radius: 4px; /* Consistent border radius */
 }
 
 QPushButton#getStartedButton:hover,
-QPushButton#controls_json_file_browse_button:hover,
-QPushButton#procedure_doc_files_browse_button:hover,
-QPushButton#validate_json_button:hover,
-QPushButton#btnCompare:hover {
-    background-color: @button_primary_hover_background; /* Primary button hover */
+QPushButton#btnCompare:hover,
+QPushButton#btnExportCsv:hover,
+QPushButton#btnBack:hover {
+    background-color: @button_get_started_hover_background; /* Primary button hover */
 }
 
 QPushButton#getStartedButton:pressed,
-QPushButton#controls_json_file_browse_button:pressed,
+QPushButton#btnCompare:pressed,
+QPushButton#btnExportCsv:pressed,
+QPushButton#btnBack:pressed {
+    background-color: @button_get_started_pressed_background; /* Primary button pressed */
+}
+
+/* === Secondary Button Styling === */
+/* These are utility/secondary buttons that should be more subtle */
+QPushButton#external_regulations_json_file_browse_button, /* From project_editor */
+QPushButton#procedure_doc_files_browse_button, /* From project_editor */
+QPushButton#validate_json_button, /* From project_editor */
+QPushButton#viewDetailsButton, /* From results_viewer table */
+QPushButton#okButton, /* From dialogs */
+QPushButton#settingsButtonBrowse { /* From settings_dialog */
+    color: @button_text; /* Use default button text color */
+    background-color: @button_background; /* Use default button background */
+    border: 1px solid @button_border; /* Use default button border */
+    border-radius: 4px; /* Consistent border radius */
+}
+
+QPushButton#external_regulations_json_file_browse_button:hover,
+QPushButton#procedure_doc_files_browse_button:hover,
+QPushButton#validate_json_button:hover,
+QPushButton#viewDetailsButton:hover,
+QPushButton#okButton:hover,
+QPushButton#settingsButtonBrowse:hover {
+    background-color: @button_hover_background; /* Use default button hover */
+    border-color: @button_hover_border; /* Use default button hover border */
+}
+
+QPushButton#external_regulations_json_file_browse_button:pressed,
 QPushButton#procedure_doc_files_browse_button:pressed,
 QPushButton#validate_json_button:pressed,
-QPushButton#btnCompare:pressed {
-    background-color: @button_primary_pressed_background; /* Primary button pressed */
+QPushButton#viewDetailsButton:pressed,
+QPushButton#okButton:pressed,
+QPushButton#settingsButtonBrowse:pressed {
+    background-color: @button_pressed_background; /* Use default button pressed */
+    border-color: @button_pressed_border; /* Use default button pressed border */
 }
-/* === End of Grouped Color Styling === */
 
-/* Individual Style Overrides (Padding, Font Size, etc.) */
+/* === Individual Button Style Overrides (Padding, Font Size, etc.) === */
 QPushButton#getStartedButton {
     font-size: 16px;
     font-weight: 500;
     padding: 12px 32px;
-    /* Color, background, border, and border-radius are handled by the grouped style */
-}
-
-QPushButton#controls_json_file_browse_button,
-QPushButton#procedure_doc_files_browse_button {
-    padding: 5px 10px; /* Default padding, keeps them small */
-    /* font-size will be from default QPushButton style or OS default */
-    /* Color, background, border, and border-radius are handled by the grouped style */
-}
-
-QPushButton#validate_json_button {
-    padding: 8px 16px; /* Medium size */
-    /* font-size will be from default QPushButton style or OS default */
-    /* Color, background, border, and border-radius are handled by the grouped style */
+    /* Color, background, border, and border-radius are handled by the primary button style */
 }
 
 QPushButton#btnCompare { /* This is the Re-run sample / Start compare button */
     font-weight: 500;
     padding: 10px 24px; /* Large size, similar to getStartedButton */
     /* font-size will be from default QPushButton style or OS default */
-    /* Color, background, border, and border-radius are handled by the grouped style */
+    /* Color, background, border, and border-radius are handled by the primary button style */
+}
+
+QPushButton#external_regulations_json_file_browse_button,
+QPushButton#procedure_doc_files_browse_button {
+    padding: 5px 10px; /* Default padding, keeps them small */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the secondary button style */
+}
+
+QPushButton#validate_json_button {
+    padding: 8px 16px; /* Medium size */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the secondary button style */
+}
+
+QPushButton#btnExportCsv { /* This is the Export CSV button */
+    font-weight: 500;
+    padding: 8px 16px; /* Medium size */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the primary button style */
+}
+
+QPushButton#btnBack { /* This is the Back button */
+    font-weight: 500;
+    padding: 8px 16px; /* Medium size */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the primary button style */
 }
 
 /* StatsBarChart Status Indicators */

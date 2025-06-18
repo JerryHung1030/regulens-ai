@@ -9,7 +9,7 @@ import shutil # For cleaning up temp directories
 
 from app.logger import logger
 from app.models.project import CompareProject
-from app.models.docs import ControlClause, AuditTask, RawDoc, NormDoc, EmbedSet # Added RawDoc, NormDoc, EmbedSet
+from app.models.docs import ExternalRegulationClause, AuditTask, RawDoc, NormDoc, EmbedSet # Added RawDoc, NormDoc, EmbedSet
 from app.models.run_data import ProjectRunData # Import from new module
 from app.pipeline_settings import PipelineSettings # Corrected import to app.pipeline_settings
 from app.pipeline.llm_utils import call_llm_api
@@ -56,9 +56,9 @@ def _save_run_json(run_data: ProjectRunData, run_json_path: Path) -> None:
         logger.error(f"Error saving run.json to {run_json_path}: {e}")
 
 
-def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
+def load_external_regulations_from_json(external_regulations_json_path: Path) -> List[ExternalRegulationClause]:
     """
-    Loads control clauses from the project's specified controls JSON file.
+    Loads external_regulation clauses from the project's specified external_regulations JSON file.
     The JSON structure is expected to be:
     {
         "name": "Project Name",
@@ -67,14 +67,14 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
         ...
     }
     """
-    control_clauses: List[ControlClause] = []
-    if not controls_json_path.exists():
-        logger.error(f"Controls JSON file not found: {controls_json_path}")
-        return control_clauses
+    external_regulation_clauses: List[ExternalRegulationClause] = []
+    if not external_regulations_json_path.exists():
+        logger.error(f"ExternalRegulations JSON file not found: {external_regulations_json_path}")
+        return external_regulation_clauses
 
     try:
         # 確保使用 UTF-8 編碼讀取檔案
-        with open(controls_json_path, 'r', encoding='utf-8') as f:
+        with open(external_regulations_json_path, 'r', encoding='utf-8') as f:
             content = f.read()
             data = json.loads(content)
         
@@ -88,8 +88,8 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
             title = lines[0]
             text = lines[1] if len(lines) > 1 else ""
             
-            # 創建 ControlClause 物件，包含所有必要的欄位
-            clause = ControlClause(
+            # 創建 ExternalRegulationClause 物件，包含所有必要的欄位
+            clause = ExternalRegulationClause(
                 id=clause_id,
                 title=title,
                 text=text,
@@ -97,12 +97,12 @@ def load_controls_from_json(controls_json_path: Path) -> List[ControlClause]:
                 tasks=[],  # 初始為空列表，將由 pipeline 填充
                 subclauses=[]  # 初始為空列表
             )
-            control_clauses.append(clause)
+            external_regulation_clauses.append(clause)
             
     except Exception as e:
-        logger.error(f"Error loading controls JSON: {e}")
+        logger.error(f"Error loading external_regulations JSON: {e}")
         
-    return control_clauses
+    return external_regulation_clauses
 
 
 def run_project_pipeline_v1_1(project: CompareProject,
@@ -116,9 +116,9 @@ def run_project_pipeline_v1_1(project: CompareProject,
     logger.info(f"Starting pipeline v1.1 for project: {project.name}")
     progress_callback(0.0, "Initializing pipeline...")
 
-    if not project.controls_json_path or not project.controls_json_path.exists():
-        logger.error("Controls JSON path not specified or file does not exist.")
-        progress_callback(1.0, "Error: Controls JSON file not found.")
+    if not project.external_regulations_json_path or not project.external_regulations_json_path.exists():
+        logger.error("ExternalRegulations JSON path not specified or file does not exist.")
+        progress_callback(1.0, "Error: ExternalRegulations JSON file not found.")
         return
 
     if not project.run_json_path:
@@ -127,12 +127,12 @@ def run_project_pipeline_v1_1(project: CompareProject,
         return
 
     # Load existing run data or initialize if not present/fresh start requested
-    # For now, let's assume we always load controls from source JSON and then update from run.json
+    # For now, let's assume we always load external_regulations from source JSON and then update from run.json
     # A more sophisticated resume logic might be needed later.
     
-    initial_clauses = load_controls_from_json(project.controls_json_path)
+    initial_clauses = load_external_regulations_from_json(project.external_regulations_json_path)
     if not initial_clauses:
-        progress_callback(1.0, "Error: No control clauses loaded. Stopping pipeline.")
+        progress_callback(1.0, "Error: No external_regulation clauses loaded. Stopping pipeline.")
         return
 
     project_run_data = _load_run_json(project.run_json_path)
@@ -141,8 +141,8 @@ def run_project_pipeline_v1_1(project: CompareProject,
         logger.info(f"Loaded existing run data from {project.run_json_path}")
         # Merge or update initial_clauses with data from project_run_data
         # This creates a map for quick lookup
-        existing_clauses_map = {c.id: c for c in project_run_data.control_clauses}
-        final_clauses_for_pipeline: List[ControlClause] = []
+        existing_clauses_map = {c.id: c for c in project_run_data.external_regulation_clauses}
+        final_clauses_for_pipeline: List[ExternalRegulationClause] = []
         for loaded_clause in initial_clauses:
             if loaded_clause.id in existing_clauses_map:
                 # Update with potentially modified/populated fields from run.json
@@ -157,7 +157,7 @@ def run_project_pipeline_v1_1(project: CompareProject,
                 if existing_version.tasks: # If tasks list is not empty
                     updated_data['tasks'] = [task.model_dump() for task in existing_version.tasks]
                 
-                final_clauses_for_pipeline.append(ControlClause(**updated_data))
+                final_clauses_for_pipeline.append(ExternalRegulationClause(**updated_data))
             else:
                 final_clauses_for_pipeline.append(loaded_clause)
         
@@ -165,22 +165,22 @@ def run_project_pipeline_v1_1(project: CompareProject,
         # This logic might need refinement based on how we want to handle discrepancies.
         # For now, source JSON is the master list.
         current_ids_in_source = {c.id for c in final_clauses_for_pipeline}
-        for existing_clause in project_run_data.control_clauses:
+        for existing_clause in project_run_data.external_regulation_clauses:
             if existing_clause.id not in current_ids_in_source:
-                logger.warning(f"Clause ID {existing_clause.id} found in run.json but not in source controls. It will be ignored.")
+                logger.warning(f"Clause ID {existing_clause.id} found in run.json but not in source external_regulations. It will be ignored.")
 
-        control_clauses_for_run = final_clauses_for_pipeline
+        external_regulation_clauses_for_run = final_clauses_for_pipeline
 
     else:
         logger.info(f"No existing run data found at {project.run_json_path}, or starting fresh.")
-        control_clauses_for_run = initial_clauses
+        external_regulation_clauses_for_run = initial_clauses
         # Initialize ProjectRunData and save it immediately
-        project_run_data = ProjectRunData(project_name=project.name, control_clauses=control_clauses_for_run)
+        project_run_data = ProjectRunData(project_name=project.name, external_regulation_clauses=external_regulation_clauses_for_run)
         _save_run_json(project_run_data, project.run_json_path)
 
 
-    if not control_clauses_for_run:
-        progress_callback(1.0, "No control clauses to process. Stopping pipeline.")
+    if not external_regulation_clauses_for_run:
+        progress_callback(1.0, "No external_regulation clauses to process. Stopping pipeline.")
         return
 
     # --- Step 1: Need-Check ---
@@ -188,10 +188,10 @@ def run_project_pipeline_v1_1(project: CompareProject,
         progress_callback(1.0, "Pipeline cancelled.")
         return
     progress_callback(0.1, "Starting Step 1: Need-Check...")
-    # control_clauses_for_run = execute_need_check_step(control_clauses_for_run, project.run_json_path, settings, cancel_cb)
+    # external_regulation_clauses_for_run = execute_need_check_step(external_regulation_clauses_for_run, project.run_json_path, settings, cancel_cb)
     # Update run_data and save (within execute_need_check_step or here)
     execute_need_check_step(
-        control_clauses=control_clauses_for_run, 
+        external_regulation_clauses=external_regulation_clauses_for_run, 
         project_run_json_path=project.run_json_path,
         current_project_run_data=project_run_data, # Pass the main run data object
         settings=settings, 
@@ -207,10 +207,10 @@ def run_project_pipeline_v1_1(project: CompareProject,
         progress_callback(1.0, "Pipeline cancelled.")
         return
     progress_callback(0.3, "Starting Step 2: Audit-Plan...")
-    # control_clauses_for_run = execute_audit_plan_step(control_clauses_for_run, project.run_json_path, settings, cancel_cb)
+    # external_regulation_clauses_for_run = execute_audit_plan_step(external_regulation_clauses_for_run, project.run_json_path, settings, cancel_cb)
     # Update run_data and save
     execute_audit_plan_step(
-        control_clauses=control_clauses_for_run,
+        external_regulation_clauses=external_regulation_clauses_for_run,
         project_run_json_path=project.run_json_path,
         current_project_run_data=project_run_data,
         settings=settings,
@@ -239,7 +239,7 @@ def run_project_pipeline_v1_1(project: CompareProject,
         return
     progress_callback(0.6, "Starting Step 3: Search for Procedures...")
     execute_search_step(
-        control_clauses=control_clauses_for_run,
+        external_regulation_clauses=external_regulation_clauses_for_run,
         project=project, # Pass the whole project for paths
         current_project_run_data=project_run_data,
         settings=settings,
@@ -255,7 +255,7 @@ def run_project_pipeline_v1_1(project: CompareProject,
         return
     progress_callback(0.8, "Starting Step 4: Judging Compliance...")
     execute_judge_step(
-        control_clauses=control_clauses_for_run,
+        external_regulation_clauses=external_regulation_clauses_for_run,
         project_run_json_path=project.run_json_path, # For saving progress
         current_project_run_data=project_run_data,
         settings=settings,
@@ -286,21 +286,21 @@ def run_project_pipeline_v1_1(project: CompareProject,
 # These will be added in subsequent steps.
 
 def execute_need_check_step(
-    control_clauses: List[ControlClause],
+    external_regulation_clauses: List[ExternalRegulationClause],
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData, # To update and save the overall run.json
     settings: PipelineSettings,
     progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None], # For detailed progress
     cancel_cb: Callable[[], bool]
-) -> List[ControlClause]:
+) -> List[ExternalRegulationClause]:
     """
-    Executes Step 1: Need-Check for each control clause.
+    Executes Step 1: Need-Check for each external_regulation clause.
     Updates need_procedure attribute and saves to run.json progressively.
     """
-    total_clauses = len(control_clauses)
+    total_clauses = len(external_regulation_clauses)
     clauses_processed = 0
 
-    for idx, clause in enumerate(control_clauses):
+    for idx, clause in enumerate(external_regulation_clauses):
         if cancel_cb():
             logger.info("Need-Check step cancelled.")
             break # Exit loop if cancellation requested
@@ -320,9 +320,9 @@ def execute_need_check_step(
         # Construct prompt for LLM
         # Basic prompt, can be enhanced with more context or specific instructions
         prompt = (
-            f"Determine if the following control clause requires a detailed audit procedure to verify its implementation. "
+            f"Determine if the following external_regulation clause requires a detailed audit procedure to verify its implementation. "
             f"Respond with a JSON object containing a single key 'requires_procedure' with a boolean value (true or false).\n\n"
-            f"Control Clause Text: \"{clause.text}\""
+            f"ExternalRegulation Clause Text: \"{clause.text}\""
         )
 
         llm_response = call_llm_api(
@@ -342,14 +342,14 @@ def execute_need_check_step(
 
         clauses_processed +=1
         
-        # Update the specific clause in current_project_run_data.control_clauses
-        # This assumes current_project_run_data.control_clauses is the same list object
+        # Update the specific clause in current_project_run_data.external_regulation_clauses
+        # This assumes current_project_run_data.external_regulation_clauses is the same list object
         # or requires finding and updating the clause by ID if it's a copy.
-        # For simplicity, if control_clauses is a mutable list shared, direct update works.
+        # For simplicity, if external_regulation_clauses is a mutable list shared, direct update works.
         # Otherwise:
-        for i, run_clause in enumerate(current_project_run_data.control_clauses):
+        for i, run_clause in enumerate(current_project_run_data.external_regulation_clauses):
             if run_clause.id == clause.id:
-                current_project_run_data.control_clauses[i] = clause
+                current_project_run_data.external_regulation_clauses[i] = clause
                 break
         _save_run_json(current_project_run_data, project_run_json_path)
         
@@ -358,30 +358,30 @@ def execute_need_check_step(
         current_step_progress = (clauses_processed / total_clauses) * step_progress_span
         progress_callback(base_progress + current_step_progress, f"Need-Check: Clause {clause.id} -> {clause.need_procedure}")
 
-    return control_clauses
+    return external_regulation_clauses
 
 
 def execute_audit_plan_step(
-    control_clauses: List[ControlClause],
+    external_regulation_clauses: List[ExternalRegulationClause],
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData,
     settings: PipelineSettings,
     progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
     cancel_cb: Callable[[], bool]
-) -> List[ControlClause]:
+) -> List[ExternalRegulationClause]:
     """
-    Executes Step 2: Audit-Plan for each relevant control clause.
+    Executes Step 2: Audit-Plan for each relevant external_regulation clause.
     Generates audit tasks and saves to run.json progressively.
     """
     base_progress = 0.3  # Progress before this step starts
     step_progress_span = 0.3  # This step spans from 30% to 60%
 
-    total_clauses_in_step = len(control_clauses)
+    total_clauses_in_step = len(external_regulation_clauses)
     clauses_iterated_in_step = 0
 
     if total_clauses_in_step == 0:
-        logger.info("No control clauses to process for audit planning.")
-        progress_callback(base_progress + step_progress_span, "Audit-Plan: No control clauses")
+        logger.info("No external_regulation clauses to process for audit planning.")
+        progress_callback(base_progress + step_progress_span, "Audit-Plan: No external_regulation clauses")
         # Send completion signal even if no clauses
         final_completion_message = AuditPlanClauseUIData(
             clause_id="summary",
@@ -389,9 +389,9 @@ def execute_audit_plan_step(
             audit_plan_generation_complete=True
         )
         progress_callback(base_progress + step_progress_span, final_completion_message)
-        return control_clauses
+        return external_regulation_clauses
 
-    for clause in control_clauses:
+    for clause in external_regulation_clauses:
         if cancel_cb():
             logger.info("Audit-Plan step cancelled.")
             break
@@ -425,15 +425,15 @@ def execute_audit_plan_step(
         logger.info(f"Performing Audit-Plan for clause: {clause.id} - {clause.title[:50]}...")
 
         prompt = (
-            f"Act as an auditor validating compliance for the control clause: '{clause.text}'.\n"
+            f"Act as an auditor validating compliance for the external_regulation clause: '{clause.text}'.\n"
             f"Your goal is to generate **one or more effective search queries (audit task sentences)** to find supporting evidence in internal documentation.\n"
-            f"Each query should be precise and target text that directly confirms, defines, or exemplifies a specific aspect of the control clause.\n"
-            f"If the control clause has multiple distinct components or requirements, generate a separate, focused query for each.\n"
+            f"Each query should be precise and target text that directly confirms, defines, or exemplifies a specific aspect of the external_regulation clause.\n"
+            f"If the external_regulation clause has multiple distinct components or requirements, generate a separate, focused query for each.\n"
             f"For example, if a clause states 'A is X and B is Y', you might generate one query for 'A is X' and another for 'B is Y'.\n"
             f"Return a JSON object containing a single key 'audit_tasks'. The value of 'audit_tasks' must be a list of dictionaries.\n"
             f"Each dictionary in the list must have an 'id' (e.g., 'task_001', 'task_002', ...) and a 'sentence' (your generated search query for that specific aspect).\n"
             f"Ensure IDs are unique for tasks generated for the same clause (e.g., task_001, task_002).\n\n"
-            f"Control Clause Text: \"{clause.text}\""
+            f"ExternalRegulation Clause Text: \"{clause.text}\""
         )
 
         llm_response = call_llm_api(
@@ -476,9 +476,9 @@ def execute_audit_plan_step(
             # clause.tasks remains empty
             
         # Update and save run.json
-        for i, run_clause in enumerate(current_project_run_data.control_clauses):
+        for i, run_clause in enumerate(current_project_run_data.external_regulation_clauses):
             if run_clause.id == clause.id:
-                current_project_run_data.control_clauses[i] = clause
+                current_project_run_data.external_regulation_clauses[i] = clause
                 break
         _save_run_json(current_project_run_data, project_run_json_path)
 
@@ -500,11 +500,11 @@ def execute_audit_plan_step(
     # Ensure this final message is sent at the end progress point of this step
     progress_callback(base_progress + step_progress_span, final_completion_message)
         
-    return control_clauses
+    return external_regulation_clauses
 
 
 def execute_search_step(
-    control_clauses: List[ControlClause],
+    external_regulation_clauses: List[ExternalRegulationClause],
     project: CompareProject,
     current_project_run_data: ProjectRunData,
     settings: PipelineSettings,
@@ -551,10 +551,12 @@ def execute_search_step(
     # Create temporary FAISS index for procedures
     # 使用 MD5 雜湊來產生安全的目錄名稱
     import hashlib
+    import tempfile
     
     # 將整個路徑轉換為安全的 ASCII 字元
     project_path_hash = hashlib.md5(str(project.run_json_path.parent).encode('utf-8')).hexdigest()
-    temp_index_dir = Path("temp_index_cache") / project_path_hash
+    # 使用系統臨時目錄而不是專案根目錄下的 temp_index_cache
+    temp_index_dir = Path(tempfile.gettempdir()) / f"regulens_temp_index_{project_path_hash}"
     temp_index_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"Creating FAISS index for procedures at {temp_index_dir}...")
@@ -569,14 +571,14 @@ def execute_search_step(
         return
 
     # --- Iterate through Audit Tasks ---
-    total_tasks_to_search = sum(len(c.tasks) for c in control_clauses if c.need_procedure and c.tasks)
+    total_tasks_to_search = sum(len(c.tasks) for c in external_regulation_clauses if c.need_procedure and c.tasks)
     tasks_searched = 0
     
     # Create a map of all EmbedSets for easy lookup by retrieve_similar_chunks
     all_embed_sets_map: Dict[str, EmbedSet] = {es.id: es for es in all_proc_embed_sets}
 
 
-    for clause_idx, clause in enumerate(control_clauses):
+    for clause_idx, clause in enumerate(external_regulation_clauses):
         if not clause.need_procedure or not clause.tasks:
             continue
         if cancel_cb(): break
@@ -641,7 +643,7 @@ def execute_search_step(
             # Update and save run.json (after each task or each clause)
             # For now, saving after each task to ensure progress is kept.
             # This might be too frequent for large projects.
-            current_project_run_data.control_clauses[clause_idx] = clause # Ensure the main list is updated
+            current_project_run_data.external_regulation_clauses[clause_idx] = clause # Ensure the main list is updated
             _save_run_json(current_project_run_data, project.run_json_path)
 
             base_progress = 0.6 # Search step is 60-80%
@@ -658,7 +660,7 @@ def execute_search_step(
 
 
 def execute_judge_step(
-    control_clauses: List[ControlClause],
+    external_regulation_clauses: List[ExternalRegulationClause],
     project_run_json_path: Path,
     current_project_run_data: ProjectRunData,
     settings: PipelineSettings,
@@ -666,12 +668,12 @@ def execute_judge_step(
     cancel_cb: Callable[[], bool]
 ):
     """
-    Executes Step 4: Judge compliance for each ControlClause based on aggregated evidence from its tasks.
+    Executes Step 4: Judge compliance for each ExternalRegulationClause based on aggregated evidence from its tasks.
     """
     logger.info("Starting Judge Step (Clause-level)...")
     
     clauses_to_judge = []
-    for clause in control_clauses:
+    for clause in external_regulation_clauses:
         # Only judge if it needs a procedure, has tasks, and hasn't been judged at clause-level yet.
         if clause.need_procedure and clause.tasks and clause.metadata.get('clause_compliant') is None:
             # Further check if there's any evidence in any task.
@@ -688,7 +690,7 @@ def execute_judge_step(
     base_progress = 0.8  # Judge step starts at 80%
     step_progress_span = 0.2 # Judge step spans 20% of total progress
 
-    for clause_idx_in_main_list, clause in enumerate(current_project_run_data.control_clauses): # Iterate with index for saving
+    for clause_idx_in_main_list, clause in enumerate(current_project_run_data.external_regulation_clauses): # Iterate with index for saving
         # Find the clause in our filtered list
         current_clause_to_process = next((c for c in clauses_to_judge if c.id == clause.id), None)
         if not current_clause_to_process:
@@ -712,7 +714,7 @@ def execute_judge_step(
                     all_evidence_texts.append(f"{evidence_header} {evidence_detail}:\n{ev_item.get('excerpt', '')}")
         
         if not all_evidence_texts:
-            evidence_prompt_str = "No evidence was retrieved for this control clause through any of its audit tasks."
+            evidence_prompt_str = "No evidence was retrieved for this external_regulation clause through any of its audit tasks."
             logger.info(f"No evidence found for clause {clause.id}. Proceeding with judgment based on lack of evidence.")
         else:
             evidence_prompt_str = "\n\n".join(all_evidence_texts)
@@ -720,21 +722,21 @@ def execute_judge_step(
         # 2. Construct Clause-Level Prompt
         prompt = (
             f"Your task is to determine if the provided 'Aggregated Evidence' (extracted from internal company documents) adequately demonstrates "
-            f"that the company has a documented procedure or policy in place that corresponds to the 'Control Clause' (from external regulations). "
-            f"Focus strictly on whether the internal documentation addresses the requirements of the control clause from a documentation standpoint, "
+            f"that the company has a documented procedure or policy in place that corresponds to the 'ExternalRegulation Clause' (from external regulations). "
+            f"Focus strictly on whether the internal documentation addresses the requirements of the external_regulation clause from a documentation standpoint, "
             f"not on whether the procedures are perfectly implemented in practice.\n\n"
             
-            f"Control Clause ID: {clause.id}\n"
-            f"Control Clause Text (External Regulation): \"{clause.text}\"\n\n"
+            f"ExternalRegulation Clause ID: {clause.id}\n"
+            f"ExternalRegulation Clause Text (External Regulation): \"{clause.text}\"\n\n"
             f"Aggregated Evidence (from Internal Company Documents):\n{evidence_prompt_str}\n\n"
             
             f"Respond with a JSON object containing the following keys:\n"
-            f"1. 'compliant': boolean (Set to true if the internal documentation, as shown in the 'Aggregated Evidence', adequately documents a procedure or policy that addresses the 'Control Clause'. Set to false otherwise, including if evidence is insufficient or irrelevant).\n"
-            f"2. 'compliance_description': string (Explain how the provided 'Aggregated Evidence' demonstrates documented compliance or where the internal documentation falls short in addressing the 'Control Clause'. Quote or refer to specific parts of the evidence if helpful to illustrate the connection or gap).\n"
-            f"3. 'improvement_suggestions': string (If 'compliant' is false, or if documentation only partially addresses the clause, suggest specific additions or changes to the internal documentation to make it fully address the 'Control Clause'. If 'compliant' is true and documentation is comprehensive for this clause, state that no further documentation improvements are suggested based on the provided evidence for this specific clause.)\n\n"
+            f"1. 'compliant': boolean (Set to true if the internal documentation, as shown in the 'Aggregated Evidence', adequately documents a procedure or policy that addresses the 'ExternalRegulation Clause'. Set to false otherwise, including if evidence is insufficient or irrelevant).\n"
+            f"2. 'compliance_description': string (Explain how the provided 'Aggregated Evidence' demonstrates documented compliance or where the internal documentation falls short in addressing the 'ExternalRegulation Clause'. Quote or refer to specific parts of the evidence if helpful to illustrate the connection or gap).\n"
+            f"3. 'improvement_suggestions': string (If 'compliant' is false, or if documentation only partially addresses the clause, suggest specific additions or changes to the internal documentation to make it fully address the 'ExternalRegulation Clause'. If 'compliant' is true and documentation is comprehensive for this clause, state that no further documentation improvements are suggested based on the provided evidence for this specific clause.)\n\n"
             
-            f"**Your entire assessment for the Control Clause must be derived SOLELY from the text presented in the 'Aggregated Evidence' section above.**\n"
-            f"Based *only* on the provided 'Aggregated Evidence', does the internal documentation show a corresponding procedure or policy for the 'Control Clause'? Provide your assessment in the specified JSON format."
+            f"**Your entire assessment for the ExternalRegulation Clause must be derived SOLELY from the text presented in the 'Aggregated Evidence' section above.**\n"
+            f"Based *only* on the provided 'Aggregated Evidence', does the internal documentation show a corresponding procedure or policy for the 'ExternalRegulation Clause'? Provide your assessment in the specified JSON format."
         )
 
         llm_response = call_llm_api(
@@ -776,7 +778,7 @@ def execute_judge_step(
             task.metadata["improvement_suggestions"] = clause_improvement_sugg
             task.metadata.pop("judge_reasoning", None) # Remove old task-specific key if it exists
         
-        current_project_run_data.control_clauses[clause_idx_in_main_list] = clause # Update in main list
+        current_project_run_data.external_regulation_clauses[clause_idx_in_main_list] = clause # Update in main list
         _save_run_json(current_project_run_data, project_run_json_path)
         
         judged_clauses_count += 1
@@ -792,19 +794,19 @@ if __name__ == '__main__':
     mock_project_dir = Path("temp_pipeline_test_project")
     mock_project_dir.mkdir(parents=True, exist_ok=True)
     
-    mock_controls_data = {
-        "name": "Test Controls",
+    mock_external_regulations_data = {
+        "name": "Test ExternalRegulations",
         "C001": "第一條 目的\n條文內容...",
         "C002": "第二條 適用範圍\n條文內容..."
     }
-    controls_json_file = mock_project_dir / "controls.json"
-    controls_json_file.write_text(json.dumps(mock_controls_data, indent=4, ensure_ascii=False), encoding='utf-8')
+    external_regulations_json_file = mock_project_dir / "external_regulations.json"
+    external_regulations_json_file.write_text(json.dumps(mock_external_regulations_data, indent=4, ensure_ascii=False), encoding='utf-8')
 
     # Dummy run.json (optional, to test loading)
     # mock_run_data = {
     #     "project_name": "TestProject",
-    #     "control_clauses": [
-    #         {"id": "CTRL001", "text": "Systems must have access control mechanisms.", "need_procedure": True, "tasks": [], "metadata":{}},
+    #     "external_regulation_clauses": [
+    #         {"id": "CTRL001", "text": "Systems must have access external_regulation mechanisms.", "need_procedure": True, "tasks": [], "metadata":{}},
     #     ]
     # }
     # run_json_file = mock_project_dir / "run.json"
@@ -812,7 +814,7 @@ if __name__ == '__main__':
 
 
     test_project = CompareProject(name="TestProject")
-    test_project.controls_json_path = controls_json_file
+    test_project.external_regulations_json_path = external_regulations_json_file
     test_project.run_json_path = mock_project_dir / "run.json" # Important: set this path
 
     # Dummy settings
@@ -840,7 +842,7 @@ if __name__ == '__main__':
         return False
 
     print(f"--- Running Test Pipeline for Project: {test_project.name} ---")
-    print(f"Controls JSON: {test_project.controls_json_path}")
+    print(f"ExternalRegulations JSON: {test_project.external_regulations_json_path}")
     print(f"Run JSON: {test_project.run_json_path}")
     
     # Clean up previous run.json if it exists to test initialization
@@ -893,11 +895,11 @@ if __name__ == '__main__':
     # shutil.rmtree(mock_project_dir) # Clean up
     print(f"Test artifacts in {mock_project_dir}")
 
-# Ensure ControlClause model is updated to include need_procedure: Optional[bool] = None
+# Ensure ExternalRegulationClause model is updated to include need_procedure: Optional[bool] = None
 # and tasks: List[AuditTask] = Field(default_factory=list)
 # This needs to be done in app/models/docs.py
 # Example:
-# class ControlClause(BaseModel):
+# class ExternalRegulationClause(BaseModel):
 #     id: str
 #     text: str
 #     metadata: Dict[str, Any] = Field(default_factory=dict)

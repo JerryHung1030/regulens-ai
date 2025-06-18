@@ -114,14 +114,14 @@ if __name__ == '__main__':
     temp_dir = Path("temp_ingestion_test_data")
     temp_dir.mkdir(exist_ok=True)
 
-    sub_dir_controls = temp_dir / "controls" # Keep for potential other tests, but not used by ingest_documents directly
-    sub_dir_controls.mkdir(exist_ok=True)
+    sub_dir_external_regulations = temp_dir / "external_regulations" # Keep for potential other tests, but not used by ingest_documents directly
+    sub_dir_external_regulations.mkdir(exist_ok=True)
     sub_dir_procedures_pdfs = temp_dir / "procedures_pdfs" # New directory for test PDFs
     sub_dir_procedures_pdfs.mkdir(exist_ok=True)
 
     # Create dummy files
-    # Control files are not ingested by this function anymore.
-    # (sub_dir_controls / "control_doc1.txt").write_text("This is a control document in TXT format.", encoding="utf-8")
+    # ExternalRegulation files are not ingested by this function anymore.
+    # (sub_dir_external_regulations / "external_regulation_doc1.txt").write_text("This is a external_regulation document in TXT format.", encoding="utf-8")
     
     # Create simple TXT files for testing procedures
     procedure_txt_list: List[Path] = []
@@ -149,9 +149,9 @@ if __name__ == '__main__':
     # (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8")
     # (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0')
 
-    # print(f"\nIngesting 'control' documents from: {sub_dir_controls}")
-    # control_docs = ingest_documents(sub_dir_controls, "control")
-    # for doc in control_docs:
+    # print(f"\nIngesting 'external_regulation' documents from: {sub_dir_external_regulations}")
+    # external_regulation_docs = ingest_documents(sub_dir_external_regulations, "external_regulation")
+    # for doc in external_regulation_docs:
     #     print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
     #     meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
     #     print(f"  Meta JSON exists: {meta_json_file.exists()}")

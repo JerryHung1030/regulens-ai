@@ -46,8 +46,6 @@ class Workspace(QWidget):
         self.sidebar.project_selected.connect(self._show_project_in_stack)
         self.sidebar.add_project_requested.connect(self._add_new_project)
 
-        self.sidebar.setup_initial_toggle_state()  # Call after splitter is fully set up
-        
         self._refresh_project_views()  # Initial population and view setup
         
         if not self.project_store.projects:

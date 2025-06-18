@@ -20,7 +20,7 @@ class CompareProject(QObject):
 
     name: str
     results: List[PairAssessment]
-    controls_json_path: Optional[Path]  # Changed from controls_dir
+    external_regulations_json_path: Optional[Path]  # Changed from external_regulations_dir
     procedure_doc_paths: List[Path]  # Changed from procedure_pdf_paths
     run_json_path: Optional[Path]  # Added
     report_path: Optional[Path]
@@ -33,7 +33,7 @@ class CompareProject(QObject):
     project_run_data: Optional[ProjectRunData] = None
 
     def __init__(self, name: str,
-                 controls_json_path: Optional[Path] = None,
+                 external_regulations_json_path: Optional[Path] = None,
                  procedure_doc_paths: Optional[List[Path]] = None,  # Changed from procedure_pdf_paths
                  run_json_path: Optional[Path] = None,
                  report_path: Optional[Path] = None,
@@ -46,7 +46,7 @@ class CompareProject(QObject):
         self.name = name
         self.results: List[PairAssessment] = []
         self._results_lock = Lock()
-        self.controls_json_path = controls_json_path
+        self.external_regulations_json_path = external_regulations_json_path
         self.procedure_doc_paths = procedure_doc_paths if procedure_doc_paths is not None else []  # Changed from procedure_pdf_paths
 
         # Initialize run_json_path with a default if not provided
@@ -67,7 +67,7 @@ class CompareProject(QObject):
     def populate_norm_map(self, norm_docs: List[NormDoc]) -> None:
         """
         Populates the internal map of norm_id to NormDoc object.
-        This map can store controls, procedures, and evidence documents if needed,
+        This map can store external_regulations, procedures, and evidence documents if needed,
         as long as they are passed in norm_docs.
         """
         for norm_doc in norm_docs:
@@ -99,15 +99,15 @@ class CompareProject(QObject):
             return True
             
         # 一般專案的檢查邏輯
-        controls_ready = self.controls_json_path is not None and self.controls_json_path.exists() and self.controls_json_path.is_file()
+        external_regulations_ready = self.external_regulations_json_path is not None and self.external_regulations_json_path.exists() and self.external_regulations_json_path.is_file()
         procedures_ready = bool(self.procedure_doc_paths) and all(p.exists() and p.is_file() for p in self.procedure_doc_paths)
-        return controls_ready and procedures_ready
+        return external_regulations_ready and procedures_ready
 
     @property
     def has_results(self) -> bool:
         # For v1.1 pipeline, "results" means run.json exists and is valid, or project_run_data is loaded.
         # The old `self.results` (List[PairAssessment]) might still be used by older pipeline versions.
-        if self.project_run_data is not None and self.project_run_data.control_clauses:
+        if self.project_run_data is not None and self.project_run_data.external_regulation_clauses:
             return True
         if self.run_json_path and self.run_json_path.exists() and self.run_json_path.is_file():
             # Basic check for existence and being a file.
@@ -132,8 +132,8 @@ class CompareProject(QObject):
         with self._results_lock:
             return list(self.results)
 
-    def set_controls_json_path(self, path: Path | None):  # Changed
-        self.controls_json_path = path
+    def set_external_regulations_json_path(self, path: Path | None):  # Changed
+        self.external_regulations_json_path = path
         with self._results_lock:
             self.results = []
         self.changed.emit()
@@ -153,7 +153,7 @@ class CompareProject(QObject):
     def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
-            "controls_json_path": str(self.controls_json_path) if self.controls_json_path else None,
+            "external_regulations_json_path": str(self.external_regulations_json_path) if self.external_regulations_json_path else None,
             "procedure_doc_paths": [str(p) for p in self.procedure_doc_paths],  # Changed from procedure_pdf_paths
             "run_json_path": str(self.run_json_path) if self.run_json_path else None,
             "report_path": str(self.report_path) if self.report_path else None,
@@ -180,7 +180,7 @@ class CompareProject(QObject):
 
         project = cls(
             name=data["name"],
-            controls_json_path=Path(data["controls_json_path"]) if data.get("controls_json_path") else None,
+            external_regulations_json_path=Path(data["external_regulations_json_path"]) if data.get("external_regulations_json_path") else None,
             procedure_doc_paths=procedure_doc_paths,  # Changed from procedure_pdf_paths
             run_json_path=Path(data["run_json_path"]) if data.get("run_json_path") else None,
             report_path=Path(data["report_path"]) if data.get("report_path") else None,
