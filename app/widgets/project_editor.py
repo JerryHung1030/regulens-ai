@@ -498,9 +498,15 @@ class ProjectEditor(QWidget):
         title = self.translator.get("rename_project_dialog_title", "Rename project")
         label = self.translator.get("rename_project_dialog_label", "New name:")
         new, ok = QInputDialog.getText(self, title, label, text=self.project.name)
-        if ok and new: 
-            self.project.rename(new) # project.name is not translated itself
-            
+        if ok:
+            try:
+                self.project.rename(new) # project.name is not translated itself
+            except ValueError:
+                # 驗證專案名稱不能為空
+                error_title = self.translator.get("validation_error_title", "Validation Error")
+                error_message = self.translator.get("project_name_empty_error", "Project name cannot be empty.")
+                QMessageBox.warning(self, error_title, error_message)
+
     def _delete(self):
         title = self.translator.get("delete_project_dialog_title", "Delete project")
         text = self.translator.get("delete_project_dialog_text", 'Delete "{project_name}"?').format(project_name=self.project.name)

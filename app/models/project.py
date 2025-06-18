@@ -86,7 +86,9 @@ class CompareProject(QObject):
         return {}
 
     def rename(self, new_name: str):
-        self.name = new_name
+        if not new_name or not new_name.strip():
+            raise ValueError("Project name cannot be empty.")
+        self.name = new_name.strip()
         self.updated.emit()
         self.changed.emit()
 

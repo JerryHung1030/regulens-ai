@@ -13,6 +13,8 @@ QMainWindow {
 QMenuBar {
     background-color: @menubar_background;
     color: @menubar_text;
+    font-family: "jf-openhuninn-2.1", "Microsoft JhengHei", "Microsoft YaHei", "SimHei", "Arial", sans-serif;
+    font-size: 14px;
 }
 
 QMenuBar::item:selected {
@@ -23,6 +25,8 @@ QMenu {
     background-color: @menu_background;
     border: 1px solid @menu_border;
     color: @menu_text;
+    font-family: "jf-openhuninn-2.1", "Microsoft JhengHei", "Microsoft YaHei", "SimHei", "Arial", sans-serif;
+    font-size: 14px;
 }
 
 QMenu::item:selected {

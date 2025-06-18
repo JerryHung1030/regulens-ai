@@ -646,10 +646,10 @@ class ResultsViewer(QWidget):
         # total_for_bar = total_controls # No longer needed for bar chart
         # self.stats_bar_chart.setData(compliant_count, non_compliant_count, pending_count, na_count, total_for_bar) # Removed
 
-        self.summary_compliant_label.setText(f"<b>{self.translator.get('summary_compliant_status', 'Compliant')}:</b> {compliant_count}")
-        self.summary_non_compliant_label.setText(f"<b>{self.translator.get('summary_non_compliant_status', 'Non-Compliant')}:</b> {non_compliant_count}")
-        self.summary_pending_label.setText(f"<b>{self.translator.get('summary_pending_status', 'Pending')}:</b> {pending_count}")
-        self.summary_na_label.setText(f"<b>{self.translator.get('summary_na_status', 'N/A')}:</b> {na_count}")
+        self.summary_compliant_label.setText(f"<b>{self.translator.get('summary_compliant_status', 'Compliant:')}</b> {compliant_count}")
+        self.summary_non_compliant_label.setText(f"<b>{self.translator.get('summary_non_compliant_status', 'Non-Compliant:')}</b> {non_compliant_count}")
+        self.summary_pending_label.setText(f"<b>{self.translator.get('summary_pending_status', 'Pending:')}</b> {pending_count}")
+        self.summary_na_label.setText(f"<b>{self.translator.get('summary_na_status', 'N/A:')}</b> {na_count}")
         
     def _refresh_table_content_text(self):
         # This method is responsible for re-translating texts within table cells
@@ -847,10 +847,20 @@ class ResultsViewer(QWidget):
         # CSV Headers - these should ideally be translatable if the CSV is for user consumption in different languages
         # However, for data exchange, non-translated headers are common. Assuming non-translated for now.
         headers = [
-            "project_name", "control_clause_id", "control_clause_title", "control_clause_text",
-            "requires_procedure", "audit_task_id", "audit_task_sentence",
-            "compliant", "compliance_description", "improvement_suggestions",
-            "evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"
+            self.translator.get("csv_header_project_name", "Project Name"),
+            self.translator.get("csv_header_control_clause_id", "Control Clause ID"),
+            self.translator.get("csv_header_control_clause_title", "Control Clause Title"),
+            self.translator.get("csv_header_control_clause_text", "Control Clause Text"),
+            self.translator.get("csv_header_requires_procedure", "Requires Procedure"),
+            self.translator.get("csv_header_audit_task_id", "Audit Task ID"),
+            self.translator.get("csv_header_audit_task_sentence", "Audit Task Sentence"),
+            self.translator.get("csv_header_compliant", "Compliant"),
+            self.translator.get("csv_header_compliance_description", "Compliance Description"),
+            self.translator.get("csv_header_improvement_suggestions", "Improvement Suggestions"),
+            self.translator.get("csv_header_evidence_source_pdf", "Evidence Source PDF"),
+            self.translator.get("csv_header_evidence_excerpt", "Evidence Excerpt"),
+            self.translator.get("csv_header_evidence_page_number", "Evidence Page Number"),
+            self.translator.get("csv_header_evidence_score", "Evidence Score")
         ]
 
         max_retries = 3
@@ -862,15 +872,14 @@ class ResultsViewer(QWidget):
                     writer = csv.DictWriter(csvfile, fieldnames=headers, quoting=csv.QUOTE_ALL)
                     writer.writeheader()
                     for clause in self.project.project_run_data.control_clauses:
-                        # ... (rest of CSV writing logic remains largely the same, ensure any direct strings are handled if necessary) ...
                         clause_title = clause.title if clause.title else clause.text
                         requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
                         base_row_data = {
-                            "project_name": self.project.name,
-                            "control_clause_id": clause.id,
-                            "control_clause_title": clause_title,
-                            "control_clause_text": clause.text,
-                            "requires_procedure": requires_procedure,
+                            self.translator.get("csv_header_project_name", "Project Name"): self.project.name,
+                            self.translator.get("csv_header_control_clause_id", "Control Clause ID"): clause.id,
+                            self.translator.get("csv_header_control_clause_title", "Control Clause Title"): clause_title,
+                            self.translator.get("csv_header_control_clause_text", "Control Clause Text"): clause.text,
+                            self.translator.get("csv_header_requires_procedure", "Requires Procedure"): requires_procedure,
                         }
                         if not clause.tasks:
                             row_data = base_row_data.copy()
@@ -881,25 +890,29 @@ class ResultsViewer(QWidget):
                             for task in clause.tasks:
                                 task_row_data = base_row_data.copy()
                                 task_row_data.update({
-                                    "audit_task_id": task.id,
-                                    "audit_task_sentence": task.sentence,
-                                    "compliant": str(task.compliant) if task.compliant is not None else "",
-                                    # "judge_reasoning": task.metadata.get("judge_reasoning", ""), # Old key
-                                    "compliance_description": task.metadata.get("compliance_description", ""),
-                                    "improvement_suggestions": task.metadata.get("improvement_suggestions", ""),
+                                    self.translator.get("csv_header_audit_task_id", "Audit Task ID"): task.id,
+                                    self.translator.get("csv_header_audit_task_sentence", "Audit Task Sentence"): task.sentence,
+                                    self.translator.get("csv_header_compliant", "Compliant"): str(task.compliant) if task.compliant is not None else "",
+                                    self.translator.get("csv_header_compliance_description", "Compliance Description"): task.metadata.get("compliance_description", ""),
+                                    self.translator.get("csv_header_improvement_suggestions", "Improvement Suggestions"): task.metadata.get("improvement_suggestions", ""),
                                 })
                                 if not task.top_k:
-                                    for key_ev in ["evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"]:
+                                    for key_ev in [
+                                        self.translator.get("csv_header_evidence_source_pdf", "Evidence Source PDF"),
+                                        self.translator.get("csv_header_evidence_excerpt", "Evidence Excerpt"),
+                                        self.translator.get("csv_header_evidence_page_number", "Evidence Page Number"),
+                                        self.translator.get("csv_header_evidence_score", "Evidence Score")
+                                    ]:
                                         task_row_data[key_ev] = ""
                                     writer.writerow(task_row_data)
                                 else:
                                     for evidence_item in task.top_k:
                                         evidence_row_data = task_row_data.copy()
                                         evidence_row_data.update({
-                                            "evidence_source_pdf": evidence_item.get("source_pdf", ""),
-                                            "evidence_excerpt": evidence_item.get("excerpt", ""),
-                                            "evidence_page_number": str(evidence_item.get("page_no", "")),
-                                            "evidence_score": f"{evidence_item.get('score', ''):.4f}" if isinstance(evidence_item.get('score'), float) else str(evidence_item.get('score', ''))
+                                            self.translator.get("csv_header_evidence_source_pdf", "Evidence Source PDF"): evidence_item.get("source_pdf", ""),
+                                            self.translator.get("csv_header_evidence_excerpt", "Evidence Excerpt"): evidence_item.get("excerpt", ""),
+                                            self.translator.get("csv_header_evidence_page_number", "Evidence Page Number"): str(evidence_item.get("page_no", "")),
+                                            self.translator.get("csv_header_evidence_score", "Evidence Score"): f"{evidence_item.get('score', ''):.4f}" if isinstance(evidence_item.get('score'), float) else str(evidence_item.get('score', ''))
                                         })
                                         writer.writerow(evidence_row_data)
                 QMessageBox.information(self,

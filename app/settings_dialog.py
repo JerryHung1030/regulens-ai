@@ -120,6 +120,14 @@ class SettingsDialog(QDialog):
         # Removed: Report language label is gone from Output tab
         # if hasattr(self, 'output_report_lang_label') and self.output_report_lang_label: # Check existence
         #    self.output_report_lang_label.setText(self.translator.get("settings_label_report_language", "Report Language:"))
+
+        save_button = self.dialog_button_box.button(QDialogButtonBox.Save)
+        if save_button:
+            save_button.setText(self.translator.get("save_button_text", "Save"))
+
+        cancel_button = self.dialog_button_box.button(QDialogButtonBox.Cancel)
+        if cancel_button:
+            cancel_button.setText(self.translator.get("cancel_button_text", "Cancel"))
         
         logger.debug("SettingsDialog UI retranslated")
 
@@ -148,6 +156,7 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(self._build_general_tab(), self.translator.get("settings_tab_general", "General"))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
+        self.dialog_button_box = buttons # Store instance variable
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
 

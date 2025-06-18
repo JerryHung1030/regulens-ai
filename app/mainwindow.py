@@ -93,18 +93,32 @@ class MainWindow(QMainWindow):
         # This method will be expanded in later steps to update menus, etc.
         self.setWindowTitle(self.translator.get("main_window_title", "Regulens-AI"))
 
+        # 套用字體到選單欄和選單項目
+        from .utils.font_manager import get_display_font
+        menu_font = get_display_font(size=10)
+        
+        # 確保選單欄有字體設定
+        menu_bar = self.menuBar()
+        if menu_bar:
+            menu_bar.setFont(menu_font)
+
         if hasattr(self, 'file_menu') and hasattr(self, 'file_menu_title_key'):
             self.file_menu.setTitle(self.translator.get(self.file_menu_title_key, "&File"))
+            self.file_menu.setFont(menu_font)  # 重新套用字體
         if hasattr(self, 'settings_action') and hasattr(self, 'settings_action_text_key'):
             self.settings_action.setText(self.translator.get(self.settings_action_text_key, "Settings…"))
+            self.settings_action.setFont(menu_font)  # 重新套用字體
         if hasattr(self, 'exit_action') and hasattr(self, 'exit_action_text_key'):
             self.exit_action.setText(self.translator.get(self.exit_action_text_key, "E&xit"))
+            self.exit_action.setFont(menu_font)  # 重新套用字體
         
         # Retranslate Help Menu
         if hasattr(self, 'help_menu') and hasattr(self, 'help_menu_title_key'):
             self.help_menu.setTitle(self.translator.get(self.help_menu_title_key, "&Help"))
+            self.help_menu.setFont(menu_font)  # 重新套用字體
         if hasattr(self, 'show_introduction_action') and hasattr(self, 'show_introduction_action_text_key'):
             self.show_introduction_action.setText(self.translator.get(self.show_introduction_action_text_key, "Show &Introduction"))
+            self.show_introduction_action.setFont(menu_font)  # 重新套用字體
 
         logger.debug("MainWindow UI retranslated (title and menus)") # Updated log message
 
@@ -125,16 +139,23 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _build_menubar(self):
         menu_bar = self.menuBar()
+        
+        # 套用字體到選單欄
+        from .utils.font_manager import get_display_font
+        menu_font = get_display_font(size=10)
+        menu_bar.setFont(menu_font)
 
         # File Menu
         self.file_menu_title_key = "main_menu_file"
         self.file_menu = menu_bar.addMenu(self.translator.get(self.file_menu_title_key, "&File"))
+        self.file_menu.setFont(menu_font)  # 套用字體到 File 選單
 
         # Settings Action
         self.settings_action_text_key = "main_action_settings"
         self.settings_action = QAction(self.translator.get(self.settings_action_text_key, "Settings…"), self)
         self.settings_action.setShortcut("Ctrl+,")
         self.settings_action.triggered.connect(self._open_settings)
+        self.settings_action.setFont(menu_font)  # 套用字體到 Settings 動作
         self.file_menu.addAction(self.settings_action)
 
         self.file_menu.addSeparator()
@@ -144,15 +165,18 @@ class MainWindow(QMainWindow):
         self.exit_action = QAction(self.translator.get(self.exit_action_text_key, "E&xit"), self)
         self.exit_action.setShortcut("Ctrl+Q")
         self.exit_action.triggered.connect(QApplication.instance().quit)
+        self.exit_action.setFont(menu_font)  # 套用字體到 Exit 動作
         self.file_menu.addAction(self.exit_action)
 
         # Help Menu
         self.help_menu_title_key = "main_menu_help"
         self.help_menu = menu_bar.addMenu(self.translator.get(self.help_menu_title_key, "&Help"))
+        self.help_menu.setFont(menu_font)  # 套用字體到 Help 選單
 
         self.show_introduction_action_text_key = "main_action_show_introduction"
         self.show_introduction_action = QAction(self.translator.get(self.show_introduction_action_text_key, "Show &Introduction"), self)
         self.show_introduction_action.triggered.connect(self._show_intro_page)
+        self.show_introduction_action.setFont(menu_font)  # 套用字體到 Show Introduction 動作
         self.help_menu.addAction(self.show_introduction_action)
 
     def _show_intro_page(self):
