@@ -67,29 +67,27 @@ class IntroPage(QWidget):
             self.key_features_title_label.setText(self.translator.get("intro_key_features_title", "Key Features"))
         
         if hasattr(self, 'feature_labels'):
-            feature_data_keys = [
-                ("intro_feature1_icon", "intro_feature1_text"),
-                ("intro_feature2_icon", "intro_feature2_text"),
-                ("intro_feature3_icon", "intro_feature3_text"),
-                ("intro_feature4_icon", "intro_feature4_text"),
-                ("intro_feature5_icon", "intro_feature5_text"),
-            ]
-            default_feature_texts = [
-                ("✨", "Automated Compliance Checks: Identify potential compliance gaps and risks quickly."),
-                ("📚", "Regulatory Summarization: Condense lengthy documents into concise summaries."),
-                ("🔍", "Semantic Search & Q&A: Find specific information and get answers about regulations."),
-                ("🛡️", "Data Security & Privacy: Your documents are processed locally, ensuring confidentiality."),
-                ("⚙️", "Customizable Analysis: Tailor the AI analysis to focus on specific regulatory aspects."),
+            feature_data = [
+                ("intro_feature1_icon", "intro_feature1_title", "intro_feature1_desc", "✨", "<strong>Automated Compliance Checks</strong>", "<small>Identify potential compliance gaps and risks quickly.</small>"),
+                ("intro_feature2_icon", "intro_feature2_title", "intro_feature2_desc", "📚", "<strong>Regulatory Summarization</strong>", "<small>Condense lengthy documents into concise summaries.</small>"),
+                ("intro_feature3_icon", "intro_feature3_title", "intro_feature3_desc", "🔍", "<strong>Semantic Search & Q&A</strong>", "<small>Find specific information and get answers about regulations.</small>"),
+                ("intro_feature4_icon", "intro_feature4_title", "intro_feature4_desc", "🛡️", "<strong>Data Security & Privacy</strong>", "<small>Your documents are processed locally, ensuring confidentiality.</small>"),
+                ("intro_feature5_icon", "intro_feature5_title", "intro_feature5_desc", "⚙️", "<strong>Customizable Analysis</strong>", "<small>Tailor the AI analysis to focus on specific regulatory aspects.</small>"),
             ]
 
-            for i, label_pair in enumerate(self.feature_labels):
-                icon_label, text_label = label_pair
-                icon_key, text_key = feature_data_keys[i]
-                default_icon, default_text = default_feature_texts[i]
-                
-                icon_label.setText(self.translator.get(icon_key, default_icon))
-                text_label.setText(self.translator.get(text_key, default_text))
-
+            for i, (icon_label, text_label) in enumerate(self.feature_labels):
+                if i < len(feature_data):
+                    icon_key, title_key, desc_key, default_icon, default_title, default_desc = feature_data[i]
+                    
+                    icon_label.setText(self.translator.get(icon_key, default_icon))
+                    
+                    # All 5 features now use new title/desc structure
+                    translated_title = self.translator.get(title_key, default_title)
+                    translated_desc = self.translator.get(desc_key, default_desc)
+                    combined_text = f"{translated_title}<br>{translated_desc}"
+                    
+                    text_label.setText(combined_text)
+        
         # Update How to Use Section Title (used in top section)
         if hasattr(self, 'how_to_use_title_label'): # This label is part of _create_how_to_use_top_section
             self.how_to_use_title_label.setText(self.translator.get("intro_how_to_use_title", "4 Steps to Use"))
@@ -276,28 +274,34 @@ class IntroPage(QWidget):
         self.feature_labels = [] # List of (icon_label, text_label)
 
         feature_data = [
-            ("intro_feature1_icon", "intro_feature1_text", "✨", "Automated Compliance Checks..."),
-            ("intro_feature2_icon", "intro_feature2_text", "📚", "Regulatory Summarization..."),
-            ("intro_feature3_icon", "intro_feature3_text", "🔍", "Semantic Search & Q&A..."),
-            ("intro_feature4_icon", "intro_feature4_text", "🛡️", "Data Security & Privacy..."),
-            ("intro_feature5_icon", "intro_feature5_text", "⚙️", "Customizable Analysis..."),
+            ("intro_feature1_icon", "intro_feature1_title", "intro_feature1_desc", "✨", "<strong>Automated Compliance Checks</strong>", "<small>Identify potential compliance gaps and risks quickly.</small>"),
+            ("intro_feature2_icon", "intro_feature2_title", "intro_feature2_desc", "📚", "<strong>Regulatory Summarization</strong>", "<small>Condense lengthy documents into concise summaries.</small>"),
+            ("intro_feature3_icon", "intro_feature3_title", "intro_feature3_desc", "🔍", "<strong>Semantic Search & Q&A</strong>", "<small>Find specific information and get answers about regulations.</small>"),
+            ("intro_feature4_icon", "intro_feature4_title", "intro_feature4_desc", "🛡️", "<strong>Data Security & Privacy</strong>", "<small>Your documents are processed locally, ensuring confidentiality.</small>"),
+            ("intro_feature5_icon", "intro_feature5_title", "intro_feature5_desc", "⚙️", "<strong>Customizable Analysis</strong>", "<small>Tailor the AI analysis to focus on specific regulatory aspects.</small>"),
         ]
 
-        for icon_key, text_key, default_icon, default_text in feature_data:
+        for i, data in enumerate(feature_data):
             feature_item_layout = QHBoxLayout()
             feature_item_layout.setSpacing(10)
             feature_item_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+            icon_key, title_key, desc_key, default_icon, default_title, default_desc = data
+            
             icon_label = QLabel(self.translator.get(icon_key, default_icon))
             icon_label.setMinimumWidth(30) # Ensure icon width
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Center icon
 
-            text_label = QLabel(self.translator.get(text_key, default_text))
+            # All 5 features now use new title/desc structure
+            translated_title = self.translator.get(title_key, default_title)
+            translated_desc = self.translator.get(desc_key, default_desc)
+            combined_text = f"{translated_title}<br>{translated_desc}"
+                
+            text_label = QLabel(combined_text)
             text_label.setWordWrap(True)
             text_label.setTextFormat(Qt.TextFormat.RichText) # Allow rich text for feature descriptions
             text_label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding) # Allow vertical expansion
             # text_label.setAlignment(Qt.AlignmentFlag.AlignTop) # Default alignment should be fine
-
 
             feature_item_layout.addWidget(icon_label)
             feature_item_layout.addWidget(text_label, 1) # Text takes available space

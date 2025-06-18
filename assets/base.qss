@@ -530,6 +530,42 @@ QFrame#corePipelineBottomCard QLabel[text~="1️⃣"],
 QFrame#corePipelineBottomCard QLabel[text~="2️⃣"],
 QFrame#corePipelineBottomCard QLabel[text~="3️⃣"],
 QFrame#corePipelineBottomCard QLabel[text~="4️⃣"] {
-    font-size: 16pt;
+    font-size: 20px;  /* 設定為 20px */
     margin-right: 10px;
+}
+
+/* Styling for process step titles (intro_process_step_A_title) */
+QFrame#corePipelineBottomCard QLabel strong {
+    font-size: 20px;  /* 設定為 20px */
+    font-weight: bold;
+    color: @intro_strong_text_color;
+}
+
+/* Styling for process step descriptions (intro_process_step_A_desc) */
+QFrame#corePipelineBottomCard QLabel small {
+    font-size: 16px;  /* 設定為 16px */
+    color: @intro_small_text_color;
+}
+
+/* Styling for feature icons (intro_feature1_icon, etc.) */
+QFrame#keyFeaturesBottomCard QLabel[text~="🔍"],
+QFrame#keyFeaturesBottomCard QLabel[text~="✍️"],
+QFrame#keyFeaturesBottomCard QLabel[text~="📂"],
+QFrame#keyFeaturesBottomCard QLabel[text~="⚖️"],
+QFrame#keyFeaturesBottomCard QLabel[text~="📊"] {
+    font-size: 20px;  /* 設定為 20px */
+    margin-right: 10px;
+}
+
+/* Styling for feature titles (intro_feature1_title, etc.) */
+QFrame#keyFeaturesBottomCard QLabel strong {
+    font-size: 20px;  /* 設定為 20px */
+    font-weight: bold;
+    color: @intro_strong_text_color;
+}
+
+/* Styling for feature descriptions (intro_feature1_desc, etc.) */
+QFrame#keyFeaturesBottomCard QLabel small {
+    font-size: 16px;  /* 設定為 16px */
+    color: @intro_small_text_color;
 }

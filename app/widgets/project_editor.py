@@ -126,21 +126,26 @@ class ProjectEditor(QWidget):
         # File Preview Section
         self.preview_container = QWidget()
         self.preview_container.setObjectName("previewContainer")
+        self.preview_container.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
         preview_container_layout = QVBoxLayout(self.preview_container)
         preview_container_layout.setContentsMargins(0, 10, 0, 0)
+        preview_container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)  # Align content to top
 
         self.toggle_preview_button = QPushButton() # Text set in _update_preview_ui_state (which calls _retranslate_ui implicitly)
         self.toggle_preview_button.setObjectName("togglePreviewButton")
         self.toggle_preview_button.setFont(get_display_font(size=10))  # 設定按鈕字體
+        self.toggle_preview_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)  # Fixed height for button
         preview_container_layout.addWidget(self.toggle_preview_button)
 
         self.preview_content_area = QWidget()
+        self.preview_content_area.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
         preview_content_layout = QVBoxLayout(self.preview_content_area)
         preview_content_layout.setContentsMargins(0, 5, 0, 0)
         preview_container_layout.addWidget(self.preview_content_area)
 
         self.preview_tab_widget = QTabWidget()
         self.preview_tab_widget.setObjectName("previewTabWidget")
+        self.preview_tab_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
         self.preview_tab_widget.setFont(get_display_font(size=10))  # 設定分頁字體
         preview_content_layout.addWidget(self.preview_tab_widget)
 
@@ -149,6 +154,7 @@ class ProjectEditor(QWidget):
         controls_tab_layout = QVBoxLayout(self.controls_tab_content_widget)
         controls_tab_layout.setContentsMargins(0,0,0,0)
         controls_splitter = QSplitter(Qt.Horizontal)
+        controls_splitter.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
         self.controls_list_view = QListView()
         self.controls_list_view.setObjectName("controlsListView")
         self.controls_list_view.clicked.connect(self._on_control_file_selected)
@@ -167,6 +173,7 @@ class ProjectEditor(QWidget):
         procedures_tab_layout = QVBoxLayout(self.procedures_tab_content_widget)
         procedures_tab_layout.setContentsMargins(0,0,0,0)
         procedures_splitter = QSplitter(Qt.Horizontal)
+        procedures_splitter.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)  # Allow vertical expansion
         self.procedures_list_view = QListView()
         self.procedures_list_view.setObjectName("proceduresListView")
         self.procedures_list_view.clicked.connect(self._on_procedure_doc_selected)
@@ -196,7 +203,6 @@ class ProjectEditor(QWidget):
         button_layout.addStretch()
         button_layout.addWidget(self.btn_compare)
         
-        lay.addStretch()
         lay.addWidget(button_container)
 
         self.toggle_preview_button.clicked.connect(self._toggle_preview_visibility)
