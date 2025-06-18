@@ -11,6 +11,17 @@ from PySide6.QtCore import QSize
 
 from ..logger import logger
 
+def get_resource_path(relative_path: str) -> Path:
+    """獲取資源檔案的路徑，支援 PyInstaller 打包後的路徑"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller 打包後的路徑
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 開發環境的路徑
+        base_path = Path(__file__).parent.parent.parent
+    
+    return base_path / relative_path
+
 class IconManager:
     """圖示管理器"""
     
@@ -21,9 +32,8 @@ class IconManager:
     
     def _get_icons_directory(self) -> Path:
         """獲取圖示目錄路徑"""
-        # 從應用程式根目錄開始尋找
-        app_root = Path(__file__).parent.parent.parent
-        icons_dir = app_root / "assets" / "icons"
+        # 使用新的路徑解析方法
+        icons_dir = get_resource_path("assets/icons")
         
         if not icons_dir.exists():
             logger.warning(f"圖示目錄不存在: {icons_dir}")

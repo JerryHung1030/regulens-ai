@@ -1,7 +1,20 @@
 import json
 import os
+import sys
 from typing import Dict, Any, Optional
 from pathlib import Path
+
+
+def get_resource_path(relative_path: str) -> Path:
+    """獲取資源檔案的路徑，支援 PyInstaller 打包後的路徑"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller 打包後的路徑
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 開發環境的路徑
+        base_path = Path(__file__).parent.parent.parent
+    
+    return base_path / relative_path
 
 
 class ThemeManager:
@@ -9,7 +22,7 @@ class ThemeManager:
     
     def __init__(self):
         self.color_variables = {}
-        self.themes_dir = Path(__file__).parent.parent.parent / "assets" / "themes"
+        self.themes_dir = get_resource_path("assets/themes")
         self._load_color_variables()
     
     def _load_color_variables(self):
@@ -171,8 +184,8 @@ def load_qss_with_theme(theme_name: str) -> str:
         if not theme_data:
             raise FileNotFoundError(f"Theme '{theme_name}' not found")
         
-        # 載入基礎 QSS 檔案
-        base_qss_path = theme_manager.themes_dir.parent / "base.qss"
+        # 載入基礎 QSS 檔案，使用新的路徑解析方法
+        base_qss_path = get_resource_path("assets/base.qss")
         if not base_qss_path.exists():
             raise FileNotFoundError(f"Base QSS file not found: {base_qss_path}")
         

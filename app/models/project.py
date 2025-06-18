@@ -8,6 +8,7 @@ from threading import Lock
 from PySide6.QtCore import QObject, Signal
 
 from app.models.assessments import PairAssessment # Old results structure
+from app.app_paths import get_app_data_dir
 from .docs import NormDoc
 # Import ProjectRunData from the new module
 from .run_data import ProjectRunData
@@ -51,7 +52,9 @@ class CompareProject(QObject):
 
         # Initialize run_json_path with a default if not provided
         if run_json_path is None:
-            self.run_json_path = Path(f"projects/{self.name}/run.json")
+            # Use application data directory instead of relative path
+            app_data_dir = get_app_data_dir()
+            self.run_json_path = app_data_dir / "projects" / self.name / "run.json"
         else:
             self.run_json_path = run_json_path
 

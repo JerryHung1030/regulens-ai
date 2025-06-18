@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import List
 import shutil # Add this import
@@ -10,6 +11,18 @@ from PySide6.QtCore import QObject, Signal
 # Add this import
 from app.app_paths import get_app_data_dir
 from app.models.project import CompareProject
+
+
+def get_resource_path(relative_path: str) -> Path:
+    """獲取資源檔案的路徑，支援 PyInstaller 打包後的路徑"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller 打包後的路徑
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 開發環境的路徑
+        base_path = Path(__file__).parent.parent.parent
+    
+    return base_path / relative_path
 
 
 class ProjectStore(QObject):
@@ -57,9 +70,8 @@ class ProjectStore(QObject):
         return projects
 
     def _create_sample_projects_and_data(self):
-        # Source of the sample data, typically from the installation/package
-        # Path.cwd() might not be robust for installed apps, but matches current behavior.
-        source_sample_data_root = Path.cwd() / "sample_data"
+        # Source of the sample data, using the new path resolution method
+        source_sample_data_root = get_resource_path("sample_data")
 
         # Destination for the sample data within the user's app data directory
         dest_sample_data_root = get_app_data_dir() / "sample_data"
@@ -81,6 +93,12 @@ class ProjectStore(QObject):
 
         # Paths for CompareProject instances now point to the destination directory
         sample_base_dir = dest_sample_data_root # This was already changed in a previous step
+
+        # 修正：確保範例專案使用正確的檔案路徑
+        # 如果目標目錄不存在，則使用原始路徑作為備用
+        if not sample_base_dir.exists():
+            print(f"Warning: Sample data directory {sample_base_dir} does not exist. Using source paths.")
+            sample_base_dir = source_sample_data_root
 
         project2 = CompareProject(
             name="符合規範案例 (Demo)",

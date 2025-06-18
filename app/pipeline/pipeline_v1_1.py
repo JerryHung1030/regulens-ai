@@ -525,8 +525,11 @@ def execute_search_step(
     raw_docs_procedures: List[RawDoc] = ingest_documents(project.procedure_doc_paths, "procedure")
     if not raw_docs_procedures:
         logger.warning("No raw procedure documents were ingested. Skipping search step.")
+        logger.error(f"Failed to ingest documents from paths: {project.procedure_doc_paths}")
         progress_callback(0.8, "Search: No procedure documents ingested.")
         return
+    
+    logger.info(f"Successfully ingested {len(raw_docs_procedures)} procedure documents")
     
     norm_docs_procedures: List[NormDoc] = [normalize_document(doc) for doc in raw_docs_procedures]
     

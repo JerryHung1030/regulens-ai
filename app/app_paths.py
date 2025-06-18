@@ -10,8 +10,8 @@ def get_app_data_dir() -> Path:
     app_name = "regulens-ai"
     
     if sys.platform == "win32":
-        # Windows - 使用當前工作目錄，適合封裝
-        path = Path.cwd() / "user_data"
+        # Windows - 使用標準的應用程式資料目錄
+        path = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) / app_name
     elif sys.platform == "darwin":
         # macOS
         path = Path.home() / "Library" / "Application Support" / app_name
