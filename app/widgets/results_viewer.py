@@ -849,7 +849,7 @@ class ResultsViewer(QWidget):
         headers = [
             "project_name", "control_clause_id", "control_clause_title", "control_clause_text",
             "requires_procedure", "audit_task_id", "audit_task_sentence",
-            "compliant", "judge_reasoning",
+            "compliant", "compliance_description", "improvement_suggestions",
             "evidence_source_pdf", "evidence_excerpt", "evidence_page_number", "evidence_score"
         ]
 
@@ -863,10 +863,10 @@ class ResultsViewer(QWidget):
                     writer.writeheader()
                     for clause in self.project.project_run_data.control_clauses:
                         # ... (rest of CSV writing logic remains largely the same, ensure any direct strings are handled if necessary) ...
-                        clause_title = clause.metadata.get("title", "")
+                        clause_title = clause.title if clause.title else clause.text
                         requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
                         base_row_data = {
-                            "project_name": self.project.name, # Project name itself is not translated
+                            "project_name": self.project.name,
                             "control_clause_id": clause.id,
                             "control_clause_title": clause_title,
                             "control_clause_text": clause.text,
