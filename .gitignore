@@ -20,6 +20,7 @@ output/
 *.meta.json
 run.json
 projects/
+user_data/
 
 # Test outputs
 htmlcov/

@@ -156,10 +156,15 @@ if __name__ == '__main__':
     # from app.pipeline.cache import CacheService
 
     print("Starting embedding module test...")
-    # Setup a temporary cache directory
-    cache_dir = Path("temp_cache_embed_test")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cs = CacheService(cache_dir)
+    # Setup a temporary cache directory - THIS LOGIC CHANGES
+    # cache_dir = Path("temp_cache_embed_test") # Old way
+    # cache_dir.mkdir(parents=True, exist_ok=True) # Old way
+    # cs = CacheService(cache_dir) # Old way
+
+    # New way: Instantiate CacheService with a project name for testing
+    test_project_name = "embed_module_test_project"
+    cs = CacheService(project_name=test_project_name)
+    print(f"Using cache directory for testing: {cs.cache_dir}")
 
     # Sample NormDoc
     sample_norm_doc_content = (
@@ -252,13 +257,17 @@ if __name__ == '__main__':
         assert len(empty_embeddings_list_cached) == 0
         print("Caching test passed for empty doc.")
 
-    # Clean up temporary cache directory
+    # Clean up temporary cache directory used by __main__
     try:
         import shutil
-        if cache_dir.exists():
-            # print(f"\nCleaning up temporary cache directory: {cache_dir}")
-            shutil.rmtree(cache_dir)
+        # The cache_dir is now cs.cache_dir, which is inside the app data structure
+        # Example: get_app_data_dir() / "cache" / "embeddings" / test_project_name
+        if cs.cache_dir.exists():
+            # print(f"\nCleaning up temporary cache directory: {cs.cache_dir}")
+            shutil.rmtree(cs.cache_dir) 
+            # Potentially remove parent directories if they are empty and were created by this test
+            # For simplicity, just removing the project-specific cache here.
     except Exception as e:
-        print(f"Error cleaning up cache directory {cache_dir}: {e}")
+        print(f"Error cleaning up cache directory {cs.cache_dir}: {e}")
 
     print("\nEmbedding module test finished.")

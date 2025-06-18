@@ -15,6 +15,7 @@ from app.pipeline_settings import PipelineSettings # Corrected import to app.pip
 from app.pipeline.llm_utils import call_llm_api
 
 # Import necessary functions from other pipeline modules
+from app.app_paths import get_app_data_dir # Added import
 from app.pipeline.ingestion import ingest_documents
 from app.pipeline.normalize import normalize_document
 from app.pipeline.embed import generate_embeddings
@@ -534,7 +535,8 @@ def execute_search_step(
 
     # Initialize CacheService for embeddings if needed by generate_embeddings
     # This path should ideally be configurable or derived from project structure
-    cache_service = CacheService(Path(f"projects/{project.name}/cache/embeddings"))
+    # cache_service = CacheService(Path(f"projects/{project.name}/cache/embeddings")) # Old way
+    cache_service = CacheService(project_name=project.name) # New way
 
     all_proc_embed_sets: List[EmbedSet] = []
     for norm_doc in norm_docs_procedures:
@@ -549,14 +551,16 @@ def execute_search_step(
         return
 
     # Create temporary FAISS index for procedures
-    # 使用 MD5 雜湊來產生安全的目錄名稱
-    import hashlib
-    import tempfile
-    
-    # 將整個路徑轉換為安全的 ASCII 字元
+    # Create temporary FAISS index for procedures
+    import hashlib # Ensure hashlib is imported
+    # import tempfile # Ensure tempfile is imported (though we are moving away from it) -> No longer needed for path
+    # Import get_app_data_dir if not already imported at the top -> Handled by global import
+
     project_path_hash = hashlib.md5(str(project.run_json_path.parent).encode('utf-8')).hexdigest()
-    # 使用系統臨時目錄而不是專案根目錄下的 temp_index_cache
-    temp_index_dir = Path(tempfile.gettempdir()) / f"regulens_temp_index_{project_path_hash}"
+    
+    # Modify this part for the FAISS index directory
+    # temp_index_dir = Path(tempfile.gettempdir()) / f"regulens_temp_index_{project_path_hash}" # Old way
+    temp_index_dir = get_app_data_dir() / "cache" / "faiss_index" / f"project_{project_path_hash}" # New way
     temp_index_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"Creating FAISS index for procedures at {temp_index_dir}...")
@@ -567,7 +571,12 @@ def execute_search_step(
     if not proc_index_meta:
         logger.error("Failed to create procedure FAISS index. Aborting search step.")
         progress_callback(0.8, "Search: Failed to create procedure index.")
-        shutil.rmtree(temp_index_dir) # Clean up
+        # Clean up the new directory if creation fails
+        if temp_index_dir.exists():
+            try:
+                shutil.rmtree(temp_index_dir) 
+            except OSError as e:
+                logger.error(f"Error removing FAISS index directory {temp_index_dir} after creation failure: {e}")
         return
 
     # --- Iterate through Audit Tasks ---

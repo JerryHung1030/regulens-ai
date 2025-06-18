@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import List
+import shutil # Add this import
 
 from PySide6.QtCore import QObject, Signal
 
+# Add this import
+from app.app_paths import get_app_data_dir
 from app.models.project import CompareProject
 
 
@@ -16,7 +19,8 @@ class ProjectStore(QObject):
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
         # Determine path at runtime to respect potential mocks of Path.home() in tests
-        self._PATH: Path = Path.home() / ".config" / "regulens-ai" / "projects.json"
+        # Modify this line
+        self._PATH: Path = get_app_data_dir() / "projects.json"
         self.projects: List[CompareProject] = self._load()
 
     def _load(self) -> List[CompareProject]:
@@ -53,9 +57,30 @@ class ProjectStore(QObject):
         return projects
 
     def _create_sample_projects_and_data(self):
-        # 使用當前工作目錄作為基準
-        current_dir = Path.cwd()
-        sample_base_dir = current_dir / "sample_data"
+        # Source of the sample data, typically from the installation/package
+        # Path.cwd() might not be robust for installed apps, but matches current behavior.
+        source_sample_data_root = Path.cwd() / "sample_data"
+
+        # Destination for the sample data within the user's app data directory
+        dest_sample_data_root = get_app_data_dir() / "sample_data"
+
+        # Copy sample data if it doesn't exist at the destination
+        if not dest_sample_data_root.exists() and source_sample_data_root.exists():
+            try:
+                shutil.copytree(source_sample_data_root, dest_sample_data_root)
+                print(f"Sample data copied from {source_sample_data_root} to {dest_sample_data_root}")
+            except Exception as e:
+                print(f"Error copying sample data: {e}")
+                # If copying fails, the sample projects might not load correctly.
+                # The application should ideally handle this gracefully.
+                # For now, we'll proceed, and paths will point to an empty/non-existent dir.
+        elif not source_sample_data_root.exists():
+            print(f"Source sample data directory not found at {source_sample_data_root}. Cannot copy sample data.")
+        # else:
+            # Destination exists or source doesn't, no copy needed or possible.
+
+        # Paths for CompareProject instances now point to the destination directory
+        sample_base_dir = dest_sample_data_root # This was already changed in a previous step
 
         project2 = CompareProject(
             name="符合規範案例 (Demo)",

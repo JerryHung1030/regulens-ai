@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any
 from pydantic import BaseModel # Added import
 
+# Add this import
+from app.app_paths import get_app_data_dir
+
 class Settings:
     """Simple settings manager that persists to JSON.
 
@@ -14,7 +17,8 @@ class Settings:
     """
 
     def __init__(self) -> None:
-        self._path = Path.home() / ".regulens-ai.json"
+        # Modify this line
+        self._path = get_app_data_dir() / "settings.json"
         self._data: dict[str, Any] = {}
         self._load()
 
