@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QStringListModel
 from app.models.project import CompareProject
 from app.logger import logger
-from app.utils.font_manager import get_font
+from app.utils.font_manager import get_font, get_display_font
 
 
 class ProjectEditor(QWidget):
@@ -54,6 +54,7 @@ class ProjectEditor(QWidget):
         # Title row
         head = QHBoxLayout()
         self.lb_title = QLabel() # Text set in _refresh
+        self.lb_title.setFont(get_display_font(size=12))  # 設定標題字體
         head.addWidget(self.lb_title)
         
         # Tool buttons - Tooltips will be set in _retranslate_ui
@@ -71,6 +72,8 @@ class ProjectEditor(QWidget):
         folder_selection_layout.setSpacing(10)
 
         self._ctrl_edit, self._proc_edit = [QLineEdit(readOnly=True) for _ in range(2)]
+        for edit in [self._ctrl_edit, self._proc_edit]:
+            edit.setFont(get_display_font(size=10))  # 設定輸入框字體
 
         # Controls Row
         controls_row_layout = QHBoxLayout()
@@ -79,12 +82,14 @@ class ProjectEditor(QWidget):
         self.controls_label.setObjectName("controls_json_file_label")
         self.controls_label.setFixedWidth(180)
         self.controls_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.controls_label.setFont(get_display_font(size=10))  # 設定標籤字體
         controls_row_layout.addWidget(self.controls_label)
 
         self.browse_ctrl_button = QPushButton() # Text set in _retranslate_ui
         self.browse_ctrl_button.setObjectName("controls_json_file_browse_button")
         self.browse_ctrl_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.browse_ctrl_button.clicked.connect(self._pick_ctrl)
+        self.browse_ctrl_button.setFont(get_display_font(size=10))  # 設定按鈕字體
         controls_row_layout.addWidget(self.browse_ctrl_button)
         controls_row_layout.addWidget(self._ctrl_edit)
         
@@ -93,6 +98,7 @@ class ProjectEditor(QWidget):
         self.validate_json_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.validate_json_button.clicked.connect(self._validate_controls_json)
         self.validate_json_button.setEnabled(False)
+        self.validate_json_button.setFont(get_display_font(size=10))  # 設定按鈕字體
         controls_row_layout.addWidget(self.validate_json_button)
         folder_selection_layout.addLayout(controls_row_layout)
 
@@ -103,12 +109,14 @@ class ProjectEditor(QWidget):
         self.procedures_label.setObjectName("procedure_doc_files_label")
         self.procedures_label.setFixedWidth(180)
         self.procedures_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.procedures_label.setFont(get_display_font(size=10))  # 設定標籤字體
         procedures_row_layout.addWidget(self.procedures_label)
 
         self.browse_proc_button = QPushButton() # Text set in _retranslate_ui
         self.browse_proc_button.setObjectName("procedure_doc_files_browse_button")
         self.browse_proc_button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.browse_proc_button.clicked.connect(self._pick_proc)
+        self.browse_proc_button.setFont(get_display_font(size=10))  # 設定按鈕字體
         procedures_row_layout.addWidget(self.browse_proc_button)
         procedures_row_layout.addWidget(self._proc_edit)
         folder_selection_layout.addLayout(procedures_row_layout)
@@ -123,6 +131,7 @@ class ProjectEditor(QWidget):
 
         self.toggle_preview_button = QPushButton() # Text set in _update_preview_ui_state (which calls _retranslate_ui implicitly)
         self.toggle_preview_button.setObjectName("togglePreviewButton")
+        self.toggle_preview_button.setFont(get_display_font(size=10))  # 設定按鈕字體
         preview_container_layout.addWidget(self.toggle_preview_button)
 
         self.preview_content_area = QWidget()
@@ -132,9 +141,10 @@ class ProjectEditor(QWidget):
 
         self.preview_tab_widget = QTabWidget()
         self.preview_tab_widget.setObjectName("previewTabWidget")
+        self.preview_tab_widget.setFont(get_display_font(size=10))  # 設定分頁字體
         preview_content_layout.addWidget(self.preview_tab_widget)
 
-        # Tabs will be added in _retranslate_ui to ensure their titles are translated
+        # Controls Tab
         self.controls_tab_content_widget = QWidget()
         controls_tab_layout = QVBoxLayout(self.controls_tab_content_widget)
         controls_tab_layout.setContentsMargins(0,0,0,0)
@@ -142,17 +152,17 @@ class ProjectEditor(QWidget):
         self.controls_list_view = QListView()
         self.controls_list_view.setObjectName("controlsListView")
         self.controls_list_view.clicked.connect(self._on_control_file_selected)
+        self.controls_list_view.setFont(get_display_font(size=10))  # 設定列表字體
         controls_splitter.addWidget(self.controls_list_view)
         self.controls_json_preview = QTextEdit()
         self.controls_json_preview.setReadOnly(True)
         self.controls_json_preview.setObjectName("controlsJsonPreview")
-        preview_font = get_font(size=10)
-        self.controls_json_preview.setFont(preview_font)
+        self.controls_json_preview.setFont(get_display_font(size=10))  # 設定預覽字體
         controls_splitter.addWidget(self.controls_json_preview)
         controls_splitter.setSizes([200, 300])
         controls_tab_layout.addWidget(controls_splitter)
-        # self.preview_tab_widget.addTab(self.controls_tab_content_widget, "Controls JSON") # Moved to _retranslate_ui
 
+        # Procedures Tab
         self.procedures_tab_content_widget = QWidget()
         procedures_tab_layout = QVBoxLayout(self.procedures_tab_content_widget)
         procedures_tab_layout.setContentsMargins(0,0,0,0)
@@ -160,32 +170,24 @@ class ProjectEditor(QWidget):
         self.procedures_list_view = QListView()
         self.procedures_list_view.setObjectName("proceduresListView")
         self.procedures_list_view.clicked.connect(self._on_procedure_doc_selected)
+        self.procedures_list_view.setFont(get_display_font(size=10)) # Apply display font to list view
         procedures_splitter.addWidget(self.procedures_list_view)
         self.procedures_text_preview = QTextEdit()
         self.procedures_text_preview.setReadOnly(True)
         self.procedures_text_preview.setObjectName("proceduresTextPreview")
-        self.procedures_text_preview.setFont(preview_font)
+        # Use get_display_font for general text preview
+        self.procedures_text_preview.setFont(get_display_font(size=10)) 
         procedures_splitter.addWidget(self.procedures_text_preview)
         procedures_splitter.setSizes([200, 300])
         procedures_tab_layout.addWidget(procedures_splitter)
-        # self.preview_tab_widget.addTab(self.procedures_tab_content_widget, "Procedure Documents") # Moved to _retranslate_ui
 
         lay.addWidget(self.preview_container)
 
         # Compare button
         self.btn_compare = QPushButton()  # Text set in _refresh (which calls _retranslate_ui implicitly)
+        self.btn_compare.setObjectName("btnCompare") # Set object name for QSS styling
         self.btn_compare.clicked.connect(lambda: self.compare_requested.emit(self.project))
-        
-        # Styling for btn_compare is handled by global stylesheet or theme
-        # self.btn_compare.setStyleSheet(""" 
-        #     QPushButton {
-        #         font-size: 15px;
-        #         font-weight: 500;
-        #         padding: 10px 24px;
-        #         border-radius: 4px;
-        #         color: white;
-        #         background-color: #1a73e8;
-        #         border: none;
+        self.btn_compare.setFont(get_display_font(size=12))  # 設定按鈕字體
         
         button_container = QWidget()
         button_container.setFixedHeight(60)
@@ -210,23 +212,29 @@ class ProjectEditor(QWidget):
         self.rename_button.setToolTip(self.translator.get("project_editor_rename_tooltip", "Rename project"))
         self.delete_button.setToolTip(self.translator.get("project_editor_delete_tooltip", "Delete project"))
 
-        # Update labels
+        # Update labels and apply fonts
         self.controls_label.setText(self.translator.get("project_editor_controls_json_label", "Controls JSON File:"))
+        self.controls_label.setFont(get_display_font(size=10))
         self.procedures_label.setText(self.translator.get("project_editor_procedure_docs_label", "Procedure Documents:"))
+        self.procedures_label.setFont(get_display_font(size=10))
 
-        # Update button texts
+        # Update button texts and apply fonts
         self.browse_ctrl_button.setText(self.translator.get("project_editor_browse_button", "Browse…"))
+        self.browse_ctrl_button.setFont(get_display_font(size=10))
         self.browse_proc_button.setText(self.translator.get("project_editor_browse_button", "Browse…"))
+        self.browse_proc_button.setFont(get_display_font(size=10))
         self.validate_json_button.setText(self.translator.get("project_editor_validate_json_button", "Validate JSON"))
+        self.validate_json_button.setFont(get_display_font(size=10))
         
-        # Update toggle preview button text (also handled in _update_preview_ui_state)
+        # Update toggle preview button text (also handled in _update_preview_ui_state) and apply font
         if self._preview_is_visible:
             self.toggle_preview_button.setText(self.translator.get("project_editor_hide_preview_button", "Hide File Preview"))
         else:
             self.toggle_preview_button.setText(self.translator.get("project_editor_show_preview_button", "Show File Preview"))
+        self.toggle_preview_button.setFont(get_display_font(size=10))
 
-        # Update tab titles
-        # Ensure tabs are added only once or cleared before adding
+        # Update tab titles and apply font to tab bar
+        self.preview_tab_widget.setFont(get_display_font(size=10)) # Sets font for the tab text
         current_tab_count = self.preview_tab_widget.count()
         if current_tab_count == 0 : # Add tabs only if they don't exist
             self.preview_tab_widget.addTab(self.controls_tab_content_widget, self.translator.get("project_editor_controls_tab", "Controls JSON"))
@@ -236,20 +244,21 @@ class ProjectEditor(QWidget):
             if current_tab_count > 1: # Check if procedure tab exists before trying to set text
                  self.preview_tab_widget.setTabText(1, self.translator.get("project_editor_procedures_tab", "Procedure Documents"))
 
-
         # Refresh texts that depend on project state (like compare button)
-        self._refresh_dynamic_texts()
+        self._refresh_dynamic_texts() # This will also apply fonts to elements within it
         logger.debug("ProjectEditor UI retranslated")
 
     def _refresh_dynamic_texts(self):
         # This method is for texts that change based on project state AND need translation
         # For example, the compare button text
         self.lb_title.setText(f"<h2>{self.project.name}</h2>") # Project name is not translated
+        self.lb_title.setFont(get_display_font(size=16, weight_style='semi_bold'))
 
         if self.project.is_sample:
             self.btn_compare.setText(self.translator.get("project_editor_rerun_sample_button", "Re-run sample"))
         else:
             self.btn_compare.setText(self.translator.get("project_editor_start_compare_button", "Start compare"))
+        self.btn_compare.setFont(get_display_font(size=11, weight_style='semi_bold'))
         
         # Update procedure edit text for multiple files
         if self.project.procedure_doc_paths and len(self.project.procedure_doc_paths) > 1:
@@ -258,6 +267,7 @@ class ProjectEditor(QWidget):
             self._proc_edit.setText(str(self.project.procedure_doc_paths[0]))
         else:
             self._proc_edit.setText("")
+        # Font for _proc_edit is set in _refresh, after this method is called.
 
 
     def _toggle_preview_visibility(self):
@@ -266,11 +276,12 @@ class ProjectEditor(QWidget):
 
     def _update_preview_ui_state(self):
         self.preview_content_area.setVisible(self._preview_is_visible)
-        # This will call _retranslate_ui, which updates the button text
+        # This will call _retranslate_ui, which updates the button text and applies its font
         if self._preview_is_visible:
             self.toggle_preview_button.setText(self.translator.get("project_editor_hide_preview_button", "Hide File Preview"))
         else:
             self.toggle_preview_button.setText(self.translator.get("project_editor_show_preview_button", "Show File Preview"))
+        # Font for toggle_preview_button is set in _retranslate_ui
 
     # ---------- Helpers ----------
     # def _row(self, line, chooser):
@@ -501,14 +512,19 @@ class ProjectEditor(QWidget):
         # This calls _retranslate_ui through _refresh_dynamic_texts
         self._retranslate_ui() 
 
-        # Update path edits (these are file paths, not typically translated)
+        # Update path edits (these are file paths, not typically translated) and apply fonts
         controls_path_str = str(self.project.controls_json_path or "")
         self._ctrl_edit.setText(controls_path_str)
+        self._ctrl_edit.setFont(get_display_font(size=10))
         self.validate_json_button.setEnabled(bool(self.project.controls_json_path and self.project.controls_json_path.exists()))
 
-        # _refresh_dynamic_texts handles the procedure edit text for multiple files
+        # _refresh_dynamic_texts handles the procedure edit text for multiple files.
+        # Apply font to _proc_edit here, as its text content might have been updated by _refresh_dynamic_texts (called by _retranslate_ui above)
+        self._proc_edit.setFont(get_display_font(size=10))
 
         # Update Previews
+        # Fonts for preview panes (controls_json_preview, procedures_text_preview) and 
+        # list views (controls_list_view, procedures_list_view) are set in _build_ui.
         self._update_controls_preview()
         self._update_procedures_preview()
         

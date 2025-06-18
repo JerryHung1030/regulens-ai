@@ -14,10 +14,11 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     # QTabWidget, # Removed
-    QStyle,
+    QStyle, # Already present, but QToolButton needs it too
     QFileDialog,
     QMessageBox,
     QTableWidget,
+    QToolButton, # Added for collapsible sections
     QTableWidgetItem,
     QHeaderView,
     QDialog,
@@ -35,7 +36,7 @@ from app.models.project import CompareProject
 from app.models.docs import ControlClause, AuditTask # For type hinting in new dialog
 from app.pipeline.pipeline_v1_1 import ProjectRunData, _load_run_json # For loading results
 from app.logger import logger
-from app.utils.font_manager import get_font
+from app.utils.font_manager import get_font, get_display_font
 
 
 # Helper function for eliding text
@@ -65,6 +66,7 @@ class StatsBarChart(QWidget):
         # self.compliant_frame.setStyleSheet("background-color: #28a745;") # Removed
         self.compliant_label = QLabel("0", self.compliant_frame)
         self.compliant_label.setAlignment(Qt.AlignCenter)
+        self.compliant_label.setFont(get_display_font(size=9, weight_style='semi_bold'))
         # self.compliant_label.setStyleSheet("color: white; font-weight: bold;") # Handled by QSS on QFrame
         compliant_layout = QHBoxLayout(self.compliant_frame)
         compliant_layout.addWidget(self.compliant_label)
@@ -78,6 +80,7 @@ class StatsBarChart(QWidget):
         # self.non_compliant_frame.setStyleSheet("background-color: #dc3545;") # Removed
         self.non_compliant_label = QLabel("0", self.non_compliant_frame)
         self.non_compliant_label.setAlignment(Qt.AlignCenter)
+        self.non_compliant_label.setFont(get_display_font(size=9, weight_style='semi_bold'))
         # self.non_compliant_label.setStyleSheet("color: white; font-weight: bold;") # Handled by QSS
         non_compliant_layout = QHBoxLayout(self.non_compliant_frame)
         non_compliant_layout.addWidget(self.non_compliant_label)
@@ -88,6 +91,7 @@ class StatsBarChart(QWidget):
         self.pending_frame = QFrame(self)
         self.pending_frame.setProperty("status", "pending")
         self.pending_label = QLabel("0", self.pending_frame)
+        self.pending_label.setFont(get_display_font(size=9, weight_style='semi_bold'))
         self.pending_label.setAlignment(Qt.AlignCenter)
         pending_layout = QHBoxLayout(self.pending_frame)
         pending_layout.setContentsMargins(0,0,0,0) # Ensure label is within frame
@@ -96,9 +100,10 @@ class StatsBarChart(QWidget):
         self.pending_frame.style().polish(self.pending_frame)
 
         self.na_frame = QFrame(self) # New N/A frame
-        self.na_frame.setProperty("status", "na") 
+        self.na_frame.setProperty("status", "na")
         # self.na_frame.setStyleSheet("background-color: #6c757d;") # Placeholder QSS will handle
         self.na_label = QLabel("0", self.na_frame)
+        self.na_label.setFont(get_display_font(size=9, weight_style='semi_bold'))
         self.na_label.setAlignment(Qt.AlignCenter)
         # self.na_label.setStyleSheet("color: white; font-weight: bold;") # Placeholder QSS will handle
         na_layout = QHBoxLayout(self.na_frame)
@@ -184,34 +189,48 @@ class RunEvidenceDetailsDialog(QDialog):
 
         # Control Clause Text
         self.clause_label = QLabel() # Text set in _retranslate_ui
+        self.clause_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
         content_layout.addWidget(self.clause_label)
         self.clause_text_edit = QPlainTextEdit(clause.text)
+        self.clause_text_edit.setFont(get_display_font(size=10))
         self.clause_text_edit.setReadOnly(True)
         self.clause_text_edit.setFixedHeight(100) # Keep fixed height, it has its own scroll
         content_layout.addWidget(self.clause_text_edit)
 
         if self.task:
             self.task_label = QLabel() # Text set in _retranslate_ui
+            self.task_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
             content_layout.addWidget(self.task_label)
             self.task_sentence_edit = QPlainTextEdit(self.task.sentence)
+            self.task_sentence_edit.setFont(get_display_font(size=10))
             self.task_sentence_edit.setReadOnly(True)
             self.task_sentence_edit.setFixedHeight(80) # Keep fixed height
             content_layout.addWidget(self.task_sentence_edit)
 
-            if self.task.top_k:
-                self.evidence_heading_label = QLabel() # Text set in _retranslate_ui
-                content_layout.addWidget(self.evidence_heading_label)
-                self.evidence_display_label = QLabel() # Content set in _retranslate_ui
-                self.evidence_display_label.setTextFormat(Qt.RichText)
-                self.evidence_display_label.setWordWrap(True)
-                self.evidence_display_label.setAlignment(Qt.AlignTop)
-                content_layout.addWidget(self.evidence_display_label)
-            else:
-                self.no_evidence_label = QLabel() # Text set in _retranslate_ui
-                self.no_evidence_label.setTextFormat(Qt.RichText)
-                content_layout.addWidget(self.no_evidence_label)
+            # Evidence section setup
+            self.evidence_heading_label = QLabel() # Text set in _retranslate_ui
+            self.evidence_heading_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
+            content_layout.addWidget(self.evidence_heading_label)
+
+            self.evidence_items_container_widget = QWidget()
+            self.evidence_items_layout = QVBoxLayout(self.evidence_items_container_widget)
+            self.evidence_items_layout.setContentsMargins(0, 0, 0, 0)
+            self.evidence_items_layout.setSpacing(5) # Spacing between evidence items
+            content_layout.addWidget(self.evidence_items_container_widget)
+            
+            self.evidence_widgets_list = [] # To store button/details pairs
+
+            self.no_evidence_label = QLabel()
+            self.no_evidence_label.setObjectName("noEvidenceLabelForDialog")
+            self.no_evidence_label.setTextFormat(Qt.RichText)
+            self.no_evidence_label.setFont(get_display_font(size=10))
+            self.no_evidence_label.setVisible(False) # Initially hidden
+            self.evidence_items_layout.addWidget(self.no_evidence_label) # Add to the dynamic layout
+
+            # self.evidence_display_label is removed and replaced by dynamic items
 
             self.reasoning_label = QLabel() # Content set in _retranslate_ui
+            self.reasoning_label.setFont(get_display_font(size=10))
             self.reasoning_label.setTextFormat(Qt.RichText)
             self.reasoning_label.setWordWrap(True)
             self.reasoning_label.setAlignment(Qt.AlignTop)
@@ -225,6 +244,7 @@ class RunEvidenceDetailsDialog(QDialog):
 
         # OK Button (outside scroll area)
         self.ok_button = QPushButton() # Text set in _retranslate_ui
+        self.ok_button.setFont(get_display_font(size=10))
         self.ok_button.clicked.connect(self.accept)
 
         btn_h_layout = QHBoxLayout()
@@ -237,7 +257,21 @@ class RunEvidenceDetailsDialog(QDialog):
         self.translator.language_changed.connect(self._retranslate_ui)
         self._retranslate_ui() # Initial translation
 
+    def _toggle_evidence_item(self, checked: bool, button: QToolButton, details_widget: QWidget):
+        details_widget.setVisible(checked)
+        if checked:
+            button.setIcon(self.style().standardIcon(QStyle.SP_ArrowDown))
+        else:
+            button.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+
     def _retranslate_ui(self):
+        # Clear previous dynamic evidence items
+        if hasattr(self, 'evidence_widgets_list'): # Ensure list exists
+            for w_dict in self.evidence_widgets_list:
+                if w_dict.get('button'): w_dict['button'].deleteLater()
+                if w_dict.get('details'): w_dict['details'].deleteLater()
+            self.evidence_widgets_list.clear()
+
         dialog_title_key = "run_evidence_details_title_task" if self.task else "run_evidence_details_title_clause"
         default_title = f"Details: {self.clause_title_display}"
         if self.task:
@@ -248,27 +282,61 @@ class RunEvidenceDetailsDialog(QDialog):
 
         if self.task:
             self.task_label.setText(f"<b>{self.translator.get('audit_task_heading', 'Audit Task:')} {self.task.id}</b>")
-
+            
+            self.evidence_heading_label.setVisible(True)
             if self.task.top_k:
+                self.no_evidence_label.setVisible(False)
                 self.evidence_heading_label.setText(f"<b>{self.translator.get('retrieved_evidence_heading', 'Retrieved Evidence (Top K):')}</b>")
-                evidence_text_parts = []
+                
                 for i, ev_item in enumerate(self.task.top_k):
+                    title_button = QToolButton()
+                    title_button.setCheckable(True)
+                    title_button.setChecked(False) # Collapsed by default
+                    title_button.setFont(get_display_font(size=10, weight_style='semi_bold'))
+                    title_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+                    title_button.setStyleSheet("QToolButton { border: none; text-align: left; padding: 2px; }")
+                    
+                    details_label = QLabel()
+                    details_label.setFont(get_display_font(size=10))
+                    details_label.setWordWrap(True)
+                    details_label.setVisible(False)
+                    details_label.setStyleSheet("QLabel { padding-left: 20px; background-color: transparent; }")
+                    details_label.setTextFormat(Qt.RichText)
+
                     score_val = ev_item.get('score', 0.0)
                     score_str = f"{score_val:.4f}" if isinstance(score_val, float) else str(score_val)
-                    source_pdf = elide_text(ev_item.get('source_pdf', 'N/A'), 30)
-                    page_no = ev_item.get('page_no', 'N/A')
-                    excerpt = elide_text(ev_item.get('excerpt', 'N/A'), 200)
-                    evidence_item_html = (
-                        f"<b>{self.translator.get('evidence_item_label', 'Evidence')} {i+1}:</b> "
-                        f"{self.translator.get('score_label', 'Score')}: {score_str}<br>"
-                        f"&nbsp;&nbsp;{self.translator.get('source_label', 'Source')}: {source_pdf} ({self.translator.get('page_label', 'Page')}: {page_no})<br>"
-                        f"&nbsp;&nbsp;{self.translator.get('excerpt_label', 'Excerpt')}: \"<i>{excerpt}</i>\""
+                    source_pdf_short = elide_text(ev_item.get('source_pdf', self.translator.get('n_a', 'N/A')), 25)
+                    page_no = ev_item.get('page_no', self.translator.get('n_a', 'N/A'))
+                    
+                    title_text = self.translator.get('evidence_item_title_template', "Evidence {item_num}: {source_pdf} (Score: {score})").format(
+                        item_num=i+1, source_pdf=source_pdf_short, score=score_str
                     )
-                    evidence_text_parts.append(evidence_item_html)
-                self.evidence_display_label.setText("<br><br>".join(evidence_text_parts))
+                    
+                    # Full source for details view
+                    full_source_pdf = ev_item.get('source_pdf', self.translator.get('n_a', 'N/A'))
+                    excerpt = ev_item.get('excerpt', self.translator.get('n_a', 'N/A')) # Excerpt is not elided here for full view
+                    details_html = (
+                        f"<b>{self.translator.get('source_label', 'Source')}:</b> {full_source_pdf} ({self.translator.get('page_label', 'Page')}: {page_no})<br>"
+                        f"<b>{self.translator.get('excerpt_label', 'Excerpt')}:</b><br><i>{excerpt}</i>"
+                    )
+
+                    title_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+                    title_button.setText(title_text)
+                    details_label.setText(details_html)
+
+                    title_button.toggled.connect(
+                        lambda checked, btn=title_button, det=details_label: self._toggle_evidence_item(checked, btn, det)
+                    )
+                    
+                    # Insert before the self.no_evidence_label
+                    self.evidence_items_layout.insertWidget(self.evidence_items_layout.count() -1, title_button)
+                    self.evidence_items_layout.insertWidget(self.evidence_items_layout.count() -1, details_label)
+                    self.evidence_widgets_list.append({'button': title_button, 'details': details_label, 'data': ev_item})
             else:
-                if hasattr(self, 'no_evidence_label'): # Check if the label was created
-                    self.no_evidence_label.setText(f"<i>{self.translator.get('no_evidence_found_message', 'No evidence found for this task.')}</i>")
+                # No top_k items
+                self.evidence_heading_label.setText(f"<b>{self.translator.get('retrieved_evidence_heading', 'Retrieved Evidence (Top K):')}</b>") # Still show heading
+                self.no_evidence_label.setText(f"<i>{self.translator.get('no_evidence_found_message', 'No evidence found for this task.')}</i>")
+                self.no_evidence_label.setVisible(True)
 
             # Fetch new structured reasoning
             compliance_desc = self.task.metadata.get('compliance_description', self.translator.get('reasoning_not_available', 'N/A'))
@@ -287,6 +355,9 @@ class RunEvidenceDetailsDialog(QDialog):
             
             if hasattr(self, 'reasoning_label'): # Check if the label was created
                 self.reasoning_label.setText(reasoning_html)
+        else: # No task
+            if hasattr(self, 'evidence_heading_label'): self.evidence_heading_label.setVisible(False)
+            if hasattr(self, 'no_evidence_label'): self.no_evidence_label.setVisible(False)
         
         self.ok_button.setText(self.translator.get("ok_button_text", "OK"))
         logger.debug("RunEvidenceDetailsDialog UI retranslated")
@@ -303,28 +374,34 @@ class EvidenceDetailsDialog(QDialog): # Old dialog
         layout = QVBoxLayout(self)
 
         self.lbl_file_title = QLabel() # Text set in _retranslate_ui
+        self.lbl_file_title.setFont(get_display_font(size=11, weight_style='semi_bold'))
         layout.addWidget(self.lbl_file_title)
 
         self.lbl_analysis_title = QLabel() # Text set in _retranslate_ui
+        self.lbl_analysis_title.setFont(get_display_font(size=10, weight_style='semi_bold'))
         layout.addWidget(self.lbl_analysis_title)
         
         self.txt_analysis = QPlainTextEdit()
         self.txt_analysis.setPlainText(self.evidence_data.get('analysis', 'N/A'))
+        self.txt_analysis.setFont(get_display_font(size=10))
         self.txt_analysis.setReadOnly(True)
         self.txt_analysis.setWordWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
         layout.addWidget(self.txt_analysis)
 
         self.lbl_suggestion_title = QLabel() # Text set in _retranslate_ui
+        self.lbl_suggestion_title.setFont(get_display_font(size=10, weight_style='semi_bold'))
         layout.addWidget(self.lbl_suggestion_title)
         
         self.txt_suggestion = QPlainTextEdit()
         self.txt_suggestion.setPlainText(self.evidence_data.get('suggestion', 'N/A'))
+        self.txt_suggestion.setFont(get_display_font(size=10))
         self.txt_suggestion.setReadOnly(True)
         # txt_suggestion_text was a typo, should be self.txt_suggestion
         self.txt_suggestion.setWordWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
         layout.addWidget(self.txt_suggestion)
 
         self.btn_ok = QPushButton() # Text set in _retranslate_ui
+        self.btn_ok.setFont(get_display_font(size=10))
         self.btn_ok.clicked.connect(self.accept)
         
         btn_layout = QHBoxLayout()
@@ -413,14 +490,17 @@ class ResultsViewer(QWidget):
 
         title_row = QHBoxLayout()
         self._title = QLabel() # Text set in _retranslate_ui/_refresh
+        self._title.setFont(get_display_font(size=14, weight_style='bold')) # Main title font
         title_row.addWidget(self._title)
         title_row.addStretch(1)
 
         self.btn_export_csv = QPushButton() # Text/Icon set in _retranslate_ui
+        self.btn_export_csv.setFont(get_display_font(size=10))
         self.btn_export_csv.clicked.connect(self._export_result_csv)
         title_row.addWidget(self.btn_export_csv)
 
         self.btn_back = QPushButton() # Text/Icon set in _retranslate_ui
+        self.btn_back.setFont(get_display_font(size=10))
         self.btn_back.clicked.connect(self._go_back)
         title_row.addWidget(self.btn_back)
         lay.addLayout(title_row)
@@ -440,27 +520,44 @@ class ResultsViewer(QWidget):
 
         # Row 2: Bar Chart for Compliance Statuses (Now effectively Row 1 of summary)
         self.stats_summary_title_label = QLabel() # Title for Stats Bar Chart
-        font_stats_title = self.stats_summary_title_label.font()
-        font_stats_title.setPointSize(12)
-        font_stats_title.setBold(True)
-        self.stats_summary_title_label.setFont(font_stats_title)
+        self.stats_summary_title_label.setFont(get_display_font(size=12, weight_style='bold'))
         summary_section_layout.addWidget(self.stats_summary_title_label)
 
-        self.stats_bar_chart = StatsBarChart(self.translator, self)
-        summary_section_layout.addWidget(self.stats_bar_chart) # Add bar chart directly
+        # self.stats_bar_chart = StatsBarChart(self.translator, self) # Comment out or delete
+        # summary_section_layout.addWidget(self.stats_bar_chart) # Comment out or delete
+
+        stats_text_layout = QHBoxLayout()
+        stats_text_layout.setSpacing(20) # Adjust spacing as needed
+
+        self.summary_compliant_label = QLabel()
+        self.summary_compliant_label.setFont(get_display_font(size=10)) # Use appropriate font
+        stats_text_layout.addWidget(self.summary_compliant_label)
+
+        self.summary_non_compliant_label = QLabel()
+        self.summary_non_compliant_label.setFont(get_display_font(size=10))
+        stats_text_layout.addWidget(self.summary_non_compliant_label)
+
+        self.summary_pending_label = QLabel()
+        self.summary_pending_label.setFont(get_display_font(size=10))
+        stats_text_layout.addWidget(self.summary_pending_label)
+
+        self.summary_na_label = QLabel()
+        self.summary_na_label.setFont(get_display_font(size=10))
+        stats_text_layout.addWidget(self.summary_na_label)
+
+        stats_text_layout.addStretch(1)
+        summary_section_layout.addLayout(stats_text_layout)
         
         lay.addLayout(summary_section_layout)
         lay.addSpacing(10) # Existing spacing before the table
 
         self.detailed_results_title_label = QLabel() # Title for Detailed Results Table
-        font_table_title = self.detailed_results_title_label.font()
-        font_table_title.setPointSize(12)
-        font_table_title.setBold(True)
-        self.detailed_results_title_label.setFont(font_table_title)
+        self.detailed_results_title_label.setFont(get_display_font(size=12, weight_style='bold'))
         lay.addWidget(self.detailed_results_title_label)
         # lay.addSpacing(5) # Optional small spacing after title
 
         self.table_widget = QTableWidget()
+        self.table_widget.setFont(get_display_font(size=10)) # Set default font for table content and headers
         self.table_widget.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table_widget.setSelectionBehavior(QTableWidget.SelectRows)
         self.table_widget.setAlternatingRowColors(True)
@@ -478,7 +575,8 @@ class ResultsViewer(QWidget):
         self.table_widget.setColumnCount(len(self.column_headers_keys))
         # self.table_widget.setHorizontalHeaderLabels(...) # Done in _retranslate_ui
 
-        item_font = get_font(size=10)
+        # item_font = get_font(size=10) # Changed to get_display_font and set on table_widget directly
+        item_font = get_display_font(size=10) # Use this for metrics if needed
         fm = QFontMetrics(item_font)
         default_row_height = fm.height() + 10 
         self.table_widget.verticalHeader().setDefaultSectionSize(default_row_height)
@@ -545,8 +643,13 @@ class ResultsViewer(QWidget):
         na_count = total_controls - (compliant_count + non_compliant_count + pending_count)
         if na_count < 0: na_count = 0 
 
-        total_for_bar = total_controls 
-        self.stats_bar_chart.setData(compliant_count, non_compliant_count, pending_count, na_count, total_for_bar)
+        # total_for_bar = total_controls # No longer needed for bar chart
+        # self.stats_bar_chart.setData(compliant_count, non_compliant_count, pending_count, na_count, total_for_bar) # Removed
+
+        self.summary_compliant_label.setText(f"<b>{self.translator.get('summary_compliant_status', 'Compliant')}:</b> {compliant_count}")
+        self.summary_non_compliant_label.setText(f"<b>{self.translator.get('summary_non_compliant_status', 'Non-Compliant')}:</b> {non_compliant_count}")
+        self.summary_pending_label.setText(f"<b>{self.translator.get('summary_pending_status', 'Pending')}:</b> {pending_count}")
+        self.summary_na_label.setText(f"<b>{self.translator.get('summary_na_status', 'N/A')}:</b> {na_count}")
         
     def _refresh_table_content_text(self):
         # This method is responsible for re-translating texts within table cells
@@ -619,19 +722,19 @@ class ResultsViewer(QWidget):
             self.table_widget.setRowCount(1)
             item = QTableWidgetItem(self.translator.get("no_data_available", "No analysis data available. Please run the pipeline."))
             item.setTextAlignment(Qt.AlignCenter)
-            table_font = get_font(size=10)
+            table_font = get_display_font(size=10) # Ensure this uses display_font
             item.setFont(table_font)
             self.table_widget.setItem(0, 0, item)
             self.table_widget.setSpan(0, 0, self.table_widget.columnCount()) # Span all columns
             return
 
-        table_font = get_font(size=10)
+        table_font = get_display_font(size=10) # Ensure this uses display_font for all items
         current_row = 0
         for clause in self.project.project_run_data.control_clauses:
             self.table_widget.insertRow(current_row)
             
             item_clause_id = QTableWidgetItem(clause.id) # ID is not translated
-            item_clause_id.setFont(table_font)
+            item_clause_id.setFont(table_font) # Font set by table_widget default or explicitly here
             self.table_widget.setItem(current_row, 0, item_clause_id)
 
             control_title_text = clause.title if clause.title else clause.text # Title/text not translated here
@@ -652,6 +755,9 @@ class ResultsViewer(QWidget):
                 item_requires_proc.setForeground(QColor("black"))
             else:
                 item_requires_proc.setText(self.translator.get("n_a", "N/A")) # n_a already exists
+                # Apply badge styling for N/A
+                item_requires_proc.setBackground(QColor(theme_colors.get("status_na_color", "#6c757d")))
+                item_requires_proc.setForeground(QColor(theme_colors.get("text_color_on_disabled", "#ffffff")))
             self.table_widget.setItem(current_row, 2, item_requires_proc)
             
             task = clause.tasks[0] if clause.tasks else None
@@ -683,6 +789,7 @@ class ResultsViewer(QWidget):
             self.table_widget.setItem(current_row, 4, item_compliance_status)
 
             details_button = QPushButton(self.translator.get("view_details_button", "View Details"))
+            details_button.setFont(get_display_font(size=10)) # Apply font to button in table
             current_task_id = task.id if task else None # Task ID not translated
             details_button.clicked.connect(
                 lambda checked=False, c_id=clause.id, t_id=current_task_id: self._show_evidence_details_dialog(c_id, t_id)

@@ -175,7 +175,7 @@ class IntroPage(QWidget):
 
     def _create_core_pipeline_bottom_left_section(self): 
         card = QFrame()
-        card.setObjectName("corePipelineBottomCard") 
+        card.setObjectName("corePipelineBottomCard")
         card.setFrameShape(QFrame.Shape.StyledPanel)
         card.setFrameShadow(QFrame.Shadow.Raised)
         # card.setContentsMargins(0, 0, 0, 0) # Margins are now set on the layout

@@ -549,15 +549,17 @@ def execute_search_step(
         return
 
     # Create temporary FAISS index for procedures
-    # Use base64 encoded name for the temp directory to avoid path issues
-    import base64
-    safe_project_name = base64.urlsafe_b64encode(project.name.encode('utf-8')).decode('ascii').rstrip('=')
-    temp_index_dir = project.run_json_path.parent / f"temp_index_cache_{safe_project_name}"
+    # 使用 MD5 雜湊來產生安全的目錄名稱
+    import hashlib
+    
+    # 將整個路徑轉換為安全的 ASCII 字元
+    project_path_hash = hashlib.md5(str(project.run_json_path.parent).encode('utf-8')).hexdigest()
+    temp_index_dir = Path("temp_index_cache") / project_path_hash
     temp_index_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"Creating FAISS index for procedures at {temp_index_dir}...")
     proc_index_meta: Optional[IndexMeta] = create_or_load_index(
-        all_proc_embed_sets, temp_index_dir, f"procedures_{safe_project_name}", settings.embedding_model
+        all_proc_embed_sets, temp_index_dir, f"procedures_{project_path_hash}", settings.embedding_model
     )
 
     if not proc_index_meta:

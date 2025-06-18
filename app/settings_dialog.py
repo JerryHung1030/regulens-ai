@@ -17,7 +17,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QCoreApplication
+from PySide6.QtWidgets import QApplication
 
 from .settings import Settings
 from .translator import Translator
@@ -175,12 +176,23 @@ class SettingsDialog(QDialog):
 
         self.gui_language_combo = QComboBox()
         self.gui_language_combo.addItems(["en", "zh"]) 
+        self.gui_language_combo.currentTextChanged.connect(self._on_language_changed)  # 新增語言變更事件處理
         self.general_gui_language_label = QLabel(self.translator.get("settings_label_gui_language", "GUI Language:"))
         layout.addRow(self.general_gui_language_label, self.gui_language_combo)
         
         container = QWidget()
         container.setLayout(layout)
         return container
+
+    def _on_language_changed(self, lang: str):
+        """當語言變更時重新套用字體"""
+        app = QCoreApplication.instance()
+        if app:
+            app.setProperty("language", "zh_TW" if lang == "zh" else "en_US")
+            # 重新套用字體
+            from app.utils.font_manager import get_display_font
+            default_font = get_display_font(size=10)
+            QApplication.setFont(default_font)
 
     def _build_models_tab(self) -> QWidget:
         page_layout = QFormLayout()

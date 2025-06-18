@@ -13,7 +13,7 @@ from PySide6.QtCore import Signal, Qt
 
 from app.stores.project_store import ProjectStore
 from app.models.project import CompareProject
-from app.utils.font_manager import get_font  # 新增字體管理器導入
+from app.utils.font_manager import get_font, get_display_font  # 新增字體管理器導入
 from app.logger import logger  # 新增 logger 導入
 
 
@@ -33,7 +33,7 @@ class Sidebar(QWidget):
         self.list_projects.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.list_projects.setTextElideMode(Qt.ElideRight)
         # 設定列表字體
-        self.list_projects.setFont(get_font('regular', 10))
+        self.list_projects.setFont(get_display_font(size=10))
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -59,6 +59,7 @@ class Sidebar(QWidget):
                 background-color: #cccccc; /* Even darker for pressed state */
             }
         """)
+        self._btn_toggle.setFont(get_display_font(size=10))  # 設定按鈕字體
         self._btn_toggle.clicked.connect(self._toggle)
         top_row_layout.addWidget(self._btn_toggle)
         
@@ -85,8 +86,7 @@ class Sidebar(QWidget):
                 background-color: #cccccc;
             }
         """)
-        # 設定按鈕字體
-        self.btn_add_project.setFont(get_font('regular', 16))
+        self.btn_add_project.setFont(get_display_font(size=16))  # 設定按鈕字體
         self.btn_add_project.clicked.connect(self.add_project_requested.emit)
         top_row_layout.addWidget(self.btn_add_project)
         top_row_layout.addStretch(1)  # Push buttons to the left

@@ -2,6 +2,7 @@ import json
 import re
 from pathlib import Path
 from typing import List, Optional
+import hashlib
 
 import faiss  # type: ignore
 import numpy as np
@@ -19,14 +20,8 @@ except ImportError:
 
 def _sanitize_filename(name: str) -> str:
     """Sanitizes a string to be filesystem-friendly."""
-    # 將中文字串轉換為 base64 編碼
-    encoded = base64.urlsafe_b64encode(name.encode('utf-8')).decode('ascii')
-    # 移除 base64 編碼中的 = 符號
-    encoded = encoded.rstrip('=')
-    # 確保檔案名稱不會太長
-    if len(encoded) > 255:
-        encoded = encoded[:255]
-    return encoded
+    # 使用 MD5 雜湊來產生安全的檔案名稱
+    return hashlib.md5(name.encode('utf-8')).hexdigest()
 
 
 def _create_index_files(
@@ -106,8 +101,9 @@ def create_or_load_index(
 
     index_dir.mkdir(parents=True, exist_ok=True)
 
+    # 使用 MD5 雜湊來產生安全的檔案名稱
     safe_model_name = _sanitize_filename(embedding_model_name)
-    base_filename = f"{doc_type}_{safe_model_name}"
+    base_filename = f"{_sanitize_filename(doc_type)}_{safe_model_name}"
     index_file_path = index_dir / f"{base_filename}.faiss"
     id_mapping_file_path = index_dir / f"{base_filename}_map.json"
 

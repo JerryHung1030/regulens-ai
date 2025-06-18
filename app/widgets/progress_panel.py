@@ -3,10 +3,11 @@ from typing import Optional, Union, Any # Added Union, Any for type flexibility
 
 from qtpy.QtWidgets import QDialog, QProgressBar, QTextEdit, QPushButton, QLabel, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QFont, QFontMetrics, QTextOption
+from qtpy.QtGui import QFont, QFontMetrics, QTextOption # QFont might still be used by elide_long_id or other parts if not fully replaced
 
 # Import the Pydantic model for type checking
 from app.pipeline.pipeline_v1_1 import AuditPlanClauseUIData # AuditTaskUIData is part of AuditPlanClauseUIData
+from app.utils.font_manager import get_display_font # Import get_display_font
 
 logger = logging.getLogger(__name__)
 
@@ -50,17 +51,17 @@ class ProgressPanel(QDialog):
 
         # UI Elements
         self.current_stage_label = QLabel() # Text set in _retranslate_ui and update_progress
-        font_label = QFont()
-        font_label.setPointSize(10)
-        self.current_stage_label.setFont(font_label)
+        # font_label = QFont() # Replaced by get_display_font
+        # font_label.setPointSize(10) # Replaced by get_display_font
+        self.current_stage_label.setFont(get_display_font(size=10))
 
         self.progress_bar = QProgressBar()
         self.details_tree_widget = QTreeWidget()
         self.details_tree_widget.setColumnCount(1)
         # self.details_tree_widget.setHeaderLabels(["Audit Plan Details"]) # Set in _retranslate_ui
-        font_details = QFont()
-        font_details.setPointSize(9) # Slightly smaller for details
-        self.details_tree_widget.setFont(font_details)
+        # font_details = QFont() # Replaced by get_display_font
+        # font_details.setPointSize(9) # Replaced by get_display_font
+        self.details_tree_widget.setFont(get_display_font(size=9)) # Apply display font
 
         # self.confirm_button = QPushButton() # Removed
         self.cancel_button = QPushButton() # Text set in _retranslate_ui
