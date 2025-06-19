@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import traceback # Add this import
 import threading # For confirm_event
 from pathlib import Path
 from typing import List, Callable, Dict, Any, Optional, Union
@@ -523,13 +524,14 @@ def execute_search_step(
 
     # --- Procedure Document Processing ---
     raw_docs_procedures: List[RawDoc] = ingest_documents(project.procedure_doc_paths, "procedure")
+    logger.info(f"Ingested {len(raw_docs_procedures)} raw procedure documents.")
     if not raw_docs_procedures:
         logger.warning("No raw procedure documents were ingested. Skipping search step.")
-        logger.error(f"Failed to ingest documents from paths: {project.procedure_doc_paths}")
+        # logger.error(f"Failed to ingest documents from paths: {project.procedure_doc_paths}") # This was a bit redundant with the warning and the count log
         progress_callback(0.8, "Search: No procedure documents ingested.")
         return
     
-    logger.info(f"Successfully ingested {len(raw_docs_procedures)} procedure documents")
+    # logger.info(f"Successfully ingested {len(raw_docs_procedures)} procedure documents") # Moved up
     
     norm_docs_procedures: List[NormDoc] = [normalize_document(doc) for doc in raw_docs_procedures]
     
@@ -537,19 +539,28 @@ def execute_search_step(
     norm_doc_id_to_filename: Dict[str, str] = {nd.id: nd.metadata.get("original_filename", "Unknown Filename") for nd in norm_docs_procedures}
 
     # Initialize CacheService for embeddings if needed by generate_embeddings
-    # This path should ideally be configurable or derived from project structure
-    # cache_service = CacheService(Path(f"projects/{project.name}/cache/embeddings")) # Old way
-    cache_service = CacheService(project_name=project.name) # New way
+    cache_service = CacheService(project_name=project.name)
 
     all_proc_embed_sets: List[EmbedSet] = []
-    for norm_doc in norm_docs_procedures:
-        if cancel_cb(): break
-        api_key = getattr(settings, 'openai_api_key', '')
-        embeds = generate_embeddings(norm_doc, cache_service, api_key, settings.embedding_model)
-        all_proc_embed_sets.extend(embeds)
+    try:
+        for norm_doc in norm_docs_procedures:
+            if cancel_cb():
+                logger.info("Embedding generation cancelled by user.")
+                break
+            logger.debug(f"Generating embeddings for normalized document: {norm_doc.id} (source: {norm_doc.metadata.get('original_filename', 'N/A')})")
+            api_key = getattr(settings, 'openai_api_key', '') # Ensure settings has this attribute
+            embeds = generate_embeddings(norm_doc, cache_service, api_key, settings.embedding_model)
+            if embeds:
+                all_proc_embed_sets.extend(embeds)
+                logger.debug(f"Successfully generated {len(embeds)} embedding sets for {norm_doc.id}.")
+            else:
+                logger.warning(f"No embeddings generated for document {norm_doc.id}.")
+    except Exception as e:
+        logger.error(f"Error during embedding generation loop for procedures: {e}\n{traceback.format_exc()}")
+        # Depending on desired behavior, you might want to clear all_proc_embed_sets or re-raise
     
-    if cancel_cb() or not all_proc_embed_sets:
-        logger.info("Search step cancelled or no procedure embeddings generated.")
+    if cancel_cb(): # Check again if loop was broken by cancel_cb
+        logger.info("Search step cancelled or no procedure embeddings generated due to cancellation.")
         progress_callback(0.8, "Search: Cancelled or no procedure embeddings.")
         return
 
@@ -566,23 +577,50 @@ def execute_search_step(
     temp_index_dir = get_app_data_dir() / "cache" / "faiss_index" / f"project_{project_path_hash}" # New way
     temp_index_dir.mkdir(parents=True, exist_ok=True)
     
-    logger.info(f"Creating FAISS index for procedures at {temp_index_dir}...")
-    proc_index_meta: Optional[IndexMeta] = create_or_load_index(
-        all_proc_embed_sets, temp_index_dir, f"procedures_{project_path_hash}", settings.embedding_model
-    )
+    logger.info(f"Proceeding to FAISS index creation with {len(all_proc_embed_sets)} embedding sets for procedures.")
+    proc_index_meta: Optional[IndexMeta] = None # Initialize
+    try:
+        if all_proc_embed_sets: # Only attempt index creation if there are embeddings
+            proc_index_meta = create_or_load_index(
+                all_proc_embed_sets, temp_index_dir, f"procedures_{project_path_hash}", settings.embedding_model
+            )
+        else:
+            logger.warning("Skipping FAISS index creation as there are no procedure embeddings.")
+    except Exception as e:
+        logger.error(f"Error during FAISS index creation for procedures: {e}\n{traceback.format_exc()}")
+        # proc_index_meta will remain None
 
-    if not proc_index_meta:
+    if not proc_index_meta and all_proc_embed_sets: # Log error only if embeddings were present but index failed
         logger.error("Failed to create procedure FAISS index. Aborting search step.")
         progress_callback(0.8, "Search: Failed to create procedure index.")
-        # Clean up the new directory if creation fails
         if temp_index_dir.exists():
             try:
-                shutil.rmtree(temp_index_dir) 
-            except OSError as e:
-                logger.error(f"Error removing FAISS index directory {temp_index_dir} after creation failure: {e}")
+                shutil.rmtree(temp_index_dir)
+            except OSError as e_rm:
+                logger.error(f"Error removing FAISS index directory {temp_index_dir} after creation failure: {e_rm}")
         return
+    elif not all_proc_embed_sets and not proc_index_meta: # Case where no embeddings, so no index
+        logger.info("No procedure embeddings were generated, so no FAISS index created. Search step cannot proceed with retrieval.")
+        # The original `if cancel_cb() or not all_proc_embed_sets:` check before this block should handle
+        # sending progress_callback and returning. If it reaches here, it implies cancel_cb() was false
+        # but all_proc_embed_sets was empty.
+        # The existing `if not proc_index_meta:` check before retrieval loop will handle this.
+        # Ensure the message indicates that the process cannot continue.
+        progress_callback(0.8, "Search: No procedure embeddings, index not created.") # Added specific message
+        return # Explicitly return if no index due to no embeddings
+
 
     # --- Iterate through Audit Tasks ---
+    # The check `if not proc_index_meta:` before retrieval loop is crucial.
+    # If we returned above due to no embeddings, this part won't run.
+    # If proc_index_meta is None due to an error during creation (and embeddings were present),
+    # we already returned. So this part should only run if proc_index_meta is valid.
+
+    if not proc_index_meta: # This is a safeguard, should have been handled by previous blocks
+        logger.error("Critical: Procedure FAISS index is not available. Aborting search step.")
+        progress_callback(0.8, "Search: Procedure index unavailable.")
+        return
+
     total_tasks_to_search = sum(len(c.tasks) for c in external_regulation_clauses if c.need_procedure and c.tasks)
     tasks_searched = 0
     

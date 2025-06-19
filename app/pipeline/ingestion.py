@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 import pandas as pd
 from pypdf import PdfReader
 
+from app.logger import logger # Add this import
+
 # This assumes that the script is run from a context where 'app' is a package.
 # If running this file directly for testing, sys.path adjustments might be needed.
 try:
@@ -28,7 +30,7 @@ def _calculate_file_hash(file_path: Path) -> str:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
     except IOError as e:
-        print(f"Error reading file {file_path} for hashing: {e}")
+        logger.error(f"Error reading file {file_path} for hashing: {e}")
         return ""  # Return empty string or raise error
 
 
@@ -36,17 +38,17 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
     raw_docs: List[RawDoc] = []
 
     if not procedure_pdf_paths:
-        print("No procedure PDF paths provided.")
+        logger.warning("No procedure PDF paths provided.")
         return raw_docs
 
     for file_path in procedure_pdf_paths:
         if not file_path.is_file() or file_path.suffix.lower() not in [".txt", ".md"]:
-            print(f"Skipping non-TXT/MD or non-existent file: {file_path}")
+            logger.warning(f"Skipping non-TXT/MD or non-existent file: {file_path}")
             continue
 
         file_hash = _calculate_file_hash(file_path)
         if not file_hash:
-            print(f"Skipping file due to hashing error: {file_path}")
+            logger.warning(f"Skipping file due to hashing error: {file_path}")
             continue
 
         content = ""
@@ -65,10 +67,12 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
                 # Optionally, add line count to metadata if useful
                 # metadata["num_lines"] = content.count('\n') + 1
             except Exception as e:
-                print(f"Error processing TXT {file_path}: {e}")
+                logger.error(f"Error processing TXT {file_path}: {e}")
                 metadata["errors"].append(f"TXT processing error: {str(e)}")
                 content = ""
 
+            logger.info(f"Ingesting file: {file_path}, Exists: {file_path.exists()}, Size: {file_path.stat().st_size if file_path.exists() else 'N/A'}")
+            logger.debug(f"Content preview (first 50 chars): {content[:50]}")
             raw_doc_instance = RawDoc(
                 id=file_hash,
                 source_path=abs_file_path,
@@ -99,17 +103,17 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
                 with open(meta_json_path, 'w', encoding='utf-8') as meta_f:
                     json.dump(meta_json_content, meta_f, indent=4)
             except IOError as e:
-                print(f"Error writing .meta.json for {file_path}: {e}")
+                logger.error(f"Error writing .meta.json for {file_path}: {e}")
 
         except Exception as e:
-            print(f"Unhandled exception processing file {file_path}: {e}")
+            logger.error(f"Unhandled exception processing file {file_path}: {e}")
             continue
 
     return raw_docs
 
 
 if __name__ == '__main__':
-    print("Starting ingestion module test...")
+    logger.info("Starting ingestion module test...")
     # Create a temporary directory structure for testing
     temp_dir = Path("temp_ingestion_test_data")
     temp_dir.mkdir(exist_ok=True)
@@ -128,12 +132,12 @@ if __name__ == '__main__':
     txt_path1 = sub_dir_procedures_pdfs / "procedure_doc1.txt"
     txt_path1.write_text("This is the content of procedure_doc1.txt.\nIt has multiple lines.", encoding="utf-8")
     procedure_txt_list.append(txt_path1)
-    print(f"Created a dummy TXT: {txt_path1.name}")
+    logger.info(f"Created a dummy TXT: {txt_path1.name}")
 
     txt_path2 = sub_dir_procedures_pdfs / "procedure_doc2.txt"
     txt_path2.write_text("This is procedure_doc2.txt.", encoding="utf-8")
     procedure_txt_list.append(txt_path2)
-    print(f"Created a dummy TXT: {txt_path2.name}")
+    logger.info(f"Created a dummy TXT: {txt_path2.name}")
     
     # Create a TXT file with non-utf-8 content to test error handling
     error_txt_path = sub_dir_procedures_pdfs / "error_doc.txt"
@@ -141,49 +145,49 @@ if __name__ == '__main__':
         with open(error_txt_path, 'wb') as f_err:
             f_err.write(b'\xff\xfe\x00\x00This is not valid UTF-8') # Example: UTF-16 BOM with non-UTF-8 chars
         procedure_txt_list.append(error_txt_path)
-        print(f"Created a dummy TXT with invalid encoding: {error_txt_path.name}")
+        logger.info(f"Created a dummy TXT with invalid encoding: {error_txt_path.name}")
     except Exception as e_create:
-        print(f"Could not create error_doc.txt for testing: {e_create}")
+        logger.error(f"Could not create error_doc.txt for testing: {e_create}")
 
 
     # (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8")
     # (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0')
 
-    # print(f"\nIngesting 'external_regulation' documents from: {sub_dir_external_regulations}")
+    # logger.info(f"\nIngesting 'external_regulation' documents from: {sub_dir_external_regulations}")
     # external_regulation_docs = ingest_documents(sub_dir_external_regulations, "external_regulation")
     # for doc in external_regulation_docs:
-    #     print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
+    #     logger.info(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
     #     meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
-    #     print(f"  Meta JSON exists: {meta_json_file.exists()}")
+    #     logger.info(f"  Meta JSON exists: {meta_json_file.exists()}")
     #     if meta_json_file.exists():
     #         with open(meta_json_file, 'r') as f_meta:
-    #             print(f"  Meta JSON content: {json.load(f_meta)}")
+    #             logger.info(f"  Meta JSON content: {json.load(f_meta)}")
 
-    print(f"\nIngesting 'procedure' TXT documents from list: {procedure_txt_list}")
+    logger.info(f"\nIngesting 'procedure' TXT documents from list: {procedure_txt_list}")
     procedure_docs = ingest_documents(procedure_txt_list, "procedure") # Pass list of paths
     for doc in procedure_docs:
-        print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
+        logger.info(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
         meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
-        print(f"  Meta JSON exists: {meta_json_file.exists()}")
+        logger.info(f"  Meta JSON exists: {meta_json_file.exists()}")
         if meta_json_file.exists():
             with open(meta_json_file, 'r') as f_meta:
                 loaded_meta = json.load(f_meta)
-                print(f"  Meta JSON content: {loaded_meta}")
+                logger.info(f"  Meta JSON content: {loaded_meta}")
                 assert "num_pages" not in loaded_meta # Ensure num_pages is not in the meta file
 
     # Test with a non-existent directory (now an empty list or list with non-existent paths)
-    print("\nIngesting from a list with a non-existent TXT path:")
+    logger.info("\nIngesting from a list with a non-existent TXT path:")
     non_existent_txt_path = Path("non_existent_dir_test/non_existent.txt") # This path won't exist
     non_existent_docs = ingest_documents([non_existent_txt_path], "error_test")
-    print(f"  Number of documents found: {len(non_existent_docs)}")
+    logger.info(f"  Number of documents found: {len(non_existent_docs)}")
 
-    print("\nIngesting from an empty list:")
+    logger.info("\nIngesting from an empty list:")
     empty_list_docs = ingest_documents([], "empty_test")
-    print(f"  Number of documents found: {len(empty_list_docs)}")
+    logger.info(f"  Number of documents found: {len(empty_list_docs)}")
 
 
     # Clean up (optional)
     # import shutil
-    # print(f"\nCleaning up temporary test directory: {temp_dir}")
+    # logger.info(f"\nCleaning up temporary test directory: {temp_dir}")
     # shutil.rmtree(temp_dir)
-    print("\nIngestion module test finished.")
+    logger.info("\nIngestion module test finished.")
