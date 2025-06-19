@@ -344,5 +344,98 @@ graph TD
   - A: 支援 Markdown 與 PDF 兩種格式。
 - **Q: 可以自訂 sample 或測試自己的資料嗎？**
   - A: 可以，建立新專案時選擇自己的 external.json 與 internal.txt 即可。
+- **Q: PyInstaller 打包後 embedding 報 Unknown encoding cl100k_base？**
+  - A: 請參考「PyInstaller 打包 tiktoken 完整指引」章節，務必加上 tiktoken_ext 與 tiktoken_ext.openai_public 兩個 hidden-imports，並確認 venv 有這兩個模組。
 
----
+## PyInstaller 打包 tiktoken 完整指引
+
+### 問題現象與成因
+
+- 打包後 exe 執行時出現：
+  ```
+  Failed to get tiktoken encoding 'cl100k_base': Unknown encoding cl100k_base.
+  tiktoken version: 0.9.0 (are you on latest?)
+  ValueError: Unknown encoding cl100k_base.
+  ```
+- 這會導致 embedding（向量化）完全失敗，RAG pipeline、證據檢索等功能無法運作。
+- 成因：tiktoken encoding 註冊在 plugin（tiktoken_ext.openai_public），PyInstaller 不會自動打包這些外掛，或 venv 安裝異常導致缺檔。
+
+### 1. venv 檢查與正確安裝
+
+先確認 venv 裡 tiktoken 安裝完整：
+
+```bash
+python - <<'PY'
+import importlib.util, pkg_resources, sys, pathlib
+print("tiktoken version =", pkg_resources.get_distribution("tiktoken").version)
+print("tiktoken_ext.openai_public =", importlib.util.find_spec("tiktoken_ext.openai_public"))
+print("encodings dir exists? ", pathlib.Path(importlib.util.find_spec("tiktoken").origin).parent.joinpath("encodings").is_dir())
+PY
+```
+- `tiktoken_ext.openai_public` 必須能找到，否則：
+  ```bash
+  pip uninstall -y tiktoken
+  pip install -U tiktoken
+  ```
+- encodings/ 資料夾新版不一定存在，只要 plugin 有就正常。
+
+### 2. .spec/CLI 正確 hidden-imports 寫法
+
+#### .spec 範例：
+```python
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+hiddenimports = collect_submodules('tiktoken_ext') + ['tiktoken_ext.openai_public']
+datas = collect_data_files('tiktoken')
+# Analysis(..., hiddenimports=hiddenimports, datas=datas, ...)
+```
+
+#### CLI 範例：
+```bash
+pyinstaller run_app.py --onefile \
+  --hidden-import=tiktoken_ext \
+  --hidden-import=tiktoken_ext.openai_public \
+  --collect-data=tiktoken
+```
+
+### 3. 打包後如何驗證
+
+- 執行 exe 並搜尋 log：
+  ```
+  Plugins found: ['tiktoken_ext.openai_public']
+  ```
+- 有這行就代表 encoding 載入成功。
+- 若 `Plugins found: []`，多半是 hidden-import 拼錯或 PyInstaller 版本太舊。
+
+### 4. 離線/自訂 cache 處理
+
+- 若目標機器無法上網，可先在開發機下載 model 檔：
+  ```bash
+  python -m tiktoken.cli download --output encodings_cache
+  ```
+- .spec 補一句：
+  ```python
+  datas += [("encodings_cache", "encodings_cache")]
+  ```
+- 或程式碼設環境變數：
+  ```python
+  os.environ["TIKTOKEN_CACHE_DIR"] = os.path.join(sys._MEIPASS, "encodings_cache")
+  ```
+
+### 5. 常見陷阱與排查清單
+
+| 狀況                                                 | 解法                                                                            |
+| -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `ModuleNotFoundError: blobfile…`                   | `tiktoken` 0.4-0.6 會自帶 optional blobfile；若遇到就 `pip install blobfile` 或升到 0.7+ |
+| `.spec` 裡用了 `collect_data_files('tiktoken')` 但還是失敗 | 仍須 **hidden-imports 2 個外掛**；只收 data 不會註冊 encoding                             |
+| 只在 arm64/mac 打包失敗                                  | 升到 PyInstaller 6.x；x86 版 hooks 有時漏掉 ctypes 動態庫                                |
+| venv 裡根本沒有 `tiktoken_ext`                          | 表示 pip 感染舊快取；`pip install --no-cache-dir --force-reinstall tiktoken` 再試       |
+
+### 一行結論
+
+> **加上 `tiktoken_ext` 與 `tiktoken_ext.openai_public` 兩個 hidden-imports，並確定 venv 裡真的有這兩個模組後，`Unknown encoding cl100k_base` 就不會再出現。**
+
+### 參考連結
+- [tiktoken #89: PyInstaller打包後找不到encoding](https://github.com/openai/tiktoken/issues/89)
+- [tiktoken #221: cl100k_base encoding missing after build](https://github.com/openai/tiktoken/issues/221)
+- [Knowledge Oasis: pyinstaller-tiktoken-unknown-encoding-cl100k_base-error](https://knowledge-oasis.net/fix/pyinstaller-tiktoken-unknown-encoding-cl100k_base-error/)
+- [StackOverflow: Unknown Encoding TikToken Error in exe](https://stackoverflow.com/questions/77292954/unknown-encoding-tiktoken-error-in-exe-that-is-compiled-with-nuitka)
