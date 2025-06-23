@@ -7,17 +7,21 @@ def get_app_data_dir() -> Path:
     Returns the application data directory for the current operating system.
     Creates the directory if it doesn't exist.
     """
-    app_name = "regulens-ai"
-    
-    if sys.platform == "win32":
-        # Windows - 使用標準的應用程式資料目錄
-        path = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) / app_name
-    elif sys.platform == "darwin":
-        # macOS
-        path = Path.home() / "Library" / "Application Support" / app_name
-    else:
-        # Linux and other Unix-like systems
-        path = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share")) / app_name
+    # app_name = "regulens-ai"
+    # if sys.platform == "win32":
+    #     # Windows - 使用標準的應用程式資料目錄
+    #     path = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) / app_name
+    # elif sys.platform == "darwin":
+    #     # macOS
+    #     path = Path.home() / "Library" / "Application Support" / app_name
+    # else:
+    #     # Linux and other Unix-like systems
+    #     path = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share")) / app_name
+    # path.mkdir(parents=True, exist_ok=True)
+    # return path
+
+    # 測試用：直接回傳專案根目錄下的 user_data 資料夾。需要被mark掉
+    path = Path(__file__).parent.parent / "user_data"
 
     path.mkdir(parents=True, exist_ok=True)
     return path

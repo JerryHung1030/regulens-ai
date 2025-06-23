@@ -84,13 +84,10 @@ def load_external_regulations_from_json(external_regulations_json_path: Path) ->
         for clause_id, content in data.items():
             if clause_id == "name":  # 跳過專案名稱
                 continue
-                
-            # 分割標題和內容
-            lines = content.split('\n', 1)
-            title = lines[0]
-            text = lines[1] if len(lines) > 1 else ""
             
-            # 創建 ExternalRegulationClause 物件，包含所有必要的欄位
+            title = clause_id  # title 直接設為條款編號
+            text = content    # 條文內容直接設為 text
+            
             clause = ExternalRegulationClause(
                 id=clause_id,
                 title=title,
@@ -323,6 +320,7 @@ def execute_need_check_step(
         # Basic prompt, can be enhanced with more context or specific instructions
         prompt = (
             f"Determine if the following external_regulation clause requires a detailed audit procedure to verify its implementation. "
+            f"For compliance and safety, unless the clause explicitly states that no procedure is needed, assume that a detailed audit procedure is required. "
             f"Respond with a JSON object containing a single key 'requires_procedure' with a boolean value (true or false).\n\n"
             f"ExternalRegulation Clause Text: \"{clause.text}\""
         )

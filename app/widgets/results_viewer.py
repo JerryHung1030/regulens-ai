@@ -171,8 +171,8 @@ class RunEvidenceDetailsDialog(QDialog):
         self.task = task
         self.translator = translator # Store translator
 
-        self.clause_title_display = clause.metadata.get('title', clause.id) # Store for retranslate
-        # Title set in _retranslate_ui
+        # 外規標題優先順序: title > text > id
+        self.clause_title_display = clause.title if getattr(clause, 'title', None) else (clause.text if getattr(clause, 'text', None) else clause.id)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setFixedSize(700, 550) # Set fixed dialog size
 
@@ -207,8 +207,16 @@ class RunEvidenceDetailsDialog(QDialog):
             self.task_sentence_edit.setFixedHeight(80) # Keep fixed height
             content_layout.addWidget(self.task_sentence_edit)
 
-            # Evidence section setup
-            self.evidence_heading_label = QLabel() # Text set in _retranslate_ui
+            # --- 合規狀態/描述/建議區塊（提前到證據前） ---
+            self.reasoning_label = QLabel()
+            self.reasoning_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
+            self.reasoning_label.setTextFormat(Qt.RichText)
+            self.reasoning_label.setWordWrap(True)
+            self.reasoning_label.setAlignment(Qt.AlignTop)
+            content_layout.addWidget(self.reasoning_label)
+
+            # --- 證據區塊 ---
+            self.evidence_heading_label = QLabel()
             self.evidence_heading_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
             content_layout.addWidget(self.evidence_heading_label)
 
@@ -227,23 +235,12 @@ class RunEvidenceDetailsDialog(QDialog):
             self.no_evidence_label.setVisible(False) # Initially hidden
             self.evidence_items_layout.addWidget(self.no_evidence_label) # Add to the dynamic layout
 
-            # self.evidence_display_label is removed and replaced by dynamic items
+        content_layout.addStretch(1)
+        content_widget.setLayout(content_layout)
+        scroll_area.setWidget(content_widget)
+        main_dialog_layout.addWidget(scroll_area, 1)
 
-            self.reasoning_label = QLabel() # Content set in _retranslate_ui
-            self.reasoning_label.setFont(get_display_font(size=10))
-            self.reasoning_label.setTextFormat(Qt.RichText)
-            self.reasoning_label.setWordWrap(True)
-            self.reasoning_label.setAlignment(Qt.AlignTop)
-            content_layout.addWidget(self.reasoning_label)
-
-        content_layout.addStretch(1) # Add stretch to push content to top of scroll area
-        content_widget.setLayout(content_layout) # Set the layout for the content_widget
-        scroll_area.setWidget(content_widget) # Put the content_widget into the scroll_area
-
-        main_dialog_layout.addWidget(scroll_area, 1) # Add scroll_area to the main dialog layout, allowing it to stretch
-
-        # OK Button (outside scroll area)
-        self.ok_button = QPushButton() # Text set in _retranslate_ui
+        self.ok_button = QPushButton()
         self.ok_button.setObjectName("okButton")
         self.ok_button.setFont(get_display_font(size=10))
         self.ok_button.clicked.connect(self.accept)
@@ -283,7 +280,23 @@ class RunEvidenceDetailsDialog(QDialog):
 
         if self.task:
             self.task_label.setText(f"<b>{self.translator.get('audit_task_heading', 'Audit Task:')} {self.task.id}</b>")
-            
+
+            # --- 合規狀態/描述/建議區塊 ---
+            compliance_desc = self.task.metadata.get('compliance_description', self.translator.get('reasoning_not_available', 'N/A'))
+            improvement_sugg = self.task.metadata.get('improvement_suggestions', self.translator.get('reasoning_not_available', 'N/A'))
+            compliant_status_text = "N/A"
+            if self.task.compliant is True: compliant_status_text = self.translator.get("compliant_true_status", "Compliant")
+            elif self.task.compliant is False: compliant_status_text = self.translator.get("compliant_false_status", "Non-Compliant")
+            else: compliant_status_text = self.translator.get("compliant_pending_status", "Pending")
+            reasoning_html = (
+                f"<b>{self.translator.get('compliance_status_heading', 'Compliance Status:')}</b> {compliant_status_text}<br><br>"
+                f"<b>{self.translator.get('compliance_description_heading', 'Compliance Description:')}</b><br><i>{compliance_desc}</i><br><br>"
+                f"<b>{self.translator.get('improvement_suggestions_heading', 'Improvement Suggestions:')}</b><br><i>{improvement_sugg}</i>"
+            )
+            if hasattr(self, 'reasoning_label'):
+                self.reasoning_label.setText(reasoning_html)
+
+            # --- 證據區塊 ---
             self.evidence_heading_label.setVisible(True)
             if self.task.top_k:
                 self.no_evidence_label.setVisible(False)
@@ -292,7 +305,7 @@ class RunEvidenceDetailsDialog(QDialog):
                 for i, ev_item in enumerate(self.task.top_k):
                     title_button = QToolButton()
                     title_button.setCheckable(True)
-                    title_button.setChecked(False) # Collapsed by default
+                    title_button.setChecked(False)
                     title_button.setFont(get_display_font(size=10, weight_style='semi_bold'))
                     title_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
                     title_button.setStyleSheet("QToolButton { border: none; text-align: left; padding: 2px; }")
@@ -338,25 +351,7 @@ class RunEvidenceDetailsDialog(QDialog):
                 self.evidence_heading_label.setText(f"<b>{self.translator.get('retrieved_evidence_heading', 'Retrieved Evidence (Top K):')}</b>") # Still show heading
                 self.no_evidence_label.setText(f"<i>{self.translator.get('no_evidence_found_message', 'No evidence found for this task.')}</i>")
                 self.no_evidence_label.setVisible(True)
-
-            # Fetch new structured reasoning
-            compliance_desc = self.task.metadata.get('compliance_description', self.translator.get('reasoning_not_available', 'N/A'))
-            improvement_sugg = self.task.metadata.get('improvement_suggestions', self.translator.get('reasoning_not_available', 'N/A'))
-
-            compliant_status_text = "N/A" # Default, should be overwritten
-            if self.task.compliant is True: compliant_status_text = self.translator.get("compliant_true_status", "Compliant")
-            elif self.task.compliant is False: compliant_status_text = self.translator.get("compliant_false_status", "Non-Compliant")
-            else: compliant_status_text = self.translator.get("compliant_pending_status", "Pending")
-            
-            reasoning_html = (
-                f"<b>{self.translator.get('compliance_status_heading', 'Compliance Status:')}</b> {compliant_status_text}<br><br>"
-                f"<b>{self.translator.get('compliance_description_heading', 'Compliance Description:')}</b><br><i>{compliance_desc}</i><br><br>"
-                f"<b>{self.translator.get('improvement_suggestions_heading', 'Improvement Suggestions:')}</b><br><i>{improvement_sugg}</i>"
-            )
-            
-            if hasattr(self, 'reasoning_label'): # Check if the label was created
-                self.reasoning_label.setText(reasoning_html)
-        else: # No task
+        else:
             if hasattr(self, 'evidence_heading_label'): self.evidence_heading_label.setVisible(False)
             if hasattr(self, 'no_evidence_label'): self.no_evidence_label.setVisible(False)
         
@@ -616,39 +611,33 @@ class ResultsViewer(QWidget):
         logger.debug("ResultsViewer UI retranslated")
 
     def _refresh_summary_labels(self):
-        # This is called by _retranslate_ui and _refresh
-        # It updates labels based on current data and current language
+        # 以 external_regulation 條文為單位統計合規狀態
         total_external_regulations = 0
-        requires_procedure_count = 0
         compliant_count = 0
         non_compliant_count = 0
         pending_count = 0
+        na_count = 0
 
         if self.project and hasattr(self.project, 'project_run_data') and self.project.project_run_data:
             for clause in self.project.project_run_data.external_regulation_clauses:
                 total_external_regulations += 1
-                if clause.need_procedure:
-                    requires_procedure_count += 1
-                if clause.tasks:
-                    for task in clause.tasks:
-                        if task.compliant is True: compliant_count += 1
-                        elif task.compliant is False: non_compliant_count += 1
-                        else: pending_count += 1
-            
-            project_name = self.project.name # Project name is not translated
+                # 條文合規狀態判斷
+                if not clause.tasks or len(clause.tasks) == 0:
+                    na_count += 1
+                else:
+                    task_statuses = [task.compliant for task in clause.tasks]
+                    if all(t is True for t in task_statuses):
+                        compliant_count += 1
+                    elif any(t is False for t in task_statuses):
+                        non_compliant_count += 1
+                    elif all(t is None for t in task_statuses):
+                        pending_count += 1
+                    else:
+                        na_count += 1
+            project_name = self.project.name
             self._title.setText(f"<h2>{self.translator.get('analysis_results_for_project_title', 'Analysis Results for: {project_name}').format(project_name=project_name)}</h2>")
         else:
             self._title.setText(f"<h2>{self.translator.get('analysis_results_title', 'Analysis Results')}</h2>")
-
-        # Removed: Old text summary labels
-        # self.summary_total_external_regulations_label.setText(f"<b>{self.translator.get('summary_total_external_regulations', 'Total ExternalRegulations')}:</b> {total_external_regulations}")
-        # self.summary_requires_procedure_label.setText(f"<b>{self.translator.get('summary_requires_procedure', 'Requires Procedure')}:</b> {requires_procedure_count}")
-        
-        na_count = total_external_regulations - (compliant_count + non_compliant_count + pending_count)
-        if na_count < 0: na_count = 0 
-
-        # total_for_bar = total_external_regulations # No longer needed for bar chart
-        # self.stats_bar_chart.setData(compliant_count, non_compliant_count, pending_count, na_count, total_for_bar) # Removed
 
         self.summary_compliant_label.setText(f"<b>{self.translator.get('summary_compliant_status', 'Compliant:')}</b> {compliant_count}")
         self.summary_non_compliant_label.setText(f"<b>{self.translator.get('summary_non_compliant_status', 'Non-Compliant:')}</b> {non_compliant_count}")

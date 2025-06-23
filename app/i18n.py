@@ -308,7 +308,9 @@ MESSAGES = {
         "csv_header_evidence_page_number": "Evidence Page Number",
         "csv_header_evidence_score": "Evidence Score",
         "col_details": "Details",
-        "project_name_empty_error": "Project name cannot be empty."
+        "project_name_empty_error": "Project name cannot be empty.",
+        "compliance_description_heading": "Compliance Description",
+        "improvement_suggestions_heading": "Improvement Suggestions"
     },
     "zh": {  # Traditional Chinese (Taiwan)
         "report_title": "合規報告",
@@ -618,6 +620,8 @@ MESSAGES = {
         "csv_header_evidence_page_number": "證據頁碼",
         "csv_header_evidence_score": "證據分數",
         "col_details": "詳細資訊",
-        "project_name_empty_error": "專案名稱不能為空。"
+        "project_name_empty_error": "專案名稱不能為空。",
+        "compliance_description_heading": "法規遵循描述",
+        "improvement_suggestions_heading": "改進建議"
     }
 }
