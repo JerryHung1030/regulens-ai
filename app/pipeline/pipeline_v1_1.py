@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os # Added for os.path.getmtime
 import traceback # Add this import
 import threading # For confirm_event
 from pathlib import Path
@@ -115,71 +116,158 @@ def run_project_pipeline_v1_1(project: CompareProject,
     logger.info(f"Starting pipeline v1.1 for project: {project.name}")
     progress_callback(0.0, "Initializing pipeline...")
 
-    if not project.external_regulations_json_path or not project.external_regulations_json_path.exists():
+    # --- Path Validations ---
+    ext_reg_path = project.external_regulations_json_path
+    if not ext_reg_path or not ext_reg_path.exists():
         logger.error("ExternalRegulations JSON path not specified or file does not exist.")
         progress_callback(1.0, "Error: ExternalRegulations JSON file not found.")
         return
 
-    if not project.run_json_path:
+    run_json_path = project.run_json_path
+    if not run_json_path:
         logger.error("Project run_json_path is not set.")
         progress_callback(1.0, "Error: run.json path not configured for the project.")
         return
 
-    # Load existing run data or initialize if not present/fresh start requested
-    # For now, let's assume we always load external_regulations from source JSON and then update from run.json
-    # A more sophisticated resume logic might be needed later.
-    
-    initial_clauses = load_external_regulations_from_json(project.external_regulations_json_path)
-    if not initial_clauses:
-        progress_callback(1.0, "Error: No external_regulation clauses loaded. Stopping pipeline.")
+    # --- Load Initial Data ---
+    initial_clauses_from_json = load_external_regulations_from_json(ext_reg_path)
+    if not initial_clauses_from_json:
+        progress_callback(1.0, "Error: No external_regulation clauses loaded from source JSON. Stopping pipeline.")
         return
 
-    project_run_data = _load_run_json(project.run_json_path)
+    # --- Load or Initialize ProjectRunData ---
+    loaded_project_run_data = _load_run_json(run_json_path)
     
-    if project_run_data:
-        logger.info(f"Loaded existing run data from {project.run_json_path}")
-        # Merge or update initial_clauses with data from project_run_data
-        # This creates a map for quick lookup
-        existing_clauses_map = {c.id: c for c in project_run_data.external_regulation_clauses}
-        final_clauses_for_pipeline: List[ExternalRegulationClause] = []
-        for loaded_clause in initial_clauses:
-            if loaded_clause.id in existing_clauses_map:
-                # Update with potentially modified/populated fields from run.json
-                # Pydantic models are immutable by default, so create new instance or use .copy(update=...)
-                existing_version = existing_clauses_map[loaded_clause.id]
-                updated_data = loaded_clause.model_dump() # Start with fresh data from source JSON
-                
-                # Overwrite with fields that were populated by the pipeline if they exist in run.json
-                # This ensures that if source text changes, it's picked up, but pipeline results are preserved.
-                if existing_version.need_procedure is not None:
-                    updated_data['need_procedure'] = existing_version.need_procedure
-                if existing_version.tasks: # If tasks list is not empty
-                    updated_data['tasks'] = [task.model_dump() for task in existing_version.tasks]
-                
-                final_clauses_for_pipeline.append(ExternalRegulationClause(**updated_data))
-            else:
-                final_clauses_for_pipeline.append(loaded_clause)
+    # --- Cache Invalidation Logic ---
+    invalidate_need_check_audit_plan = False
+    invalidate_search_judge = False
+
+    current_ext_reg_mtime = os.path.getmtime(ext_reg_path)
+    
+    if loaded_project_run_data:
+        logger.info(f"Loaded existing run data from {run_json_path}")
         
-        # Add clauses that might be in run.json but not in source (e.g. if source file changed)
-        # This logic might need refinement based on how we want to handle discrepancies.
-        # For now, source JSON is the master list.
-        current_ids_in_source = {c.id for c in final_clauses_for_pipeline}
-        for existing_clause in project_run_data.external_regulation_clauses:
-            if existing_clause.id not in current_ids_in_source:
-                logger.warning(f"Clause ID {existing_clause.id} found in run.json but not in source external_regulations. It will be ignored.")
+        # Check external regulations file timestamp
+        # These timestamp fields will be added to ProjectRunData in a subsequent step
+        prev_ext_reg_mtime = getattr(loaded_project_run_data, 'external_regulations_file_timestamp', None)
+        if prev_ext_reg_mtime is None or current_ext_reg_mtime > prev_ext_reg_mtime:
+            logger.info("External regulations JSON file has changed or no previous timestamp. Invalidating Need-Check and Audit-Plan steps.")
+            invalidate_need_check_audit_plan = True
+            # Also implies search and judge might need re-evaluation if tasks change
+            invalidate_search_judge = True 
 
-        external_regulation_clauses_for_run = final_clauses_for_pipeline
+        # Check procedure documents timestamps
+        # Assuming procedure_files_timestamps is a dict {path_str: mtime} in ProjectRunData
+        prev_proc_files_mtimes = getattr(loaded_project_run_data, 'procedure_files_timestamps', None)
+        if project.procedure_doc_paths:
+            if prev_proc_files_mtimes is None:
+                logger.info("No previous timestamps for procedure files. Invalidating Search and Judge steps.")
+                invalidate_search_judge = True
+            else:
+                for proc_path in project.procedure_doc_paths:
+                    current_proc_mtime = os.path.getmtime(proc_path)
+                    if str(proc_path) not in prev_proc_files_mtimes or \
+                       current_proc_mtime > prev_proc_files_mtimes[str(proc_path)]:
+                        logger.info(f"Procedure file {proc_path} has changed or is new. Invalidating Search and Judge steps.")
+                        invalidate_search_judge = True
+                        break 
+        elif prev_proc_files_mtimes: # Previously had procedure files, now none
+             logger.info("Procedure files were removed. Invalidating Search and Judge steps.")
+             invalidate_search_judge = True
 
-    else:
-        logger.info(f"No existing run data found at {project.run_json_path}, or starting fresh.")
-        external_regulation_clauses_for_run = initial_clauses
-        # Initialize ProjectRunData and save it immediately
-        project_run_data = ProjectRunData(project_name=project.name, external_regulation_clauses=external_regulation_clauses_for_run)
-        _save_run_json(project_run_data, project.run_json_path)
+
+        # --- Merge existing data with new data from JSON ---
+        # Start with clauses freshly loaded from the current external_regulations.json
+        external_regulation_clauses_for_run: List[ExternalRegulationClause] = []
+        existing_clauses_map_from_run_data = {c.id: c for c in loaded_project_run_data.external_regulation_clauses}
+
+        for fresh_clause in initial_clauses_from_json:
+            # Keep the text and title from the fresh JSON load
+            updated_clause = fresh_clause.model_copy(deep=True) 
+            
+            if fresh_clause.id in existing_clauses_map_from_run_data:
+                existing_version = existing_clauses_map_from_run_data[fresh_clause.id]
+                
+                # If invalidating, don't carry over these fields. They will be regenerated.
+                if not invalidate_need_check_audit_plan:
+                    if existing_version.need_procedure is not None:
+                        updated_clause.need_procedure = existing_version.need_procedure
+                    if existing_version.tasks:
+                        updated_clause.tasks = [t.model_copy(deep=True) for t in existing_version.tasks]
+                else:
+                    # Ensure tasks are reset if audit plan is invalidated
+                    updated_clause.tasks = []
+
+
+                # If search/judge is invalidated, clear top_k from tasks and clause-level compliance
+                if invalidate_search_judge:
+                    for task in updated_clause.tasks:
+                        task.top_k = []
+                        task.compliant = None # Reset task compliance
+                        task.metadata.pop("compliance_description", None)
+                        task.metadata.pop("improvement_suggestions", None)
+                    updated_clause.metadata.pop('clause_compliant', None)
+                    updated_clause.metadata.pop('clause_compliance_description', None)
+                    updated_clause.metadata.pop('clause_improvement_suggestions', None)
+                else: # Not invalidating search/judge, try to preserve them
+                    if updated_clause.tasks and existing_version.tasks:
+                        # This part is tricky: tasks might have different lengths or IDs if audit_plan changed text
+                        # For simplicity, if audit_plan is NOT invalidated, we assume task structure is compatible.
+                        # A more robust merge would align tasks by ID if possible.
+                        # For now, if need_check/audit_plan were NOT invalidated, tasks were copied.
+                        # We just need to ensure their top_k and compliance are also copied if not invalidate_search_judge
+                        # This is implicitly handled if tasks were copied fully.
+                        # Let's ensure metadata is also preserved if not invalidated
+                        if 'clause_compliant' in existing_version.metadata:
+                             updated_clause.metadata['clause_compliant'] = existing_version.metadata['clause_compliant']
+                        if 'clause_compliance_description' in existing_version.metadata:
+                             updated_clause.metadata['clause_compliance_description'] = existing_version.metadata['clause_compliance_description']
+                        if 'clause_improvement_suggestions' in existing_version.metadata:
+                             updated_clause.metadata['clause_improvement_suggestions'] = existing_version.metadata['clause_improvement_suggestions']
+                        # Task-level compliance and top_k are part of the task objects, copied above if not invalidated.
+                
+            external_regulation_clauses_for_run.append(updated_clause)
+
+        # Handle clauses in run.json but not in the current source JSON (they will be dropped)
+        current_ids_in_source = {c.id for c in external_regulation_clauses_for_run}
+        for existing_clause_id in existing_clauses_map_from_run_data:
+            if existing_clause_id not in current_ids_in_source:
+                logger.warning(f"Clause ID {existing_clause_id} found in run.json but not in current source external_regulations.json. It will be removed from this run.")
+
+        # Update project_run_data with the potentially modified clauses
+        # This is important so that _save_run_json saves the invalidated state if pipeline is interrupted
+        loaded_project_run_data.external_regulation_clauses = external_regulation_clauses_for_run
+        # Update timestamps before saving
+        loaded_project_run_data.external_regulations_file_timestamp = current_ext_reg_mtime
+        if project.procedure_doc_paths:
+            loaded_project_run_data.procedure_files_timestamps = {
+                str(p): os.path.getmtime(p) for p in project.procedure_doc_paths if p.exists()
+            }
+        else:
+            loaded_project_run_data.procedure_files_timestamps = {}
+        
+        project_run_data = loaded_project_run_data
+        # Save immediately to reflect invalidated state AND updated timestamps if pipeline is stopped early
+        _save_run_json(project_run_data, run_json_path)
+
+
+    else: # No existing run.json, or it failed to load
+        logger.info(f"No existing valid run data found at {run_json_path}, or starting fresh.")
+        external_regulation_clauses_for_run = initial_clauses_from_json
+        
+        # Initialize ProjectRunData with current timestamps
+        current_proc_mtimes = {str(p): os.path.getmtime(p) for p in project.procedure_doc_paths if p.exists()}
+        project_run_data = ProjectRunData(
+            project_name=project.name, 
+            external_regulation_clauses=external_regulation_clauses_for_run,
+            external_regulations_file_timestamp=current_ext_reg_mtime,
+            procedure_files_timestamps=current_proc_mtimes
+        )
+        _save_run_json(project_run_data, run_json_path)
 
 
     if not external_regulation_clauses_for_run:
-        progress_callback(1.0, "No external_regulation clauses to process. Stopping pipeline.")
+        progress_callback(1.0, "No external_regulation clauses to process after loading/merging. Stopping pipeline.")
         return
 
     # --- Step 1: Need-Check ---
@@ -198,6 +286,9 @@ def run_project_pipeline_v1_1(project: CompareProject,
         cancel_cb=cancel_cb
     )
     # _save_run_json is now called within execute_need_check_step after each update.
+    # After Need-Check, external_regulations_file_timestamp is effectively "stable" for this run regarding need_procedure
+    project_run_data.external_regulations_file_timestamp = os.path.getmtime(project.external_regulations_json_path)
+    _save_run_json(project_run_data, project.run_json_path) # Save updated timestamp
     logger.info("Step 1: Need-Check completed.")
 
 
@@ -206,8 +297,6 @@ def run_project_pipeline_v1_1(project: CompareProject,
         progress_callback(1.0, "Pipeline cancelled.")
         return
     progress_callback(0.3, "Starting Step 2: Audit-Plan...")
-    # external_regulation_clauses_for_run = execute_audit_plan_step(external_regulation_clauses_for_run, project.run_json_path, settings, cancel_cb)
-    # Update run_data and save
     execute_audit_plan_step(
         external_regulation_clauses=external_regulation_clauses_for_run,
         project_run_json_path=project.run_json_path,
@@ -216,6 +305,9 @@ def run_project_pipeline_v1_1(project: CompareProject,
         progress_callback=progress_callback,
         cancel_cb=cancel_cb
     )
+    # After Audit-Plan, tasks are stable, related to external_regulations_file_timestamp
+    project_run_data.external_regulations_file_timestamp = os.path.getmtime(project.external_regulations_json_path)
+    _save_run_json(project_run_data, project.run_json_path) # Save updated timestamp
     logger.info("Step 2: Audit-Plan completed.")
 
     # --- Pause for user confirmation before Search step --- # REMOVED
@@ -245,6 +337,14 @@ def run_project_pipeline_v1_1(project: CompareProject,
         progress_callback=progress_callback,
         cancel_cb=cancel_cb
     )
+    # After Search, procedure_files_timestamps are stable for this run regarding top_k
+    if project.procedure_doc_paths:
+        project_run_data.procedure_files_timestamps = {
+            str(p): os.path.getmtime(p) for p in project.procedure_doc_paths if p.exists()
+        }
+    else:
+        project_run_data.procedure_files_timestamps = {}
+    _save_run_json(project_run_data, project.run_json_path) # Save updated timestamps
     logger.info("Step 3: Search completed.")
 
 
@@ -261,6 +361,15 @@ def run_project_pipeline_v1_1(project: CompareProject,
         progress_callback=progress_callback,
         cancel_cb=cancel_cb
     )
+    # After Judge, all results are final for the current file states
+    project_run_data.external_regulations_file_timestamp = os.path.getmtime(project.external_regulations_json_path)
+    if project.procedure_doc_paths:
+        project_run_data.procedure_files_timestamps = {
+            str(p): os.path.getmtime(p) for p in project.procedure_doc_paths if p.exists()
+        }
+    else:
+        project_run_data.procedure_files_timestamps = {}
+    _save_run_json(project_run_data, project.run_json_path) # Save final state with updated timestamps
     logger.info("Step 4: Judging completed.")
 
     progress_callback(1.0, "Pipeline v1.1 completed successfully.")
