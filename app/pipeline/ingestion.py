@@ -88,7 +88,6 @@ def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[Raw
                 "source_path": str(abs_file_path),
                 "original_filename": file_path.name,
                 "doc_type": doc_type,
-                # "num_pages": metadata.get("num_pages"), # Removed
                 "num_rows": metadata.get("num_rows"),
                 "num_cols": metadata.get("num_cols"),
                 "headers": metadata.get("headers"),

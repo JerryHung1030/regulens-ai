@@ -5,9 +5,6 @@ from typing import Dict, Any, Optional, Union, List
 from openai import OpenAI, APIError
 from app.logger import logger
 
-# Removed: from app.pipeline_settings import PipelineSettings as it's not directly used for API key in this file anymore.
-# API key is now passed as an argument to call_llm_api.
-
 def call_llm_api(
     prompt: str,
     model_name: str,

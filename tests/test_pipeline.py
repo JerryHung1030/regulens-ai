@@ -118,7 +118,7 @@ def test_run_pipeline_basic_execution(
          patch('app.pipeline.index.create_or_load_index') as mock_create_index, \
          patch('app.pipeline.retrieve.retrieve_similar_chunks') as mock_retrieve_similar_chunks, \
          patch('app.pipeline.judge_llm.assess_triplet_with_llm') as mock_assess_llm, \
-         patch('faiss.read_index', MagicMock()): # Removed: patch('app.pipeline.report.generate_report') as mock_generate_report,
+         patch('faiss.read_index', MagicMock()): 
 
         # 1. Mock for ingest_documents
         raw_doc_mock_ctrl = MagicMock(spec=RawDoc, id="rd_ctrl_1", text_content="Control content")
@@ -202,7 +202,6 @@ def test_run_pipeline_basic_execution(
     if mock_retrieve_similar_chunks.return_value:  # If retrieve found matches
         mock_assess_llm.assert_called()
 
-    # mock_generate_report.assert_called_once() # Removed
     # We can also assert some arguments passed to generate_report if needed
 
 

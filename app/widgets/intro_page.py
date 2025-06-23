@@ -265,7 +265,6 @@ class IntroPage(QWidget):
         self.key_features_title_label.setObjectName("keyFeaturesTitleLabel") # Added object name
         self.key_features_title_label.setTextFormat(Qt.TextFormat.RichText) 
         self.key_features_title_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        # Removed inline stylesheet: "font-size: 18pt; font-weight: bold; margin-bottom: 10px;"
         card_layout.addWidget(self.key_features_title_label)
 
         features_layout = QVBoxLayout()
@@ -369,7 +368,6 @@ class IntroPage(QWidget):
             step_title_label.setWordWrap(True)
             step_title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             step_title_label.setMinimumHeight(50)
-            # step_title_label.setStyleSheet("padding: 5px; background-color: #f0f0f0;") # Removed inline style
             step_title_label.setProperty("class", "howToUseStepBox") # Added class for QSS
 
             htu_steps_title_layout.addWidget(step_title_label, 1) # Equal stretch

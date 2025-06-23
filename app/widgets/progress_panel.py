@@ -39,7 +39,6 @@ def elide_long_id(text: str, max_length: int = 32, font: Optional[QFont] = None,
 
 class ProgressPanel(QDialog):
     cancelled = Signal()
-    # audit_plan_confirmed = Signal() # Removed: No longer needed
     completed = Signal()  # To be emitted by MainWindow when the task is truly done
 
     def __init__(self, translator, parent=None, total_stages=0): # Added translator
@@ -63,7 +62,6 @@ class ProgressPanel(QDialog):
         # font_details.setPointSize(9) # Replaced by get_display_font
         self.details_tree_widget.setFont(get_display_font(size=9)) # Apply display font
 
-        # self.confirm_button = QPushButton() # Removed
         self.cancel_button = QPushButton() # Text set in _retranslate_ui
 
         # Layout
@@ -71,13 +69,11 @@ class ProgressPanel(QDialog):
         layout.addWidget(self.current_stage_label)
         layout.addWidget(self.progress_bar)
         layout.addWidget(self.details_tree_widget)
-        # layout.addWidget(self.confirm_button) # Removed
         layout.addWidget(self.cancel_button)
         self.setLayout(layout)
 
         # Connections
         self.cancel_button.clicked.connect(self._handle_cancel)
-        # self.confirm_button.clicked.connect(self._handle_confirm) # Removed
 
         self._user_cancelled = False
         self.pipeline_stage_names = [] # Will be populated in _retranslate_ui and used
@@ -91,7 +87,6 @@ class ProgressPanel(QDialog):
         self.setWindowTitle(self.translator.get("progress_panel_title", "Pipeline Progress"))
         self.current_stage_label.setText(self.translator.get("progress_panel_initializing", "Initializing..."))
         self.details_tree_widget.setHeaderLabels([self.translator.get("progress_panel_audit_plan_details_header", "Audit Plan Details")])
-        # self.confirm_button.setText(self.translator.get("progress_panel_confirm_button", "Confirm and Start Checking Internal Documents")) # Removed
         self.cancel_button.setText(self.translator.get("progress_panel_cancel_button", "Cancel"))
 
         self.pipeline_stage_names = [
@@ -174,12 +169,6 @@ class ProgressPanel(QDialog):
             
             self.details_tree_widget.scrollToItem(clause_item)
 
-            # Enable confirm_button based on the audit_plan_generation_complete flag - REMOVED
-            # if message_data.audit_plan_generation_complete and self.confirm_button.text() != "Confirmed": # Removed
-            #      if not self.confirm_button.isEnabled(): # Removed
-            #         self.confirm_button.setEnabled(True) # Removed
-            #         logger.info("Audit plan display complete. Confirm button enabled via audit_plan_generation_complete flag.") # Removed
-
         elif isinstance(message_data, str): # Existing behavior for string messages
             log_message = f"[{percent_complete}%] {message_data}"
             elided_log_message = elide_long_id(log_message, max_length=150, font=self.details_tree_widget.font(), width_in_pixels=self.details_tree_widget.viewport().width() - 25)
@@ -198,13 +187,6 @@ class ProgressPanel(QDialog):
         self._user_cancelled = True
         self.cancelled.emit()
         self.reject()  # Close the dialog
-
-    # def _handle_confirm(self): # Removed
-    #     """Handles the confirm button click."""
-    #     self.audit_plan_confirmed.emit()
-    #     self.confirm_button.setEnabled(False) # Disable after clicking
-    #     self.confirm_button.setText(self.translator.get("progress_panel_confirmed_button", "Confirmed")) # Optional: Change text
-    #     logger.info("Audit plan confirmed by user.")
 
     def closeEvent(self, event):
         if not self._user_cancelled:

@@ -109,7 +109,6 @@ def run_project_pipeline_v1_1(project: CompareProject,
                               settings: PipelineSettings,
                               progress_callback: Callable[[float, Union[str, AuditPlanClauseUIData]], None],
                               cancel_cb: Callable[[], bool]):
-                              # confirm_event: Optional[threading.Event] = None): # Removed parameter
     """
     Main orchestrator for the V1.1 pipeline.
     """

@@ -73,7 +73,6 @@ class MainWindow(QMainWindow):
         self.translator = translator
         self.project_store = ProjectStore()
         self.threadpool = QThreadPool()
-        # self.pipeline_confirm_event = threading.Event() # Removed: No longer needed for pipeline pause/resume
         self._cancelled = False  # Added
         self._progress_panel: ProgressPanel | None = None  # Added
 
@@ -319,10 +318,8 @@ class MainWindow(QMainWindow):
         self.apply_theme()
 
         self._cancelled = False  # Reset cancellation flag for new run
-        # self.pipeline_confirm_event.clear() # Removed: No longer needed
         self._progress_panel = ProgressPanel(self.translator, self) # Pass translator
         self._progress_panel.cancelled.connect(self._handle_pipeline_cancellation)
-        # self._progress_panel.audit_plan_confirmed.connect(self._handle_audit_plan_confirmation) # Removed
         self._progress_panel.show()
 
         def task_wrapper(worker_signals: _Signals):
@@ -339,7 +336,6 @@ class MainWindow(QMainWindow):
                     self.settings,
                     progress_callback=progress_handler,
                     cancel_cb=self._is_pipeline_cancelled
-                    # confirm_event=self.pipeline_confirm_event # Removed: No longer needed
                 )
                 # For v1.1, primary output is run.json, not a single report_path from the pipeline function.
                 logger.info(f"Pipeline task finished for {proj.name}. Results are in {proj.run_json_path}")
@@ -440,15 +436,6 @@ class MainWindow(QMainWindow):
 
         proj.changed.emit() # Notify that project data (potentially project_run_data) has changed
         self.comparison_finished.emit(proj) # Notify workspace to update its view
-
-    # def _handle_audit_plan_confirmation(self): # Removed
-    #     """Slot for ProgressPanel's audit_plan_confirmed signal."""
-    #     logger.info("Audit plan confirmation received from ProgressPanel. Setting pipeline_confirm_event.")
-    #     self.pipeline_confirm_event.set()
-
-    # ------------------------------------------------------------------
-    # closeEvent is removed as Workspace handles its own splitter state.
-    # QMainWindow's default closeEvent is sufficient.
 
     def resizeEvent(self, event):
         """處理視窗大小改變事件"""

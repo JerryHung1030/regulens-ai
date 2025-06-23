@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    # QTabWidget, # Removed
     QStyle, # Already present, but QToolButton needs it too
     QFileDialog,
     QMessageBox,
@@ -31,8 +30,6 @@ from PySide6.QtCore import Signal, Qt, QSize # Added QSize
 from PySide6.QtGui import QTextOption, QColor, QFontMetrics # Added QColor and QFontMetrics
 
 from app.models.project import CompareProject
-# Models from assessments and old pipeline structure are no longer directly used here
-# from app.models.assessments import PairAssessment, TripleAssessment # Removed
 from app.models.docs import ExternalRegulationClause, AuditTask # For type hinting in new dialog
 from app.pipeline.pipeline_v1_1 import ProjectRunData, _load_run_json # For loading results
 from app.logger import logger
@@ -62,12 +59,10 @@ class StatsBarChart(QWidget):
 
         self.compliant_frame = QFrame(self)
         self.compliant_frame.setProperty("status", "compliant")
-        # self.compliant_frame.setObjectName("compliantBarSegment") # Alternative for QSS if property doesn't work well with themes
-        # self.compliant_frame.setStyleSheet("background-color: #28a745;") # Removed
         self.compliant_label = QLabel("0", self.compliant_frame)
         self.compliant_label.setAlignment(Qt.AlignCenter)
         self.compliant_label.setFont(get_display_font(size=9, weight_style='semi_bold'))
-        # self.compliant_label.setStyleSheet("color: white; font-weight: bold;") # Handled by QSS on QFrame
+
         compliant_layout = QHBoxLayout(self.compliant_frame)
         compliant_layout.addWidget(self.compliant_label)
         compliant_layout.setContentsMargins(5,0,5,0)
@@ -76,12 +71,10 @@ class StatsBarChart(QWidget):
 
         self.non_compliant_frame = QFrame(self)
         self.non_compliant_frame.setProperty("status", "non-compliant")
-        # self.non_compliant_frame.setObjectName("nonCompliantBarSegment")
-        # self.non_compliant_frame.setStyleSheet("background-color: #dc3545;") # Removed
+
         self.non_compliant_label = QLabel("0", self.non_compliant_frame)
         self.non_compliant_label.setAlignment(Qt.AlignCenter)
         self.non_compliant_label.setFont(get_display_font(size=9, weight_style='semi_bold'))
-        # self.non_compliant_label.setStyleSheet("color: white; font-weight: bold;") # Handled by QSS
         non_compliant_layout = QHBoxLayout(self.non_compliant_frame)
         non_compliant_layout.addWidget(self.non_compliant_label)
         non_compliant_layout.setContentsMargins(5,0,5,0)
@@ -168,7 +161,6 @@ class RunEvidenceDetailsDialog(QDialog):
     def __init__(self, clause: ExternalRegulationClause, translator, parent: QWidget | None = None): # task parameter removed
         super().__init__(parent)
         self.clause = clause
-        # self.task = task # Removed, dialog will show all tasks for the clause
         self.translator = translator # Store translator
 
         # 外規標題優先順序: title > text > id
@@ -260,8 +252,6 @@ class RunEvidenceDetailsDialog(QDialog):
         btn_h_layout.addStretch()
         btn_h_layout.addWidget(self.ok_button)
         main_dialog_layout.addLayout(btn_h_layout) # Add button layout to main_dialog_layout
-
-        # self.resize(700, 600) # Removed as setFixedSize is used
         
         self.translator.language_changed.connect(self._retranslate_ui)
         self._retranslate_ui() # Initial translation
