@@ -163,18 +163,18 @@ class StatsBarChart(QWidget):
 class RunEvidenceDetailsDialog(QDialog):
     """
     New dialog to display details from ProjectRunData:
-    ExternalRegulationClause text, AuditTask sentence, top_k evidence, and judge reasoning.
+    ExternalRegulationClause text, ALL its AuditTasks, their top_k evidence, and judge reasoning.
     """
-    def __init__(self, clause: ExternalRegulationClause, task: Optional[AuditTask], translator, parent: QWidget | None = None): # Added translator
+    def __init__(self, clause: ExternalRegulationClause, translator, parent: QWidget | None = None): # task parameter removed
         super().__init__(parent)
         self.clause = clause
-        self.task = task
+        # self.task = task # Removed, dialog will show all tasks for the clause
         self.translator = translator # Store translator
 
         # 外規標題優先順序: title > text > id
         self.clause_title_display = clause.title if getattr(clause, 'title', None) else (clause.text if getattr(clause, 'text', None) else clause.id)
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setFixedSize(700, 550) # Set fixed dialog size
+        self.setFixedSize(750, 650) # Increased dialog size for more content
 
         main_dialog_layout = QVBoxLayout(self) # This is the dialog's main layout
 
@@ -197,45 +197,56 @@ class RunEvidenceDetailsDialog(QDialog):
         self.clause_text_edit.setFixedHeight(100) # Keep fixed height, it has its own scroll
         content_layout.addWidget(self.clause_text_edit)
 
-        if self.task:
-            self.task_label = QLabel() # Text set in _retranslate_ui
-            self.task_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
-            content_layout.addWidget(self.task_label)
-            self.task_sentence_edit = QPlainTextEdit(self.task.sentence)
-            self.task_sentence_edit.setFont(get_display_font(size=10))
-            self.task_sentence_edit.setReadOnly(True)
-            self.task_sentence_edit.setFixedHeight(80) # Keep fixed height
-            content_layout.addWidget(self.task_sentence_edit)
+        # --- Section 2: Analysis Results (Overall Clause Assessment) ---
+        self.analysis_results_title_label = QLabel() # Key: "dialog_analysis_results_title"
+        self.analysis_results_title_label.setFont(get_display_font(size=12, weight_style='bold'))
+        content_layout.addWidget(self.analysis_results_title_label)
 
-            # --- 合規狀態/描述/建議區塊（提前到證據前） ---
-            self.reasoning_label = QLabel()
-            self.reasoning_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
-            self.reasoning_label.setTextFormat(Qt.RichText)
-            self.reasoning_label.setWordWrap(True)
-            self.reasoning_label.setAlignment(Qt.AlignTop)
-            content_layout.addWidget(self.reasoning_label)
+        self.overall_status_label = QLabel() # Key: "dialog_overall_clause_status_label" + status
+        self.overall_status_label.setFont(get_display_font(size=10))
+        self.overall_status_label.setWordWrap(True)
+        content_layout.addWidget(self.overall_status_label)
+        
+        self.overall_description_label = QLabel() # Key: "dialog_overall_clause_description_label"
+        self.overall_description_label.setFont(get_display_font(size=10, weight_style='semi_bold')) # Make it a sub-heading
+        content_layout.addWidget(self.overall_description_label)
+        self.overall_description_text = QPlainTextEdit() # Actual description
+        self.overall_description_text.setFont(get_display_font(size=10))
+        self.overall_description_text.setReadOnly(True)
+        self.overall_description_text.setFixedHeight(80) # Adjust as needed
+        content_layout.addWidget(self.overall_description_text)
 
-            # --- 證據區塊 ---
-            self.evidence_heading_label = QLabel()
-            self.evidence_heading_label.setFont(get_display_font(size=11, weight_style='semi_bold'))
-            content_layout.addWidget(self.evidence_heading_label)
+        self.overall_suggestions_label = QLabel() # Key: "dialog_overall_clause_suggestions_label"
+        self.overall_suggestions_label.setFont(get_display_font(size=10, weight_style='semi_bold')) # Make it a sub-heading
+        content_layout.addWidget(self.overall_suggestions_label)
+        self.overall_suggestions_text = QPlainTextEdit() # Actual suggestions
+        self.overall_suggestions_text.setFont(get_display_font(size=10))
+        self.overall_suggestions_text.setReadOnly(True)
+        self.overall_suggestions_text.setFixedHeight(80) # Adjust as needed
+        content_layout.addWidget(self.overall_suggestions_text)
 
-            self.evidence_items_container_widget = QWidget()
-            self.evidence_items_layout = QVBoxLayout(self.evidence_items_container_widget)
-            self.evidence_items_layout.setContentsMargins(0, 0, 0, 0)
-            self.evidence_items_layout.setSpacing(5) # Spacing between evidence items
-            content_layout.addWidget(self.evidence_items_container_widget)
-            
-            self.evidence_widgets_list = [] # To store button/details pairs
+        # --- Section 3: Evidence Details (Per Audit Task) ---
+        self.evidence_section_title_label = QLabel() # Key: "dialog_evidence_section_title"
+        self.evidence_section_title_label.setFont(get_display_font(size=12, weight_style='bold'))
+        content_layout.addWidget(self.evidence_section_title_label)
+        
+        # Container for all tasks (this will be the "Evidence Section" content)
+        self.tasks_container_widget = QWidget()
+        self.tasks_container_layout = QVBoxLayout(self.tasks_container_widget)
+        self.tasks_container_layout.setContentsMargins(0, 0, 0, 0) # No extra margins for the container itself
+        self.tasks_container_layout.setSpacing(10) 
+        content_layout.addWidget(self.tasks_container_widget)
+        
+        self.all_tasks_widgets_list = [] 
 
-            self.no_evidence_label = QLabel()
-            self.no_evidence_label.setObjectName("noEvidenceLabelForDialog")
-            self.no_evidence_label.setTextFormat(Qt.RichText)
-            self.no_evidence_label.setFont(get_display_font(size=10))
-            self.no_evidence_label.setVisible(False) # Initially hidden
-            self.evidence_items_layout.addWidget(self.no_evidence_label) # Add to the dynamic layout
-
-        content_layout.addStretch(1)
+        self.no_tasks_label = QLabel() # Placeholder if no tasks for evidence section
+        self.no_tasks_label.setObjectName("noTasksLabelForDialog")
+        self.no_tasks_label.setTextFormat(Qt.RichText)
+        self.no_tasks_label.setFont(get_display_font(size=10))
+        self.no_tasks_label.setVisible(False) 
+        # This will be added to tasks_container_layout in _retranslate_ui if needed
+        
+        content_layout.addStretch(1) 
         content_widget.setLayout(content_layout)
         scroll_area.setWidget(content_widget)
         main_dialog_layout.addWidget(scroll_area, 1)
@@ -257,106 +268,172 @@ class RunEvidenceDetailsDialog(QDialog):
 
     def _toggle_evidence_item(self, checked: bool, button: QToolButton, details_widget: QWidget):
         details_widget.setVisible(checked)
+        # button.setArrowType(Qt.DownArrow if checked else Qt.RightArrow) # Replaced by setIcon
         if checked:
             button.setIcon(self.style().standardIcon(QStyle.SP_ArrowDown))
         else:
             button.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+        # Attempting to color the icon green via stylesheet is tricky for standard icons.
+        # The stylesheet on the button itself would be:
+        # button.setStyleSheet("QToolButton { icon: green; }") /* This might not work for standard icons */
+        # Or more specifically targeting the icon sub-control if available.
+        # For now, we'll rely on the default icon color, or a theme might provide a green variant.
+        # A more robust way for specific green icons would be to load green PNGs.
 
     def _retranslate_ui(self):
-        # Clear previous dynamic evidence items
-        if hasattr(self, 'evidence_widgets_list'): # Ensure list exists
-            for w_dict in self.evidence_widgets_list:
-                if w_dict.get('button'): w_dict['button'].deleteLater()
-                if w_dict.get('details'): w_dict['details'].deleteLater()
-            self.evidence_widgets_list.clear()
+        # 1. Clear previous dynamic task and evidence items
+        for task_widget_dict in self.all_tasks_widgets_list:
+            if task_widget_dict.get('task_toggle_button'): task_widget_dict['task_toggle_button'].deleteLater()
+            if task_widget_dict.get('task_details_container'): task_widget_dict['task_details_container'].deleteLater()
+            # Evidence items within task_details_container will be deleted with their parent.
+        self.all_tasks_widgets_list.clear()
+        
+        # Also clear any direct children of self.tasks_container_layout not in all_tasks_widgets_list (like no_tasks_label if added directly)
+        while self.tasks_container_layout.count():
+            item = self.tasks_container_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
-        dialog_title_key = "run_evidence_details_title_task" if self.task else "run_evidence_details_title_clause"
-        default_title = f"Details: {self.clause_title_display}"
-        if self.task:
-            default_title += f" / Task: {self.task.id}" # Task ID is not translated
-        self.setWindowTitle(self.translator.get(dialog_title_key, default_title).format(clause_title=self.clause_title_display, task_id=self.task.id if self.task else ""))
-
+        # 2. Set Window Title and Clause Info (Static part)
+        self.setWindowTitle(self.translator.get("run_evidence_details_title_clause", "Details for Clause: {clause_title}").format(clause_title=self.clause_title_display))
         self.clause_label.setText(f"<b>{self.translator.get('external_regulation_clause_heading', 'ExternalRegulation Clause:')} {self.clause.id} - {self.clause_title_display}</b>")
 
-        if self.task:
-            self.task_label.setText(f"<b>{self.translator.get('audit_task_heading', 'Audit Task:')} {self.task.id}</b>")
+        # 3. Populate Section 2: Analysis Results (Overall Clause Assessment)
+        self.analysis_results_title_label.setText(f"<b>{self.translator.get('dialog_analysis_results_title', 'Analysis Results (Overall Clause Assessment)')}</b>")
+        
+        clause_compliant_status_val = self.clause.metadata.get('clause_compliant')
+        overall_status_text_display = self.translator.get('n_a', "N/A") # Default
+        if clause_compliant_status_val is True:
+            overall_status_text_display = self.translator.get("compliant_true_status", "Compliant")
+        elif clause_compliant_status_val is False:
+            overall_status_text_display = self.translator.get("compliant_false_status", "Non-Compliant")
+        elif self.clause.need_procedure is False : # If no procedure needed, can be considered N/A if not explicitly judged
+             overall_status_text_display = self.translator.get("compliant_na_status", "N/A (Procedure Not Required)")
+        elif clause_compliant_status_val is None: # Pending or not judged but procedure was needed
+            overall_status_text_display = self.translator.get("compliant_pending_status", "Pending")
 
-            # --- 合規狀態/描述/建議區塊 ---
-            compliance_desc = self.task.metadata.get('compliance_description', self.translator.get('reasoning_not_available', 'N/A'))
-            improvement_sugg = self.task.metadata.get('improvement_suggestions', self.translator.get('reasoning_not_available', 'N/A'))
-            compliant_status_text = "N/A"
-            if self.task.compliant is True: compliant_status_text = self.translator.get("compliant_true_status", "Compliant")
-            elif self.task.compliant is False: compliant_status_text = self.translator.get("compliant_false_status", "Non-Compliant")
-            else: compliant_status_text = self.translator.get("compliant_pending_status", "Pending")
-            reasoning_html = (
-                f"<b>{self.translator.get('compliance_status_heading', 'Compliance Status:')}</b> {compliant_status_text}<br><br>"
-                f"<b>{self.translator.get('compliance_description_heading', 'Compliance Description:')}</b><br><i>{compliance_desc}</i><br><br>"
-                f"<b>{self.translator.get('improvement_suggestions_heading', 'Improvement Suggestions:')}</b><br><i>{improvement_sugg}</i>"
-            )
-            if hasattr(self, 'reasoning_label'):
-                self.reasoning_label.setText(reasoning_html)
+        self.overall_status_label.setText(f"<b>{self.translator.get('dialog_overall_clause_status_label', 'Overall Clause Compliance Status:')}</b> {overall_status_text_display}")
+        
+        self.overall_description_label.setText(f"<b>{self.translator.get('dialog_overall_clause_description_label', 'Overall Clause Compliance Description:')}</b>")
+        self.overall_description_text.setPlainText(self.clause.metadata.get('clause_compliance_description', self.translator.get('reasoning_not_available', 'N/A')))
+        
+        self.overall_suggestions_label.setText(f"<b>{self.translator.get('dialog_overall_clause_suggestions_label', 'Overall Clause Improvement Suggestions:')}</b>")
+        self.overall_suggestions_text.setPlainText(self.clause.metadata.get('clause_improvement_suggestions', self.translator.get('reasoning_not_available', 'N/A')))
 
-            # --- 證據區塊 ---
-            self.evidence_heading_label.setVisible(True)
-            if self.task.top_k:
-                self.no_evidence_label.setVisible(False)
-                self.evidence_heading_label.setText(f"<b>{self.translator.get('retrieved_evidence_heading', 'Retrieved Evidence (Top K):')}</b>")
-                
-                for i, ev_item in enumerate(self.task.top_k):
-                    title_button = QToolButton()
-                    title_button.setCheckable(True)
-                    title_button.setChecked(False)
-                    title_button.setFont(get_display_font(size=10, weight_style='semi_bold'))
-                    title_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-                    title_button.setStyleSheet("QToolButton { border: none; text-align: left; padding: 2px; }")
-                    
-                    details_label = QLabel()
-                    details_label.setFont(get_display_font(size=10))
-                    details_label.setWordWrap(True)
-                    details_label.setVisible(False)
-                    details_label.setStyleSheet("QLabel { padding-left: 20px; background-color: transparent; }")
-                    details_label.setTextFormat(Qt.RichText)
+        # 4. Populate Section 3: Evidence Details (Per Audit Task)
+        self.evidence_section_title_label.setText(f"<b>{self.translator.get('dialog_evidence_section_title', 'Evidence Details (Per Audit Task)')}</b>")
 
-                    score_val = ev_item.get('score', 0.0)
-                    score_str = f"{score_val:.4f}" if isinstance(score_val, float) else str(score_val)
-                    source_pdf_short = elide_text(ev_item.get('source_pdf', self.translator.get('n_a', 'N/A')), 25)
-                    page_no = ev_item.get('page_no', self.translator.get('n_a', 'N/A'))
-                    
-                    title_text = self.translator.get('evidence_item_title_template', "Evidence {item_num}: {source_pdf} (Score: {score})").format(
-                        item_num=i+1, source_pdf=source_pdf_short, score=score_str
-                    )
-                    
-                    # Full source for details view
-                    full_source_pdf = ev_item.get('source_pdf', self.translator.get('n_a', 'N/A'))
-                    excerpt = ev_item.get('excerpt', self.translator.get('n_a', 'N/A')) # Excerpt is not elided here for full view
-                    details_html = (
-                        f"<b>{self.translator.get('source_label', 'Source')}:</b> {full_source_pdf} ({self.translator.get('page_label', 'Page')}: {page_no})<br>"
-                        f"<b>{self.translator.get('excerpt_label', 'Excerpt')}:</b><br><i>{excerpt}</i>"
-                    )
-
-                    title_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
-                    title_button.setText(title_text)
-                    details_label.setText(details_html)
-
-                    title_button.toggled.connect(
-                        lambda checked, btn=title_button, det=details_label: self._toggle_evidence_item(checked, btn, det)
-                    )
-                    
-                    # Insert before the self.no_evidence_label
-                    self.evidence_items_layout.insertWidget(self.evidence_items_layout.count() -1, title_button)
-                    self.evidence_items_layout.insertWidget(self.evidence_items_layout.count() -1, details_label)
-                    self.evidence_widgets_list.append({'button': title_button, 'details': details_label, 'data': ev_item})
-            else:
-                # No top_k items
-                self.evidence_heading_label.setText(f"<b>{self.translator.get('retrieved_evidence_heading', 'Retrieved Evidence (Top K):')}</b>") # Still show heading
-                self.no_evidence_label.setText(f"<i>{self.translator.get('no_evidence_found_message', 'No evidence found for this task.')}</i>")
-                self.no_evidence_label.setVisible(True)
+        if not self.clause.tasks:
+            self.no_tasks_label.setText(f"<i>{self.translator.get('no_audit_tasks_for_clause', 'No audit tasks defined for this clause.')}</i>")
+            self.tasks_container_layout.addWidget(self.no_tasks_label)
+            self.no_tasks_label.setVisible(True)
         else:
-            if hasattr(self, 'evidence_heading_label'): self.evidence_heading_label.setVisible(False)
-            if hasattr(self, 'no_evidence_label'): self.no_evidence_label.setVisible(False)
+            self.no_tasks_label.setVisible(False) 
+            for task_idx, task_data in enumerate(self.clause.tasks):
+                task_widgets = {}
+
+                # --- Level 1 Toggle: AuditTask Sentence ---
+                task_toggle_button = QToolButton()
+                task_toggle_button.setText(f"{self.translator.get('audit_task_label', 'Audit Task')} {task_data.id}: {task_data.sentence}")
+                task_toggle_button.setCheckable(True)
+                task_toggle_button.setChecked(False) 
+                task_toggle_button.setFont(get_display_font(size=10, weight_style='semi_bold')) # Normal size for task sentence
+                task_toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+                # task_toggle_button.setArrowType(Qt.RightArrow) # Replaced by setIcon
+                task_toggle_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+                task_toggle_button.setProperty("isToggle", True) # For QSS styling
+                task_toggle_button.setStyleSheet("""
+                    QToolButton[isToggle=true] { border: none; text-align: left; padding: 4px; }
+                    QToolButton[isToggle=true]::indicator { image: none; } /* Attempt to remove native arrow if any */
+                    /* Standard icon coloring is hard with QSS. This is a best effort.
+                       A more reliable method is using custom (e.g. SVG) icons. */
+                    QToolButton[isToggle=true] { icon-size: 12px; /* Adjust size if needed */ } 
+                    /* Placeholder for green icon - this specific QSS might not work directly on standard icons */
+                    /* QToolButton[isToggle=true] { qproperty-icon: url(path/to/green/arrow.svg); } */
+                    /* Forcing color on standard icons is difficult. We primarily rely on the setIcon call. */
+                """)
+
+                self.tasks_container_layout.addWidget(task_toggle_button)
+                task_widgets['task_toggle_button'] = task_toggle_button
+                
+                task_evidence_container = QWidget() # This container is for evidence items of this task
+                task_evidence_container.setVisible(False) 
+                task_evidence_layout = QVBoxLayout(task_evidence_container)
+                task_evidence_layout.setContentsMargins(20, 5, 0, 5) 
+                task_evidence_layout.setSpacing(5)
+                self.tasks_container_layout.addWidget(task_evidence_container)
+                task_widgets['task_details_container'] = task_evidence_container # Re-using key for consistency in cleanup
+
+                task_toggle_button.toggled.connect(
+                    lambda checked, btn=task_toggle_button, det=task_evidence_container: self._toggle_evidence_item(checked, btn, det)
+                )
+
+                # REMOVED: Task-specific compliance status, description, suggestions.
+                # These are now shown at the clause level in Section 2.
+
+                # --- Evidence List for this Task (within task_evidence_container) ---
+                # evidence_heading_for_task_label was here, can be removed or kept simple
+                # For simplicity, we'll let the evidence toggles speak for themselves.
+                # If needed, a small label "Found X evidence items:" can be added here.
+
+                if task_data.top_k:
+                    for ev_idx, ev_item in enumerate(task_data.top_k):
+                        # --- Level 2 Toggle: Evidence Item Summary ---
+                        score_val = ev_item.get('score', 0.0)
+                        score_str = f"{score_val:.4f}" if isinstance(score_val, float) else str(score_val)
+                        source_display_name = elide_text(ev_item.get('source_txt', self.translator.get('n_a', 'N/A')), 30) 
+                        page_no = ev_item.get('page_no', self.translator.get('n_a', 'N/A'))
+
+                        evidence_toggle_text = self.translator.get('evidence_item_title_template_dialog', "Evidence {item_num}: {source_file} (Page: {page}, Score: {score})").format(
+                            item_num=ev_idx + 1, source_file=source_display_name, page=page_no, score=score_str
+                        )
+                        evidence_toggle_button = QToolButton()
+                        evidence_toggle_button.setText(evidence_toggle_text)
+                        evidence_toggle_button.setCheckable(True)
+                        evidence_toggle_button.setChecked(False) 
+                        evidence_toggle_button.setFont(get_display_font(size=10, weight_style='normal'))
+                        evidence_toggle_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+                        # evidence_toggle_button.setArrowType(Qt.RightArrow) # Replaced by setIcon
+                        evidence_toggle_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowRight))
+                        evidence_toggle_button.setProperty("isToggle", True) # For QSS styling
+                        evidence_toggle_button.setStyleSheet("""
+                            QToolButton[isToggle=true] { border: none; text-align: left; padding: 3px; margin-left: 0px; }
+                            QToolButton[isToggle=true]::indicator { image: none; }
+                            QToolButton[isToggle=true] { icon-size: 12px; }
+                        """)
+                        task_evidence_layout.addWidget(evidence_toggle_button)
+                        
+                        # --- Level 3 Content: Evidence Details (Excerpt) ---
+                        full_source_file = ev_item.get('source_txt', self.translator.get('n_a', 'N/A')) 
+                        excerpt = ev_item.get('excerpt', self.translator.get('n_a', 'N/A'))
+                        evidence_details_html = (
+                             f"<b>{self.translator.get('source_label', 'Source')}:</b> {full_source_file}<br>"
+                             f"<b>{self.translator.get('page_label', 'Page')}:</b> {page_no}<br>"
+                             f"<b>{self.translator.get('score_label', 'Score')}:</b> {score_str}<br>"
+                             f"<b>{self.translator.get('excerpt_label', 'Excerpt')}:</b><br><i>{excerpt}</i>"
+                        )
+                        evidence_detail_label = QLabel(evidence_details_html)
+                        evidence_detail_label.setFont(get_display_font(size=10))
+                        evidence_detail_label.setWordWrap(True)
+                        evidence_detail_label.setTextFormat(Qt.RichText)
+                        evidence_detail_label.setVisible(False) 
+                        evidence_detail_label.setStyleSheet("QLabel { padding-left: 20px; background-color: transparent; }") # Indent L3 content
+                        task_evidence_layout.addWidget(evidence_detail_label)
+
+                        evidence_toggle_button.toggled.connect(
+                            lambda checked, btn=evidence_toggle_button, det=evidence_detail_label: self._toggle_evidence_item(checked, btn, det)
+                        )
+                else:
+                    no_evidence_for_task_label = QLabel(f"<i>{self.translator.get('no_evidence_found_for_task_message', 'No evidence found for this specific task.')}</i>")
+                    no_evidence_for_task_label.setFont(get_display_font(size=10))
+                    # no_evidence_for_task_label.setStyleSheet("QLabel { margin-left: 10px; }") # No extra indent if it's the only thing
+                    task_evidence_layout.addWidget(no_evidence_for_task_label)
+                
+                self.all_tasks_widgets_list.append(task_widgets)
         
         self.ok_button.setText(self.translator.get("ok_button_text", "OK"))
-        logger.debug("RunEvidenceDetailsDialog UI retranslated")
+        logger.debug("RunEvidenceDetailsDialog UI retranslated with distinct Analysis and Evidence sections.")
 
 
 class EvidenceDetailsDialog(QDialog): # Old dialog
@@ -435,8 +512,8 @@ class ResultsViewer(QWidget):
         # _retranslate_ui() # Called by _refresh via _build_ui
         logger.debug("ResultsViewer initialization completed")
 
-    def _show_evidence_details_dialog(self, clause_id: str, task_id: Optional[str]):
-        logger.debug(f"Showing details for ExternalRegulation Clause ID: {clause_id}, Task ID: {task_id}")
+    def _show_evidence_details_dialog(self, clause_id: str, _task_id: Optional[str] = None): # task_id is no longer used here
+        logger.debug(f"Showing details for ExternalRegulation Clause ID: {clause_id}")
         
         if not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
             QMessageBox.warning(self, 
@@ -456,19 +533,9 @@ class ResultsViewer(QWidget):
                                 self.translator.get("external_regulation_clause_not_found_text", "ExternalRegulation Clause {clause_id} not found.").format(clause_id=clause_id))
             return
 
-        target_task: Optional[AuditTask] = None
-        if task_id:
-            for t_idx, t_val in enumerate(target_clause.tasks):
-                if t_val.id == task_id:
-                    target_task = t_val
-                    break
-            if not target_task:
-                 QMessageBox.warning(self, 
-                                     self.translator.get("data_error_title", "Data Error"), 
-                                     self.translator.get("audit_task_not_found_text", "Audit Task {task_id} not found in clause {clause_id}.").format(task_id=task_id, clause_id=clause_id))
-                 return
-        
-        dialog = RunEvidenceDetailsDialog(clause=target_clause, task=target_task, translator=self.translator, parent=self)
+        # The dialog will now handle displaying all tasks for the clause.
+        # The specific task_id is not needed to select a single task anymore.
+        dialog = RunEvidenceDetailsDialog(clause=target_clause, translator=self.translator, parent=self)
         dialog.exec_()
 
 
@@ -562,14 +629,14 @@ class ResultsViewer(QWidget):
         self.table_widget.setAlternatingRowColors(True)
         self.table_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # Column headers set in _retranslate_ui
+        # Column headers set in _retranslate_ui - "Audit Task" column removed
         self.column_headers_keys = [
             "col_external_regulation_id", "col_external_regulation_title", "col_requires_procedure",
-            "col_audit_task", "col_compliance_status", "col_details"
+            "col_clause_compliance_status", "col_details" # Changed col_compliance_status to col_clause_compliance_status
         ]
         self.column_headers_defaults = [
             "ExternalRegulation ID", "ExternalRegulation Title", "Requires Procedure?",
-            "Audit Task", "Compliance Status", "Details"
+            "Clause Compliance Status", "Details" # Changed "Compliance Status"
         ]
         self.table_widget.setColumnCount(len(self.column_headers_keys))
         # self.table_widget.setHorizontalHeaderLabels(...) # Done in _retranslate_ui
@@ -724,19 +791,22 @@ class ResultsViewer(QWidget):
             return
 
         table_font = get_display_font(size=10) # Ensure this uses display_font for all items
-        current_row = 0
-        for clause in self.project.project_run_data.external_regulation_clauses:
-            self.table_widget.insertRow(current_row)
+        current_row_index = 0
+        for clause_idx, clause in enumerate(self.project.project_run_data.external_regulation_clauses):
+            self.table_widget.insertRow(current_row_index)
             
-            item_clause_id = QTableWidgetItem(clause.id) # ID is not translated
-            item_clause_id.setFont(table_font) # Font set by table_widget default or explicitly here
-            self.table_widget.setItem(current_row, 0, item_clause_id)
+            # Column 0: ExternalRegulation ID
+            item_clause_id = QTableWidgetItem(clause.id)
+            item_clause_id.setFont(table_font)
+            self.table_widget.setItem(current_row_index, 0, item_clause_id)
 
-            external_regulation_title_text = clause.title if clause.title else clause.text # Title/text not translated here
-            item_external_regulation_title = QTableWidgetItem(elide_text(external_regulation_title_text, max_length=70))
+            # Column 1: ExternalRegulation Title
+            external_regulation_title_text = clause.title if clause.title else clause.text
+            item_external_regulation_title = QTableWidgetItem(elide_text(external_regulation_title_text, max_length=100)) # Increased max_length
             item_external_regulation_title.setFont(table_font)
-            self.table_widget.setItem(current_row, 1, item_external_regulation_title)
+            self.table_widget.setItem(current_row_index, 1, item_external_regulation_title)
 
+            # Column 2: Requires Procedure?
             item_requires_proc = QTableWidgetItem()
             item_requires_proc.setTextAlignment(Qt.AlignCenter)
             item_requires_proc.setFont(table_font)
@@ -748,59 +818,55 @@ class ResultsViewer(QWidget):
                 item_requires_proc.setText(self.translator.get("no", "No"))
                 item_requires_proc.setBackground(QColor(theme_colors.get("requires_procedure_no_color", "#6c757d")))
                 item_requires_proc.setForeground(QColor(theme_colors.get("text_color_on_primary", "#ffffff")))
-            else:
-                item_requires_proc.setText(self.translator.get("n_a", "N/A")) # n_a already exists
-                # Apply badge styling for N/A
+            else: # N/A or None
+                item_requires_proc.setText(self.translator.get("n_a", "N/A"))
                 item_requires_proc.setBackground(QColor(theme_colors.get("status_na_color", "#6c757d")))
                 item_requires_proc.setForeground(QColor(theme_colors.get("text_color_on_disabled", "#ffffff")))
-            self.table_widget.setItem(current_row, 2, item_requires_proc)
+            self.table_widget.setItem(current_row_index, 2, item_requires_proc)
             
-            task = clause.tasks[0] if clause.tasks else None
-            task_sentence_display = elide_text(task.sentence, max_length=70) if task else self.translator.get("n_a", "N/A")
-            item_audit_task = QTableWidgetItem(task_sentence_display) # Sentence not translated here
-            item_audit_task.setFont(table_font)
-            self.table_widget.setItem(current_row, 3, item_audit_task)
+            # Column 3: Clause Compliance Status
+            item_clause_compliance_status = QTableWidgetItem()
+            item_clause_compliance_status.setTextAlignment(Qt.AlignCenter)
+            item_clause_compliance_status.setFont(table_font)
+            
+            clause_compliant = clause.metadata.get('clause_compliant') # From Step 4: Judge
+            if clause_compliant is True:
+                item_clause_compliance_status.setText(self.translator.get("compliant_true_long", "Compliant"))
+                item_clause_compliance_status.setBackground(QColor(theme_colors.get("status_compliant_color", "#d4edda")))
+                item_clause_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_primary", "#155724")))
+            elif clause_compliant is False:
+                item_clause_compliance_status.setText(self.translator.get("compliant_false_long", "Non-Compliant"))
+                item_clause_compliance_status.setBackground(QColor(theme_colors.get("status_non_compliant_color", "#f8d7da")))
+                item_clause_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_danger", "#721c24")))
+            elif clause.need_procedure is False : # Not applicable if no procedure needed and no tasks.
+                item_clause_compliance_status.setText(self.translator.get("n_a", "N/A"))
+                item_clause_compliance_status.setBackground(QColor(theme_colors.get("status_na_color", "#f0f0f0")))
+                item_clause_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_disabled", "#000000")))
+            else: # Pending or not yet judged
+                item_clause_compliance_status.setText(self.translator.get("compliant_pending_long", "Pending"))
+                item_clause_compliance_status.setBackground(QColor(theme_colors.get("status_pending_color", "#fff3cd")))
+                item_clause_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_warning", "#856404")))
+            self.table_widget.setItem(current_row_index, 3, item_clause_compliance_status)
 
-            item_compliance_status = QTableWidgetItem()
-            item_compliance_status.setTextAlignment(Qt.AlignCenter)
-            item_compliance_status.setFont(table_font)
-            if task:
-                if task.compliant is True:
-                    item_compliance_status.setText(self.translator.get("compliant_true_long", "Compliant"))
-                    item_compliance_status.setBackground(QColor(theme_colors.get("status_compliant_color", "#d4edda")))
-                    item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_primary", "#155724")))
-                elif task.compliant is False:
-                    item_compliance_status.setText(self.translator.get("compliant_false_long", "Non-Compliant"))
-                    item_compliance_status.setBackground(QColor(theme_colors.get("status_non_compliant_color", "#f8d7da")))
-                    item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_danger", "#721c24")))
-                else: # Pending
-                    item_compliance_status.setText(self.translator.get("compliant_pending_long", "Pending"))
-                    item_compliance_status.setBackground(QColor(theme_colors.get("status_pending_color", "#fff3cd")))
-                    item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_warning", "#856404")))
-            else: # N/A for compliance status
-                item_compliance_status.setText(self.translator.get("n_a", "N/A"))
-                item_compliance_status.setBackground(QColor(theme_colors.get("status_na_color", "#f0f0f0"))) # Default to a light gray if not in theme
-                item_compliance_status.setForeground(QColor(theme_colors.get("text_color_on_disabled", "#000000"))) # Default to black if not in theme
-            self.table_widget.setItem(current_row, 4, item_compliance_status)
-
+            # Column 4: Details Button
             details_button = QPushButton(self.translator.get("view_details_button", "View Details"))
             details_button.setObjectName("viewDetailsButton")
-            details_button.setFont(get_display_font(size=10)) # Apply font to button in table
-            current_task_id = task.id if task else None # Task ID not translated
+            details_button.setFont(get_display_font(size=10))
+            # Pass clause.id and task_id=None. The dialog will handle showing all tasks for the clause.
             details_button.clicked.connect(
-                lambda checked=False, c_id=clause.id, t_id=current_task_id: self._show_evidence_details_dialog(c_id, t_id)
+                lambda checked=False, c_id=clause.id: self._show_evidence_details_dialog(c_id, None)
             )
-            self.table_widget.setCellWidget(current_row, 5, details_button)
+            self.table_widget.setCellWidget(current_row_index, 4, details_button) # Index 4 for details
             
-            current_row += 1
+            current_row_index += 1
 
         self.table_widget.resizeColumnsToContents()
-        if self.table_widget.columnCount() > 1:
+        # Adjust stretching: ExternalRegulation Title (column 1) is a good candidate for stretching.
+        if self.table_widget.columnCount() > 1: 
             self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        if self.table_widget.columnCount() > 3:
-            self.table_widget.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        # No longer have audit task sentence column to stretch.
         
-        logger.info(f"ResultsViewer table populated with {current_row} rows. Statistics updated via _refresh_summary_labels called from _retranslate_ui.")
+        logger.info(f"ResultsViewer table populated with {current_row_index} rows (one per clause). Statistics updated via _refresh_summary_labels.")
         self.table_widget.viewport().update()
 
 

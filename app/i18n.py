@@ -10,7 +10,7 @@ MESSAGES = {
         "external_regulation_requirement_text": "External Regulation Requirement Text:",
         "no_procedures_assessed": "No procedures were assessed under this external_regulation.",
         "section_procedure": "Procedure: {proc_name} (`{proc_id}`)",
-        "procedure_text": "Procedure Text:",  # This is for the actual content of the procedure
+        "procedure_text": "Procedure Text:",
         "procedure_assessment_summary": "Procedure Assessment Summary:",
         "overall_aggregated_status": "Overall Aggregated Status:",
         "calculated_overall_score": "Calculated Overall Score:",
@@ -18,7 +18,6 @@ MESSAGES = {
         "detailed_evidence_assessments": "Detailed Evidence Assessments for this Procedure:",
         "evidence_assessment_n": "Evidence Assessment {index}",
         "evidence_document_name": "Evidence Document: {evidence_name} (`{evidence_id}`)",
-        # "evidence_chunk_id": "Evidence Chunk ID:", # Removed as per plan to not show chunk_id if snippet is shown
         "evidence_text_snippet": "Evidence Text Snippet:",
         "status": "Status:",
         "llm_confidence_score": "LLM Confidence Score:",
@@ -73,7 +72,6 @@ MESSAGES = {
         "main_action_exit": "E&xit",
         "main_menu_help": "&Help",
         "main_action_show_introduction": "Show &Introduction",
-        # Introduction Page (New Translations)
         "intro_subtitle_v2": "Harness the power of AI to navigate, understand, and manage complex regulatory landscapes with unparalleled efficiency and precision.",
         "intro_core_pipeline_title": "System Functions",
         "intro_pipeline_step1_title_v2": "1. Secure Document Upload",
@@ -105,27 +103,26 @@ MESSAGES = {
         "intro_feature5_title": "Report Generation",
         "intro_feature5_desc": "Creates CSV reports with regulations, procedural needs, queries, status, and original paragraphs.",
         "intro_feature5_text": "Report Generation: Creates CSV reports with regulations, procedural needs, queries, status, and original paragraphs.",
-        # Old intro keys
-        "intro_subtitle": "<p style='margin:0px;'>Compliance document comparison, one-click audit report generation</p>", # Old
-        "intro_workflow_title": "<h2>Workflow</h2>", # Old
-        "intro_workflow_step1_title": "External Regulations, Procedures, Evidence", # Old
-        "intro_workflow_step1_desc": "Upload your compliance documents", # Old
-        "intro_workflow_step2_title": "Processing", # Old
-        "intro_workflow_step2_desc": "Normalization, Vectorization, Indexing", # Old
-        "intro_workflow_step3_title": "LLM Assessment", # Old
-        "intro_workflow_step3_desc": "AI-powered evaluation", # Old
-        "intro_workflow_step4_title": "Audit Report", # Old
-        "intro_workflow_step4_desc": "Markdown & PDF output", # Old
-        "intro_data_journey_title": "<h3>Data Journey</h3>", # Old
-        "intro_data_journey_item1": "<strong>Ingestion:</strong> Supports TXT (PDF/CSV TBC)", # Old
-        "intro_data_journey_item2": "<strong>Embedding:</strong> OpenAI text-embedding-3-large", # Old
-        "intro_data_journey_item3": "<strong>Retrieval:</strong> FAISS k-NN similarity search", # Old
-        "intro_data_journey_item4": "<strong>Assessment:</strong> GPT-4o for Pass / Partial / Fail", # Old
-        "intro_data_journey_item5": "<strong>Report:</strong> Markdown → Optional PDF", # Old
-        "intro_trust_title": "<h3>Why Trust Regulens-AI?</h3>", # Old
-        "intro_trust_item1": "✅ <strong>Offline Capability:</strong> Supports pipeline and can run offline.", # Old
-        "intro_trust_item2": "🔒 <strong>Robust Caching:</strong> Content hashing & vector indexing.", # Old
-        "intro_trust_item3": "🔍 <strong>Full Traceability:</strong> Detailed logs in logs/ and output/.", # Old
+        "intro_subtitle": "<p style='margin:0px;'>Compliance document comparison, one-click audit report generation</p>", 
+        "intro_workflow_title": "<h2>Workflow</h2>", 
+        "intro_workflow_step1_title": "External Regulations, Procedures, Evidence", 
+        "intro_workflow_step1_desc": "Upload your compliance documents", 
+        "intro_workflow_step2_title": "Processing", 
+        "intro_workflow_step2_desc": "Normalization, Vectorization, Indexing", 
+        "intro_workflow_step3_title": "LLM Assessment", 
+        "intro_workflow_step3_desc": "AI-powered evaluation", 
+        "intro_workflow_step4_title": "Audit Report", 
+        "intro_workflow_step4_desc": "Markdown & PDF output", 
+        "intro_data_journey_title": "<h3>Data Journey</h3>", 
+        "intro_data_journey_item1": "<strong>Ingestion:</strong> Supports TXT (PDF/CSV TBC)", 
+        "intro_data_journey_item2": "<strong>Embedding:</strong> OpenAI text-embedding-3-large", 
+        "intro_data_journey_item3": "<strong>Retrieval:</strong> FAISS k-NN similarity search", 
+        "intro_data_journey_item4": "<strong>Assessment:</strong> GPT-4o for Pass / Partial / Fail", 
+        "intro_data_journey_item5": "<strong>Report:</strong> Markdown → Optional PDF", 
+        "intro_trust_title": "<h3>Why Trust Regulens-AI?</h3>", 
+        "intro_trust_item1": "✅ <strong>Offline Capability:</strong> Supports pipeline and can run offline.", 
+        "intro_trust_item2": "🔒 <strong>Robust Caching:</strong> Content hashing & vector indexing.", 
+        "intro_trust_item3": "🔍 <strong>Full Traceability:</strong> Detailed logs in logs/ and output/.", 
         "intro_get_started_button": "Get Started",
         "config_incomplete_title": "Configuration Incomplete",
         "config_incomplete_text": "Please set OpenAI API Key and model parameters to proceed.",
@@ -150,7 +147,6 @@ MESSAGES = {
         "progress_panel_title": "Pipeline Progress",
         "progress_panel_initializing": "Initializing...",
         "progress_panel_audit_plan_details_header": "Audit Plan Details",
-        # "progress_panel_confirm_button": "Confirm and Start Checking Internal Documents", # Removed
         "progress_panel_cancel_button": "Cancel",
         "progress_stage_initializing": "Initializing Pipeline",
         "progress_stage_need_check": "Need-Check",
@@ -160,7 +156,6 @@ MESSAGES = {
         "progress_stage_unknown": "Unknown Stage",
         "progress_panel_current_stage_label": "Current Stage: {stage_name} ({percent_complete}%)",
         "progress_panel_no_audit_needed": "No audit needed for this clause.",
-        # "progress_panel_confirmed_button": "Confirmed", # Removed
         "project_editor_rename_tooltip": "Rename project",
         "project_editor_delete_tooltip": "Delete project",
         "project_editor_external_regulations_json_label": "External Regulations JSON File:",
@@ -196,21 +191,23 @@ MESSAGES = {
         "delete_project_dialog_title": "Delete project",
         "delete_project_dialog_text": "Delete \"{project_name}\"?",
         "run_evidence_details_title_task": "Details: {clause_title} / Task: {task_id}",
-        "run_evidence_details_title_clause": "Details: {clause_title}",
+        "run_evidence_details_title_clause": "Details for Clause: {clause_title}",
         "external_regulation_clause_heading": "External Regulation Clause:",
-        "audit_task_heading": "Audit Task:",
-        "retrieved_evidence_heading": "Retrieved Evidence (Top K):",
+        "audit_task_heading": "Audit Task:", # Old, but might be reused if individual task details come back
+        "retrieved_evidence_heading": "Retrieved Evidence (Top K):", # Old, contextually replaced by per-task headings
         "evidence_item_label": "Evidence",
         "source_label": "Source",
         "page_label": "Page",
+        "score_label": "Score", # Added for evidence item details
         "excerpt_label": "Excerpt",
-        "no_evidence_found_message": "No evidence found for this task.",
+        "no_evidence_found_message": "No evidence found for this task.", # Old, now "no_evidence_found_for_task_message"
         "reasoning_not_available": "N/A",
         "compliant_true_status": "Compliant",
         "compliant_false_status": "Non-Compliant",
         "compliant_pending_status": "Pending",
-        "compliance_status_heading": "Compliance Status:",
-        "llm_reasoning_heading": "LLM Reasoning:",
+        "compliant_na_status": "N/A (Procedure Not Required)", # New specific N/A status
+        "compliance_status_heading": "Compliance Status:", # Old, now used for overall clause
+        "llm_reasoning_heading": "LLM Reasoning:", # Potentially for future use
         "ok_button_text": "OK",
         "analysis_results_title": "Analysis Results",
         "analysis_results_for_project_title": "Analysis Results for: {project_name}",
@@ -224,8 +221,9 @@ MESSAGES = {
         "col_external_regulation_id": "External Regulation ID",
         "col_external_regulation_title": "External Regulation Title",
         "col_requires_procedure": "Requires Procedure?",
-        "col_audit_task": "Audit Task",
-        "col_compliance_status": "Compliance Status",
+        "col_audit_task": "Audit Task", # No longer in main table
+        "col_clause_compliance_status": "Clause Compliance Status", # New for main table
+        "col_compliance_status": "Compliance Status", # Old, effectively replaced by clause_compliance_status in table
         "data_error_title": "Data Error",
         "project_run_data_not_loaded_text": "Project run data not loaded.",
         "external_regulation_clause_not_found_text": "External Regulation Clause {clause_id} not found.",
@@ -233,9 +231,9 @@ MESSAGES = {
         "no_data_available": "No analysis data available. Please run the pipeline.",
         "yes": "Yes",
         "no": "No",
-        "compliant_true_long": "Compliant",
-        "compliant_false_long": "Non-Compliant",
-        "compliant_pending_long": "Pending",
+        "compliant_true_long": "Compliant", # Used in table
+        "compliant_false_long": "Non-Compliant", # Used in table
+        "compliant_pending_long": "Pending", # Used in table
         "view_details_button": "View Details",
         "untitled_project_csv_default": "Untitled_Project",
         "audit_results_csv_default_filename": "{project_name}_audit_results_{timestamp}.csv",
@@ -309,8 +307,19 @@ MESSAGES = {
         "csv_header_evidence_score": "Evidence Score",
         "col_details": "Details",
         "project_name_empty_error": "Project name cannot be empty.",
-        "compliance_description_heading": "Compliance Description",
-        "improvement_suggestions_heading": "Improvement Suggestions"
+        "compliance_description_heading": "Compliance Description", # Used for task-level in old dialog, now for clause-level
+        "improvement_suggestions_heading": "Improvement Suggestions", # Used for task-level in old dialog, now for clause-level
+        # New keys for RunEvidenceDetailsDialog restructuring
+        "dialog_analysis_results_title": "Analysis Results (Overall Clause Assessment)",
+        "dialog_overall_clause_status_label": "Overall Clause Compliance Status:",
+        "dialog_overall_clause_description_label": "Overall Clause Compliance Description:",
+        "dialog_overall_clause_suggestions_label": "Overall Clause Improvement Suggestions:",
+        "dialog_evidence_section_title": "Evidence Details (Per Audit Task)",
+        "audit_task_label": "Audit Task", # Already exists, but confirmed usage for new task toggles
+        "retrieved_evidence_heading_for_task": "Retrieved Evidence for this Task: ({count})", # Already exists, confirmed usage
+        "evidence_item_title_template_dialog": "Evidence {item_num}: {source_file} (Page: {page}, Score: {score})", # New for dialog evidence toggle
+        "no_evidence_found_for_task_message": "No evidence found for this specific task.", # New or refined from "no_evidence_found_message"
+        "no_audit_tasks_for_clause": "No audit tasks defined for this clause." # New
     },
     "zh": {  # Traditional Chinese (Taiwan)
         "report_title": "合規報告",
@@ -385,7 +394,6 @@ MESSAGES = {
         "main_action_exit": "結束（&X）",
         "main_menu_help": "&說明",
         "main_action_show_introduction": "顯示 &介紹",
-        # Introduction Page (New Translations)
         "intro_subtitle_v2": "利用人工智能的力量，以前所未有的效率和精度導航、理解和管理複雜的監管環境。",
         "intro_core_pipeline_title": "系統功能",
         "intro_pipeline_step1_title_v2": "1. 安全文件上傳",
@@ -394,7 +402,7 @@ MESSAGES = {
         "intro_pipeline_step2_desc_v2": "利用先進的AI算法對您的文件進行深入的文本提取、結構識別和語義分析。Regulens-AI能夠精確定位關鍵信息，為您節省寶貴時間。",
         "intro_pipeline_step3_title_v2": "3. 可行性洞察生成",
         "intro_pipeline_step3_desc_v2": "接收AI驅動的摘要、提取的義務、潛在風險和關鍵定義。我們的系統將複雜的專業術語轉化為清晰、可操作的見解。",
-        "intro_pipeline_step4_title_v2": "4. 交互式審查与導出", # Original was "交互式審查與導出" - checking if this change is intended or if it should be "與"
+        "intro_pipeline_step4_title_v2": "4. 交互式審查与導出", 
         "intro_pipeline_step4_desc_v2": "通過直觀的界面與分析過的內容進行互動。審查AI生成的見解，利用問答功能進行澄清，並以方便的格式導出您的發現。",
         "intro_key_features_title": "功能模組",
         "intro_feature1_icon": "🔍",
@@ -417,27 +425,26 @@ MESSAGES = {
         "intro_feature5_title": "報表產出",
         "intro_feature5_desc": "生成CSV報告，包含外規、程序化需求、查詢句、合規狀態及原始段落。",
         "intro_feature5_text": "報表產出：生成CSV報告，包含外規、程序化需求、查詢句、合規狀態及原始段落。",
-        # Old intro keys - Chinese
-        "intro_subtitle": "<p style='margin:0px;'>合規文件比對，一鍵產出稽核報告</p>", # Old
-        "intro_workflow_title": "<h2>工作流程</h2>", # Old
-        "intro_workflow_step1_title": "外規、程序、證據", # Old
-        "intro_workflow_step1_desc": "上傳您的合規文件", # Old
-        "intro_workflow_step2_title": "處理中", # Old
-        "intro_workflow_step2_desc": "標準化、向量化、索引化", # Old
-        "intro_workflow_step3_title": "LLM 評估", # Old
-        "intro_workflow_step3_desc": "AI 驅動的評估", # Old
-        "intro_workflow_step4_title": "稽核報告", # Old
-        "intro_workflow_step4_desc": "Markdown 及 PDF 輸出", # Old
-        "intro_data_journey_title": "<h3>資料流程</h3>", # Old
-        "intro_data_journey_item1": "<strong>擷取：</strong>支援 TXT（PDF/CSV 後續支援）", # Old
-        "intro_data_journey_item2": "<strong>嵌入：</strong>OpenAI text-embedding-3-large", # Old
-        "intro_data_journey_item3": "<strong>檢索：</strong>FAISS k-NN 相似性搜尋", # Old
-        "intro_data_journey_item4": "<strong>評估：</strong>GPT-4 進行 通過 / 部分符合 / 失敗 判斷", # Old
-        "intro_data_journey_item5": "<strong>報告：</strong>Markdown → 選填 PDF", # Old
-        "intro_trust_title": "<h3>為什麼信任 Regulens-AI？</h3>", # Old
-        "intro_trust_item1": "✅ <strong>離線能力：</strong>支援 pipeline 並可離線執行。", # Old
-        "intro_trust_item2": "🔒 <strong>穩健快取：</strong>內容雜湊與向量索引。", # Old
-        "intro_trust_item3": "🔍 <strong>完整可追溯性：</strong>logs/ 與 output/ 中的詳細日誌。", # Old
+        "intro_subtitle": "<p style='margin:0px;'>合規文件比對，一鍵產出稽核報告</p>", 
+        "intro_workflow_title": "<h2>工作流程</h2>", 
+        "intro_workflow_step1_title": "外規、程序、證據", 
+        "intro_workflow_step1_desc": "上傳您的合規文件", 
+        "intro_workflow_step2_title": "處理中", 
+        "intro_workflow_step2_desc": "標準化、向量化、索引化", 
+        "intro_workflow_step3_title": "LLM 評估", 
+        "intro_workflow_step3_desc": "AI 驅動的評估", 
+        "intro_workflow_step4_title": "稽核報告", 
+        "intro_workflow_step4_desc": "Markdown 及 PDF 輸出", 
+        "intro_data_journey_title": "<h3>資料流程</h3>", 
+        "intro_data_journey_item1": "<strong>擷取：</strong>支援 TXT（PDF/CSV 後續支援）", 
+        "intro_data_journey_item2": "<strong>嵌入：</strong>OpenAI text-embedding-3-large", 
+        "intro_data_journey_item3": "<strong>檢索：</strong>FAISS k-NN 相似性搜尋", 
+        "intro_data_journey_item4": "<strong>評估：</strong>GPT-4 進行 通過 / 部分符合 / 失敗 判斷", 
+        "intro_data_journey_item5": "<strong>報告：</strong>Markdown → 選填 PDF", 
+        "intro_trust_title": "<h3>為什麼信任 Regulens-AI？</h3>", 
+        "intro_trust_item1": "✅ <strong>離線能力：</strong>支援 pipeline 並可離線執行。", 
+        "intro_trust_item2": "🔒 <strong>穩健快取：</strong>內容雜湊與向量索引。", 
+        "intro_trust_item3": "🔍 <strong>完整可追溯性：</strong>logs/ 與 output/ 中的詳細日誌。", 
         "intro_get_started_button": "開始使用",
         "config_incomplete_title": "組態設定不完整",
         "config_incomplete_text": "請先設定 OpenAI API Key 與模型參數，才能執行比較",
@@ -462,7 +469,6 @@ MESSAGES = {
         "progress_panel_title": "流程進度",
         "progress_panel_initializing": "初始化中...",
         "progress_panel_audit_plan_details_header": "稽核計畫詳情",
-        # "progress_panel_confirm_button": "確認並開始檢查內部文件", # Removed
         "progress_panel_cancel_button": "取消",
         "progress_stage_initializing": "初始化流程中",
         "progress_stage_need_check": "需求確認",
@@ -472,7 +478,6 @@ MESSAGES = {
         "progress_stage_unknown": "未知階段",
         "progress_panel_current_stage_label": "目前階段：{stage_name} ({percent_complete}%)",
         "progress_panel_no_audit_needed": "此條文無須制定稽核計畫。",
-        # "progress_panel_confirmed_button": "已確認", # Removed
         "project_editor_rename_tooltip": "重新命名專案",
         "project_editor_delete_tooltip": "刪除專案",
         "project_editor_external_regulations_json_label": "外規 JSON 檔案：",
@@ -515,12 +520,14 @@ MESSAGES = {
         "evidence_item_label": "證據",
         "source_label": "來源",
         "page_label": "頁碼",
+        "score_label": "分數", # Added for evidence item details
         "excerpt_label": "摘錄",
         "no_evidence_found_message": "未找到此任務的證據。",
         "reasoning_not_available": "不適用",
         "compliant_true_status": "合規",
         "compliant_false_status": "不合規",
         "compliant_pending_status": "待定",
+        "compliant_na_status": "不適用 (無需程序)", # New specific N/A status
         "compliance_status_heading": "合規狀態：",
         "llm_reasoning_heading": "LLM 推理：",
         "ok_button_text": "確定",
@@ -537,6 +544,7 @@ MESSAGES = {
         "col_external_regulation_title": "外規標題",
         "col_requires_procedure": "需程序？",
         "col_audit_task": "稽核任務",
+        "col_clause_compliance_status": "條款合規狀態", # New for main table
         "col_compliance_status": "合規狀態",
         "data_error_title": "資料錯誤",
         "project_run_data_not_loaded_text": "專案執行資料未載入。",
@@ -621,7 +629,18 @@ MESSAGES = {
         "csv_header_evidence_score": "證據分數",
         "col_details": "詳細資訊",
         "project_name_empty_error": "專案名稱不能為空。",
-        "compliance_description_heading": "法規遵循描述",
-        "improvement_suggestions_heading": "改進建議"
+        "compliance_description_heading": "法規遵循描述", 
+        "improvement_suggestions_heading": "改進建議", 
+        # New keys for RunEvidenceDetailsDialog restructuring - Chinese
+        "dialog_analysis_results_title": "分析結果 (整體條款評估)",
+        "dialog_overall_clause_status_label": "整體條款合規狀態：",
+        "dialog_overall_clause_description_label": "整體條款合規描述：",
+        "dialog_overall_clause_suggestions_label": "整體條款改進建議：",
+        "dialog_evidence_section_title": "證據詳情 (按稽核任務)",
+        "audit_task_label": "稽核任務", # Already exists
+        "retrieved_evidence_heading_for_task": "此任務檢索到的證據：({count})", # Already exists
+        "evidence_item_title_template_dialog": "證據 {item_num}：{source_file} (頁碼：{page}，分數：{score})", # New
+        "no_evidence_found_for_task_message": "未找到此特定任務的證據。", # New
+        "no_audit_tasks_for_clause": "此條款未定義稽核任務。" # New
     }
 }
