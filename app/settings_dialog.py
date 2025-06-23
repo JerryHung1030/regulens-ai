@@ -60,7 +60,7 @@ class SettingsDialog(QDialog):
         
         # New Tab Order: Models, Retrieval, Output (if exists), General
         self.tabs.setTabText(0, self.translator.get("settings_tab_models", "Models"))
-        self.tabs.setTabText(1, self.translator.get("settings_tab_retrieval", "Retrieval"))
+        self.tabs.setTabText(1, self.translator.get("settings_tab_general", "General"))
         
         current_tab_offset = 2
         # Assuming self.output_tab_index is set in _init_ui if Output tab is added
@@ -118,30 +118,15 @@ class SettingsDialog(QDialog):
     # ---------------------------------------------------------------------
     def _init_ui(self) -> None:
         self.tabs = QTabWidget(self)
-        
-        # New Tab Order: Models, Retrieval, General. Output tab handled conditionally.
+        # 只保留 Models 與 General，移除 Retrieval
         self.models_tab_index = 0
         self.tabs.addTab(self._build_models_tab(), self.translator.get("settings_tab_models", "Models"))
-        
-        self.retrieval_tab_index = 1
-        self.tabs.addTab(self._build_retrieval_tab(), self.translator.get("settings_tab_retrieval", "Retrieval"))
-        
-        # Handle Output Tab - build it first to see if it has content
-        output_tab_widget = self._build_output_tab()
-        if output_tab_widget.layout() is not None and output_tab_widget.layout().count() > 0:
-            self.output_tab_index = self.tabs.count() # Index at which it will be inserted
-            self.tabs.addTab(output_tab_widget, self.translator.get("settings_tab_output", "Output"))
-        else:
-            self.output_tab_index = -1 # Mark as not present / empty
-
-        self.general_tab_index = self.tabs.count() # General tab is added last
+        self.general_tab_index = self.tabs.count()
         self.tabs.addTab(self._build_general_tab(), self.translator.get("settings_tab_general", "General"))
-
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
-        self.dialog_button_box = buttons # Store instance variable
+        self.dialog_button_box = buttons
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
-
         layout = QVBoxLayout(self)
         layout.addWidget(self.tabs)
         layout.addWidget(buttons)
@@ -187,34 +172,44 @@ class SettingsDialog(QDialog):
 
     def _build_models_tab(self) -> QWidget:
         page_layout = QFormLayout()
-
         self.key_edit = QLineEdit()
         self.key_edit.setEchoMode(QLineEdit.Password)
         self.models_api_key_label = QLabel(self.translator.get("settings_label_openai_api_key", "OpenAI API Key:"))
         page_layout.addRow(self.models_api_key_label, self.key_edit)
-
         self.timeout_spin = QSpinBox()
         self.timeout_spin.setRange(1, 300)
         self.models_timeout_label = QLabel(self.translator.get("settings_label_openai_timeout", "OpenAI Client Timeout (s):"))
         page_layout.addRow(self.models_timeout_label, self.timeout_spin)
-
         self.embedding_model_combo = QComboBox()
         self.embedding_model_combo.addItems(["text-embedding-3-large", "text-embedding-3-small", "text-embedding-ada-002"])
         self.models_embedding_label = QLabel(self.translator.get("settings_label_embedding_model", "Embedding Model:"))
         page_layout.addRow(self.models_embedding_label, self.embedding_model_combo)
-
-        self.model_need_check_edit = QLineEdit()
+        # 新增檢索引擎下拉式選單
+        self.retrieval_engine_combo = QComboBox()
+        self.retrieval_engine_combo.addItems(["FAISS"])
+        self.models_retrieval_engine_label = QLabel(self.translator.get("settings_label_retrieval_engine", "Retrieval Engine:"))
+        page_layout.addRow(self.models_retrieval_engine_label, self.retrieval_engine_combo)
+        # Audit Top-K
+        self.audit_top_k_spin = QSpinBox()
+        self.audit_top_k_spin.setRange(1, 25)
+        self.retrieval_audit_top_k_label = QLabel(self.translator.get("settings_label_audit_top_k", "Audit Retrieval Top-K:"))
+        page_layout.addRow(self.retrieval_audit_top_k_label, self.audit_top_k_spin)
+        # LLM Model Need-Check
+        self.model_need_check_combo = QComboBox()
+        self.model_need_check_combo.addItems(["gpt-4o"])
         self.models_model_need_check_label = QLabel(self.translator.get("settings_label_model_need_check", "LLM Model for Need-Check:"))
-        page_layout.addRow(self.models_model_need_check_label, self.model_need_check_edit)
-
-        self.model_audit_plan_edit = QLineEdit()
+        page_layout.addRow(self.models_model_need_check_label, self.model_need_check_combo)
+        # LLM Model Audit Plan
+        self.model_audit_plan_combo = QComboBox()
+        self.model_audit_plan_combo.addItems(["gpt-4o"])
         self.models_model_audit_plan_label = QLabel(self.translator.get("settings_label_model_audit_plan", "LLM Model for Audit Plan:"))
-        page_layout.addRow(self.models_model_audit_plan_label, self.model_audit_plan_edit)
-
-        self.model_judge_edit = QLineEdit()
+        page_layout.addRow(self.models_model_audit_plan_label, self.model_audit_plan_combo)
+        # LLM Model Judge
+        self.model_judge_combo = QComboBox()
+        self.model_judge_combo.addItems(["gpt-4o"])
         self.models_model_judge_label = QLabel(self.translator.get("settings_label_model_judge", "LLM Model for Judge:"))
-        page_layout.addRow(self.models_model_judge_label, self.model_judge_edit)
-        
+        page_layout.addRow(self.models_model_judge_label, self.model_judge_combo)
+        # Local Model Path
         local_model_layout = QHBoxLayout()
         self.local_model_path_edit = QLineEdit()
         local_model_layout.addWidget(self.local_model_path_edit)
@@ -224,31 +219,10 @@ class SettingsDialog(QDialog):
         local_model_layout.addWidget(self.local_model_button)
         self.models_local_path_label = QLabel(self.translator.get("settings_label_local_model_path", "Local Model Path (Optional):"))
         page_layout.addRow(self.models_local_path_label, local_model_layout)
-
         container = QWidget()
         container.setLayout(page_layout)
         return container
 
-    def _build_retrieval_tab(self) -> QWidget:
-        page_layout = QFormLayout()
-        
-        self.audit_top_k_spin = QSpinBox()
-        self.audit_top_k_spin.setRange(1, 25)
-        self.retrieval_audit_top_k_label = QLabel(self.translator.get("settings_label_audit_top_k", "Audit Retrieval Top-K:"))
-        page_layout.addRow(self.retrieval_audit_top_k_label, self.audit_top_k_spin)
-
-        container = QWidget()
-        container.setLayout(page_layout)
-        return container
-
-    def _build_output_tab(self) -> QWidget:
-        page_layout = QFormLayout()
-        container = QWidget()
-        # Only set layout if there are actual rows, otherwise it's an empty tab
-        if page_layout.rowCount() > 0:
-            container.setLayout(page_layout)
-        return container
-        
     # --- File Dialog Helpers ---
     def _browse_local_model_path(self):
         # Could be a file or directory depending on how local models are loaded
@@ -267,62 +241,45 @@ class SettingsDialog(QDialog):
     # ---------------------------------------------------------------------
     def _load(self):
         s = self.settings
-
         # General Tab
         current_theme_value = s.get("theme", "system")
-        # 確保 theme_combo 中有 system 選項
         if "system" not in [self.theme_combo.itemText(i).lower() for i in range(self.theme_combo.count())]:
             self.theme_combo.addItem("system")
         self.theme_combo.setCurrentText(current_theme_value)
-        if hasattr(self, 'gui_language_combo'): # Check if new combo exists
-            self.gui_language_combo.setCurrentText(s.get("gui_language", "en")) # Load GUI language
-
+        if hasattr(self, 'gui_language_combo'):
+            self.gui_language_combo.setCurrentText(s.get("gui_language", "en"))
         # Models Tab
-        self.key_edit.setText(s.get("openai.api_key", "")) # Ensure key matches new config_default structure
-        self.timeout_spin.setValue(int(s.get("openai.timeout", 60))) # Ensure key matches
+        self.key_edit.setText(s.get("openai.api_key", ""))
+        self.timeout_spin.setValue(int(s.get("openai.timeout", 60)))
         self.embedding_model_combo.setCurrentText(s.get("embedding_model", "text-embedding-3-large"))
-        self.model_need_check_edit.setText(s.get("llm.model_need_check", "gpt-4o"))
-        self.model_audit_plan_edit.setText(s.get("llm.model_audit_plan", "gpt-4o"))
-        self.model_judge_edit.setText(s.get("llm.model_judge", "gpt-4o"))
-        self.local_model_path_edit.setText(s.get("local_model_path", ""))
-
-        # Retrieval Tab
+        self.retrieval_engine_combo.setCurrentText(s.get("retrieval_engine", "FAISS"))
         self.audit_top_k_spin.setValue(int(s.get("audit.retrieval_top_k", 5)))
-
+        self.model_need_check_combo.setCurrentText(s.get("llm.model_need_check", "gpt-4o"))
+        self.model_audit_plan_combo.setCurrentText(s.get("llm.model_audit_plan", "gpt-4o"))
+        self.model_judge_combo.setCurrentText(s.get("llm.model_judge", "gpt-4o"))
+        self.local_model_path_edit.setText(s.get("local_model_path", ""))
 
     def _save(self):
         s = self.settings
-
         # General Tab
         selected_theme = self.theme_combo.currentText().lower()
         s.set("theme", selected_theme)
-        if hasattr(self, 'gui_language_combo'): # Check if new combo exists
-            s.set("gui_language", self.gui_language_combo.currentText()) # Save GUI language
-
-        # Models Tab
-        s.set("openai.api_key", self.key_edit.text().strip()) # Ensure key matches new config_default structure
-        s.set("openai.timeout", self.timeout_spin.value()) # Ensure key matches
-        s.set("embedding_model", self.embedding_model_combo.currentText())
-        
-        s.set("llm.model_need_check", self.model_need_check_edit.text().strip())
-        s.set("llm.model_audit_plan", self.model_audit_plan_edit.text().strip())
-        s.set("llm.model_judge", self.model_judge_edit.text().strip())
-        
-        s.set("local_model_path", self.local_model_path_edit.text().strip())
-
-        s.set("audit.retrieval_top_k", self.audit_top_k_spin.value())
-                
         if hasattr(self, 'gui_language_combo'):
-            new_lang = self.gui_language_combo.currentText() # Use GUI language for translator
+            s.set("gui_language", self.gui_language_combo.currentText())
+        # Models Tab
+        s.set("openai.api_key", self.key_edit.text().strip())
+        s.set("openai.timeout", self.timeout_spin.value())
+        s.set("embedding_model", self.embedding_model_combo.currentText())
+        s.set("retrieval_engine", self.retrieval_engine_combo.currentText())
+        s.set("audit.retrieval_top_k", self.audit_top_k_spin.value())
+        s.set("llm.model_need_check", self.model_need_check_combo.currentText())
+        s.set("llm.model_audit_plan", self.model_audit_plan_combo.currentText())
+        s.set("llm.model_judge", self.model_judge_combo.currentText())
+        s.set("local_model_path", self.local_model_path_edit.text().strip())
+        if hasattr(self, 'gui_language_combo'):
+            new_lang = self.gui_language_combo.currentText()
             language_changed = self.translator.set_language(new_lang)
             if language_changed:
                 logger.info(f"Translator language set to {new_lang}. Application UI will refresh.")
-        # else: # Fallback if gui_language_combo somehow doesn't exist.
-              # This part is probably not strictly needed if _init_ui always creates gui_language_combo.
-              # old_report_lang = s.get("language", "en") # Get previously set report language if any
-              # self.translator.set_language(old_report_lang) # Or set translator to a default like 'en'
-              # logger.warning("gui_language_combo not found, translator language change might not reflect user's latest choice if it was made.")
-
-
         self.settings_saved.emit()
         self.accept()

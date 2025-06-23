@@ -23,6 +23,7 @@ class PipelineSettings(BaseModel):
     # score_threshold: float = Field(default=0.7) # Used in old pipeline logic (if ever reactivated) - REMOVED
     # report_theme: str = Field(default="default.css") - REMOVED
     language: str = Field(default="en")
+    retrieval_engine: str = Field(default="FAISS")
 
     # Fields for pipeline_v1_1 (retained and potentially new ones if any)
     llm_model_need_check: str = Field(default="default_model_need_check")
@@ -47,6 +48,7 @@ class PipelineSettings(BaseModel):
             # score_threshold=float(settings.get("score_threshold", 0.7)), # REMOVED
             # report_theme=settings.get("report_theme", "default.css"), # REMOVED
             language=settings.get("language", "en"),
+            retrieval_engine=settings.get("retrieval_engine", "FAISS"),
 
             # Settings for v1.1 pipeline from config_default.yaml or user settings
             llm_model_need_check=settings.get("llm.model_need_check", "default_model_need_check"),

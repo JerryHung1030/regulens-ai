@@ -407,7 +407,7 @@ QFrame#corePipelineCard QLabel small { /* Updated selector */
 /* These are the main action buttons that should be prominent */
 QPushButton#getStartedButton, /* From intro_page */
 QPushButton#btnCompare, /* From project_editor - main compare button */
-QPushButton#btnExportCsv, /* From results_viewer - export CSV button */
+QPushButton#btnExportExcel, /* From results_viewer - export Excel button */
 QPushButton#btnBack { /* From results_viewer - back button */
     color: @button_get_started_text; /* Text color for primary buttons */
     background-color: @button_get_started_background; /* Primary button background */
@@ -417,14 +417,14 @@ QPushButton#btnBack { /* From results_viewer - back button */
 
 QPushButton#getStartedButton:hover,
 QPushButton#btnCompare:hover,
-QPushButton#btnExportCsv:hover,
+QPushButton#btnExportExcel:hover,
 QPushButton#btnBack:hover {
     background-color: @button_get_started_hover_background; /* Primary button hover */
 }
 
 QPushButton#getStartedButton:pressed,
 QPushButton#btnCompare:pressed,
-QPushButton#btnExportCsv:pressed,
+QPushButton#btnExportExcel:pressed,
 QPushButton#btnBack:pressed {
     background-color: @button_get_started_pressed_background; /* Primary button pressed */
 }
@@ -491,7 +491,7 @@ QPushButton#validate_json_button {
     /* Color, background, border, and border-radius are handled by the secondary button style */
 }
 
-QPushButton#btnExportCsv { /* This is the Export CSV button */
+QPushButton#btnExportExcel { /* This is the Export Excel button */
     font-weight: 500;
     padding: 8px 16px; /* Medium size */
     /* font-size will be from default QPushButton style or OS default */

@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Optional # For type hinting
 import re # Keep re for now, might be useful for _get_display_name if that's kept/adapted
 import json # Added for placeholder theme colors
+import openpyxl # For Excel export
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side # For Excel styling
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -548,11 +550,11 @@ class ResultsViewer(QWidget):
         title_row.addWidget(self._title)
         title_row.addStretch(1)
 
-        self.btn_export_csv = QPushButton() # Text/Icon set in _retranslate_ui
-        self.btn_export_csv.setObjectName("btnExportCsv")
-        self.btn_export_csv.setFont(get_display_font(size=10))
-        self.btn_export_csv.clicked.connect(self._export_result_csv)
-        title_row.addWidget(self.btn_export_csv)
+        self.btn_export_excel = QPushButton() # New button for Excel export
+        self.btn_export_excel.setObjectName("btnExportExcel")
+        self.btn_export_excel.setFont(get_display_font(size=10))
+        self.btn_export_excel.clicked.connect(self._export_result_excel) # Connect to new method
+        title_row.addWidget(self.btn_export_excel)
 
         self.btn_back = QPushButton() # Text/Icon set in _retranslate_ui
         self.btn_back.setObjectName("btnBack")
@@ -646,8 +648,9 @@ class ResultsViewer(QWidget):
 
     def _retranslate_ui(self):
         self._title.setText(f"<h2>{self.translator.get('analysis_results_title', 'Analysis Results')}</h2>")
-        self.btn_export_csv.setText(self.translator.get("export_csv_button", "Export Result CSV..."))
-        self.btn_export_csv.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
+        self.btn_export_excel.setText(self.translator.get("export_excel_button", "Export Result Excel..."))
+        self.btn_export_excel.setIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
+        
         self.btn_back.setText(self.translator.get("back_to_edit_button", "Back to Edit"))
         self.btn_back.setIcon(self.style().standardIcon(QStyle.SP_ArrowBack))
 
@@ -791,7 +794,7 @@ class ResultsViewer(QWidget):
             self.table_widget.setItem(current_row_index, 0, item_clause_id)
 
             # Column 1: ExternalRegulation Title
-            external_regulation_title_text = clause.title if clause.title else clause.text
+            external_regulation_title_text = clause.text
             item_external_regulation_title = QTableWidgetItem(elide_text(external_regulation_title_text, max_length=100)) # Increased max_length
             item_external_regulation_title.setFont(table_font)
             self.table_widget.setItem(current_row_index, 1, item_external_regulation_title)
@@ -860,34 +863,32 @@ class ResultsViewer(QWidget):
         self.table_widget.viewport().update()
 
 
-    def _export_result_csv(self):
+    def _export_result_excel(self):
         if not self.project or not hasattr(self.project, 'project_run_data') or not self.project.project_run_data:
             QMessageBox.warning(self,
                                 self.translator.get("no_data_to_export_title", "No Data to Export"),
-                                self.translator.get("no_data_to_export_message", "Project run data is not loaded or available. Cannot export CSV."))
+                                self.translator.get("no_data_to_export_message", "Project run data is not loaded or available. Cannot export Excel."))
             return
 
-        # 使用更安全的文件名生成方式
         project_name_safe = re.sub(r'[^\w\s-]', '', self.project.name)
         project_name_safe = re.sub(r'[-\s]+', '_', project_name_safe).strip('-_')
         if not project_name_safe.strip():
-            project_name_safe = self.translator.get("untitled_project_csv_default", "Untitled_Project")
+            project_name_safe = self.translator.get("untitled_project_excel_default", "Untitled_Project")
 
         from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_filename_key = "audit_results_csv_default_filename"
-        default_filename_pattern = "{project_name}_audit_results_{timestamp}.csv"
+        default_filename_key = "audit_results_excel_default_filename"
+        default_filename_pattern = "{project_name}_audit_results_{timestamp}.xlsx"
         
         suggested_filename = self.translator.get(default_filename_key, default_filename_pattern).format(
             project_name=project_name_safe, timestamp=timestamp
         )
 
-
         target_file_path_str, selected_filter = QFileDialog.getSaveFileName(
             self,
-            self.translator.get("save_csv_dialog_title", "Save Result CSV As..."),
+            self.translator.get("save_excel_dialog_title", "Save Result Excel As..."),
             str(Path.home() / suggested_filename),
-            self.translator.get("save_csv_dialog_filter", "CSV Files (*.csv);;All Files (*.*)")
+            self.translator.get("save_excel_dialog_filter", "Excel Files (*.xlsx);;All Files (*.*)")
         )
 
         if not target_file_path_str:
@@ -896,102 +897,240 @@ class ResultsViewer(QWidget):
         target_file_path = Path(target_file_path_str)
         target_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # CSV Headers - these should ideally be translatable if the CSV is for user consumption in different languages
-        # However, for data exchange, non-translated headers are common. Assuming non-translated for now.
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = self.translator.get("excel_sheet_title_audit_results", "Audit Results")
+
+        # Define Styles
+        header_font = Font(bold=True, name='Arial', size=12)
+        cell_font = Font(name='Arial', size=11)
+        compliant_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid") # Light Green
+        non_compliant_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid") # Light Red
+        pending_fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid") # Light Yellow
+        na_fill = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid") # Light Grey
+        
+        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
         headers = [
-            self.translator.get("csv_header_project_name", "Project Name"),
-            self.translator.get("csv_header_external_regulation_clause_id", "ExternalRegulation Clause ID"),
-            self.translator.get("csv_header_external_regulation_clause_title", "ExternalRegulation Clause Title"),
-            self.translator.get("csv_header_external_regulation_clause_text", "ExternalRegulation Clause Text"),
-            self.translator.get("csv_header_requires_procedure", "Requires Procedure"),
-            self.translator.get("csv_header_audit_task_id", "Audit Task ID"),
-            self.translator.get("csv_header_audit_task_sentence", "Audit Task Sentence"),
-            self.translator.get("csv_header_compliant", "Compliant"),
-            self.translator.get("csv_header_compliance_description", "Compliance Description"),
-            self.translator.get("csv_header_improvement_suggestions", "Improvement Suggestions"),
-            self.translator.get("csv_header_evidence_source_pdf", "Evidence Source PDF"),
-            self.translator.get("csv_header_evidence_excerpt", "Evidence Excerpt"),
-            self.translator.get("csv_header_evidence_page_number", "Evidence Page Number"),
-            self.translator.get("csv_header_evidence_score", "Evidence Score")
+            self.translator.get("excel_header_clause_id", "Clause ID"),
+            self.translator.get("excel_header_clause_title", "Clause Title/Text"),
+            self.translator.get("excel_header_requires_procedure", "Requires Procedure?"),
+            self.translator.get("excel_header_clause_compliance_status", "Overall Clause Compliance"),
+            self.translator.get("excel_header_clause_compliance_desc", "Clause Compliance Description"),
+            self.translator.get("excel_header_clause_improvement_sugg", "Clause Improvement Suggestions"),
+            self.translator.get("excel_header_task_id", "Task ID"),
+            self.translator.get("excel_header_task_sentence", "Task Sentence"),
+            self.translator.get("excel_header_evidence_source", "Evidence Source"),
+            self.translator.get("excel_header_evidence_page", "Page"),
+            self.translator.get("excel_header_evidence_score", "Score"),
+            self.translator.get("excel_header_evidence_excerpt", "Evidence Excerpt")
         ]
 
-        max_retries = 3
-        retry_delay = 1
+        for col_num, header_title in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header_title)
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            cell.border = thin_border
+        ws.row_dimensions[1].height = 40
 
-        for attempt in range(max_retries):
-            try:
-                with open(target_file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                    writer = csv.DictWriter(csvfile, fieldnames=headers, quoting=csv.QUOTE_ALL)
-                    writer.writeheader()
-                    for clause in self.project.project_run_data.external_regulation_clauses:
-                        clause_title = clause.title if clause.title else clause.text
-                        requires_procedure = str(clause.need_procedure) if clause.need_procedure is not None else ""
-                        base_row_data = {
-                            self.translator.get("csv_header_project_name", "Project Name"): self.project.name,
-                            self.translator.get("csv_header_external_regulation_clause_id", "ExternalRegulation Clause ID"): clause.id,
-                            self.translator.get("csv_header_external_regulation_clause_title", "ExternalRegulation Clause Title"): clause_title,
-                            self.translator.get("csv_header_external_regulation_clause_text", "ExternalRegulation Clause Text"): clause.text,
-                            self.translator.get("csv_header_requires_procedure", "Requires Procedure"): requires_procedure,
-                        }
-                        if not clause.tasks:
-                            row_data = base_row_data.copy()
-                            for key in headers:
-                                if key not in row_data: row_data[key] = ""
-                            writer.writerow(row_data)
-                        else:
-                            for task in clause.tasks:
-                                task_row_data = base_row_data.copy()
-                                task_row_data.update({
-                                    self.translator.get("csv_header_audit_task_id", "Audit Task ID"): task.id,
-                                    self.translator.get("csv_header_audit_task_sentence", "Audit Task Sentence"): task.sentence,
-                                    self.translator.get("csv_header_compliant", "Compliant"): str(task.compliant) if task.compliant is not None else "",
-                                    self.translator.get("csv_header_compliance_description", "Compliance Description"): task.metadata.get("compliance_description", ""),
-                                    self.translator.get("csv_header_improvement_suggestions", "Improvement Suggestions"): task.metadata.get("improvement_suggestions", ""),
-                                })
-                                if not task.top_k:
-                                    for key_ev in [
-                                        self.translator.get("csv_header_evidence_source_pdf", "Evidence Source PDF"),
-                                        self.translator.get("csv_header_evidence_excerpt", "Evidence Excerpt"),
-                                        self.translator.get("csv_header_evidence_page_number", "Evidence Page Number"),
-                                        self.translator.get("csv_header_evidence_score", "Evidence Score")
-                                    ]:
-                                        task_row_data[key_ev] = ""
-                                    writer.writerow(task_row_data)
-                                else:
-                                    for evidence_item in task.top_k:
-                                        evidence_row_data = task_row_data.copy()
-                                        evidence_row_data.update({
-                                            self.translator.get("csv_header_evidence_source_pdf", "Evidence Source PDF"): evidence_item.get("source_pdf", ""),
-                                            self.translator.get("csv_header_evidence_excerpt", "Evidence Excerpt"): evidence_item.get("excerpt", ""),
-                                            self.translator.get("csv_header_evidence_page_number", "Evidence Page Number"): str(evidence_item.get("page_no", "")),
-                                            self.translator.get("csv_header_evidence_score", "Evidence Score"): f"{evidence_item.get('score', ''):.4f}" if isinstance(evidence_item.get('score'), float) else str(evidence_item.get('score', ''))
-                                        })
-                                        writer.writerow(evidence_row_data)
-                QMessageBox.information(self,
-                                    self.translator.get("csv_exported_dialog_title", "CSV Exported"),
-                                    self.translator.get("csv_exported_dialog_message", "Results successfully exported to: {filepath}").format(filepath=target_file_path))
-                return
 
-            except IOError as e:
-                logger.error(f"IOError exporting CSV for project {self.project.name} to {target_file_path}: {e}", exc_info=True)
-                if attempt < max_retries - 1:
-                    import time
-                    time.sleep(retry_delay)
-                    continue
-                QMessageBox.critical(self,
+        current_row = 2
+        for clause in self.project.project_run_data.external_regulation_clauses:
+            clause_start_row = current_row
+            
+            clause_title_display = clause.title if getattr(clause, 'title', None) else clause.text
+            
+            # Clause level data
+            clause_data_row = {
+                headers[0]: clause.id,
+                headers[1]: clause_title_display,
+                headers[2]: self.translator.get("yes", "Yes") if clause.need_procedure else (self.translator.get("no", "No") if clause.need_procedure is False else self.translator.get("n_a", "N/A")),
+            }
+
+            # Overall Clause Compliance Status determination
+            clause_compliant_status_val = clause.metadata.get('clause_compliant')
+            clause_status_display = self.translator.get('n_a', "N/A")
+            clause_status_fill = na_fill
+            if clause_compliant_status_val is True:
+                clause_status_display = self.translator.get("compliant_true_status", "Compliant")
+                clause_status_fill = compliant_fill
+            elif clause_compliant_status_val is False:
+                clause_status_display = self.translator.get("compliant_false_status", "Non-Compliant")
+                clause_status_fill = non_compliant_fill
+            elif clause.need_procedure is False:
+                 clause_status_display = self.translator.get("compliant_na_status", "N/A (Procedure Not Required)")
+                 clause_status_fill = na_fill
+            elif clause_compliant_status_val is None:
+                clause_status_display = self.translator.get("compliant_pending_status", "Pending")
+                clause_status_fill = pending_fill
+
+            clause_data_row[headers[3]] = clause_status_display
+            clause_data_row[headers[4]] = clause.metadata.get('clause_compliance_description', '')
+            clause_data_row[headers[5]] = clause.metadata.get('clause_improvement_suggestions', '')
+
+            if not clause.tasks:
+                for col_num, header_name in enumerate(headers, 1):
+                    cell_value = clause_data_row.get(header_name, "")
+                    cell = ws.cell(row=current_row, column=col_num, value=str(cell_value))
+                    cell.font = cell_font
+                    cell.alignment = Alignment(vertical="top", wrap_text=True, indent=0)
+                    cell.border = thin_border
+                    if header_name == headers[3]: # Clause Compliance Status column
+                        cell.fill = clause_status_fill
+                current_row += 1
+            else:
+                for task_idx, task in enumerate(clause.tasks):
+                    task_start_row = current_row
+                    task_data_row = {
+                        headers[6]: task.id,
+                        headers[7]: task.sentence,
+                    }
+                    if not task.top_k:
+                        # Write clause data then task data
+                        loop_row_data = {**clause_data_row, **task_data_row}
+                        for col_num, header_name in enumerate(headers, 1):
+                            cell_value = loop_row_data.get(header_name, "")
+                            indent_level = 1 if header_name in [headers[6], headers[7]] else 0
+                            cell = ws.cell(row=current_row, column=col_num, value=str(cell_value))
+                            cell.font = cell_font
+                            cell.alignment = Alignment(vertical="top", wrap_text=True, indent=indent_level)
+                            cell.border = thin_border
+                            if header_name == headers[3]: cell.fill = clause_status_fill
+                        current_row += 1
+                    else:
+                        for evidence_idx, ev_item in enumerate(task.top_k):
+                            evidence_data_row = {
+                                headers[8]: ev_item.get('source_txt', ''),
+                                headers[9]: str(ev_item.get('page_no', '')),
+                                headers[10]: f"{ev_item.get('score', 0.0):.4f}" if isinstance(ev_item.get('score'), float) else str(ev_item.get('score', '')),
+                                headers[11]: ev_item.get('excerpt', '')
+                            }
+                            # Write clause data, then task data, then evidence data
+                            loop_row_data = {**clause_data_row, **task_data_row, **evidence_data_row}
+                            for col_num, header_name in enumerate(headers, 1):
+                                cell_value = loop_row_data.get(header_name, "")
+                                indent_level = 0
+                                if header_name in [headers[6], headers[7]]: # Task level
+                                    indent_level = 1
+                                elif header_name in [headers[8], headers[9], headers[10], headers[11]]: # Evidence level
+                                    indent_level = 2
+                                cell = ws.cell(row=current_row, column=col_num, value=str(cell_value))
+                                cell.font = cell_font
+                                cell.alignment = Alignment(vertical="top", wrap_text=True, indent=indent_level)
+                                cell.border = thin_border
+                                if header_name == headers[3]: cell.fill = clause_status_fill # Clause status
+                            current_row += 1
+                    # Merge task-level cells if task spanned multiple evidence rows
+                    if task_start_row < current_row -1 and task.top_k: # Only if there were evidence items
+                         for task_col_idx in range(6, 8): # Columns G, H (Task ID, Task Sentence)
+                            ws.merge_cells(start_row=task_start_row, start_column=task_col_idx + 1, end_row=current_row - 1, end_column=task_col_idx + 1)
+                            # Reapply alignment after merge for some versions of openpyxl
+                            merged_cell = ws.cell(row=task_start_row, column=task_col_idx + 1)
+                            merged_cell.alignment = Alignment(vertical="top", wrap_text=True, indent=1)
+
+
+            # Merge clause-level cells if clause spanned multiple task/evidence rows
+            if clause_start_row < current_row -1 : # Only if there were tasks or evidence rows
+                for clause_col_idx in range(6): # Columns A to F (Clause ID to Clause Impr. Sugg.)
+                    ws.merge_cells(start_row=clause_start_row, start_column=clause_col_idx + 1, end_row=current_row - 1, end_column=clause_col_idx + 1)
+                    # Reapply alignment after merge
+                    merged_cell = ws.cell(row=clause_start_row, column=clause_col_idx + 1)
+                    merged_cell.alignment = Alignment(vertical="top", wrap_text=True, indent=0)
+
+
+        # Adjust column widths
+        column_widths = { # Approximate widths, can be fine-tuned
+            headers[0]: 15,  # Clause ID
+            headers[1]: 50,  # Clause Title
+            headers[2]: 20,  # Requires Procedure
+            headers[3]: 25,  # Clause Compliance Status
+            headers[4]: 40,  # Clause Compliance Desc
+            headers[5]: 40,  # Clause Impr Sugg
+            headers[6]: 15,  # Task ID
+            headers[7]: 50,  # Task Sentence
+            headers[8]: 40,  # Evidence Source
+            headers[9]: 10,  # Evidence Page
+            headers[10]: 10, # Evidence Score
+            headers[11]: 60  # Evidence Excerpt
+        }
+        for i, header_name in enumerate(headers):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i + 1)].width = column_widths.get(header_name, 20) # Default width 20
+
+        try:
+            # 新增外部法規原文 sheet
+            if hasattr(self.project, 'external_regulations_json_path') and self.project.external_regulations_json_path and self.project.external_regulations_json_path.exists():
+                ws_ext = wb.create_sheet(self.translator.get("excel_sheet_title_external_regulations", "External Regulations"))
+                try:
+                    with open(self.project.external_regulations_json_path, 'r', encoding='utf-8') as f:
+                        ext_content = f.read()
+                    # 格式化 JSON
+                    try:
+                        ext_json = json.loads(ext_content)
+                        ext_content = json.dumps(ext_json, indent=2, ensure_ascii=False)
+                    except Exception:
+                        pass
+                    # 標題
+                    ws_ext.cell(row=1, column=1, value=self.translator.get("excel_external_regulations_content_col", "External Regulations JSON Content"))
+                    ws_ext.cell(row=1, column=1).font = header_font
+                    ws_ext.cell(row=1, column=1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+                    ws_ext.cell(row=1, column=1).border = thin_border
+                    # 內容
+                    lines = ext_content.splitlines()
+                    for i, line in enumerate(lines, start=2):
+                        cell = ws_ext.cell(row=i, column=1, value=line)
+                        cell.font = cell_font
+                        cell.alignment = Alignment(vertical="top", wrap_text=True)
+                        cell.border = thin_border
+                    ws_ext.column_dimensions['A'].width = 120
+                except Exception as e:
+                    ws_ext.cell(row=1, column=1, value=f"Error reading file: {e}")
+                    ws_ext.cell(row=1, column=1).font = cell_font
+                    ws_ext.cell(row=1, column=1).alignment = Alignment(vertical="top", wrap_text=True)
+                    ws_ext.cell(row=1, column=1).border = thin_border
+
+            # 新增內部程序原文 sheet
+            if hasattr(self.project, 'procedure_doc_paths') and self.project.procedure_doc_paths:
+                ws_proc = wb.create_sheet(self.translator.get("excel_sheet_title_procedures", "Procedures"))
+                ws_proc.cell(row=1, column=1, value=self.translator.get("excel_procedure_filename_col", "File Name"))
+                ws_proc.cell(row=1, column=2, value=self.translator.get("excel_procedure_content_col", "Content"))
+                ws_proc.cell(row=1, column=1).font = header_font
+                ws_proc.cell(row=1, column=2).font = header_font
+                ws_proc.cell(row=1, column=1).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+                ws_proc.cell(row=1, column=2).alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+                ws_proc.cell(row=1, column=1).border = thin_border
+                ws_proc.cell(row=1, column=2).border = thin_border
+                ws_proc.column_dimensions['A'].width = 40
+                ws_proc.column_dimensions['B'].width = 120
+                for idx, proc_path in enumerate(self.project.procedure_doc_paths, start=2):
+                    ws_proc.cell(row=idx, column=1, value=str(proc_path.name))
+                    ws_proc.cell(row=idx, column=1).font = cell_font
+                    ws_proc.cell(row=idx, column=1).alignment = Alignment(vertical="top", wrap_text=True)
+                    ws_proc.cell(row=idx, column=1).border = thin_border
+                    try:
+                        with open(proc_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        ws_proc.cell(row=idx, column=2, value=content)
+                        ws_proc.cell(row=idx, column=2).font = cell_font
+                        ws_proc.cell(row=idx, column=2).alignment = Alignment(vertical="top", wrap_text=True)
+                        ws_proc.cell(row=idx, column=2).border = thin_border
+                    except Exception as e:
+                        ws_proc.cell(row=idx, column=2, value=f"Error reading file: {e}")
+                        ws_proc.cell(row=idx, column=2).font = cell_font
+                        ws_proc.cell(row=idx, column=2).alignment = Alignment(vertical="top", wrap_text=True)
+                        ws_proc.cell(row=idx, column=2).border = thin_border
+
+            wb.save(str(target_file_path))
+            QMessageBox.information(self,
+                                    self.translator.get("excel_exported_dialog_title", "Excel Exported"),
+                                    self.translator.get("excel_exported_dialog_message", "Results successfully exported to: {filepath}").format(filepath=target_file_path))
+        except IOError as e:
+            logger.error(f"IOError exporting Excel for project {self.project.name} to {target_file_path}: {e}", exc_info=True)
+            QMessageBox.critical(self,
                                  self.translator.get("export_error_dialog_title", "Export Error"),
-                                 self.translator.get("export_error_dialog_message_csv", "Could not write CSV file: {error}\n\nPlease try saving to a different location.").format(error=e))
-            except Exception as e:
-                logger.error(f"Unexpected error during CSV export for project {self.project.name}: {e}", exc_info=True)
-                QMessageBox.critical(self,
+                                 self.translator.get("export_error_dialog_message_excel", "Could not write Excel file: {error}\n\nPlease try saving to a different location or ensure the file is not open elsewhere.").format(error=e))
+        except Exception as e:
+            logger.error(f"Unexpected error during Excel export for project {self.project.name}: {e}", exc_info=True)
+            QMessageBox.critical(self,
                                  self.translator.get("export_error_dialog_title", "Export Error"),
-                                 self.translator.get("unexpected_export_error_dialog_message", "An unexpected error occurred during CSV export: {error}").format(error=e))
-                return
+                                 self.translator.get("unexpected_export_error_dialog_message", "An unexpected error occurred during Excel export: {error}").format(error=e))
 
-    # def _export_report(self): # Old report export, can be translated similarly if reactivated
-    #     if not self.project or not self.project.report_path:
-    #         QMessageBox.warning(self,
-    #                             self.translator.get("no_report_dialog_title", "No Report"),
-    #                             self.translator.get("no_report_dialog_message", "The report for this project is not available or has not been generated yet."))
-    #         return
-    #     # ... rest of the logic with self.translator.get for dialogs and messages ...

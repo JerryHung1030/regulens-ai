@@ -8,6 +8,8 @@ block_cipher = None
 datas_tiktoken = collect_data_files('tiktoken')
 # collect all tiktoken_ext submodules for hidden-import
 hiddenimports_tiktoken = collect_submodules('tiktoken_ext') + ['tiktoken_ext.openai_public']
+# collect all openpyxl submodules for hidden-import
+hiddenimports_openpyxl = collect_submodules('openpyxl')
 
 # existing data files
 datas = [
@@ -44,7 +46,7 @@ hiddenimports = [
     'distro', 'numexpr', 'pyarrow', 'QtPy', 'shiboken6',
     'tzdata', 'vcrpy', 'aiohappyeyeballs', 'langsmith',
     # (…any others you rely on…)
-] + hiddenimports_tiktoken
+] + hiddenimports_tiktoken + hiddenimports_openpyxl
 
 a = Analysis(
     ['run_app.py'],

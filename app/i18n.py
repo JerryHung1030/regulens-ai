@@ -319,7 +319,16 @@ MESSAGES = {
         "retrieved_evidence_heading_for_task": "Retrieved Evidence for this Task: ({count})", # Already exists, confirmed usage
         "evidence_item_title_template_dialog": "Evidence {item_num}: {source_file} (Page: {page}, Score: {score})", # New for dialog evidence toggle
         "no_evidence_found_for_task_message": "No evidence found for this specific task.", # New or refined from "no_evidence_found_message"
-        "no_audit_tasks_for_clause": "No audit tasks defined for this clause." # New
+        "no_audit_tasks_for_clause": "No audit tasks defined for this clause.", # New
+        "export_excel_button": "Export Result Excel...",
+        "save_excel_dialog_title": "Save Result Excel As...",
+        "save_excel_dialog_filter": "Excel Files (*.xlsx);;All Files (*.*)",
+        "excel_exported_dialog_title": "Excel Exported",
+        "excel_exported_dialog_message": "Results successfully exported to: {filepath}",
+        "untitled_project_excel_default": "Untitled_Project",
+        "audit_results_excel_default_filename": "{project_name}_audit_results_{timestamp}.xlsx",
+        "export_error_dialog_message_excel": "Could not write Excel file: {error}\n\nPlease try saving to a different location or ensure the file is not open elsewhere.",
+        "settings_label_retrieval_engine": "Retrieval Engine:"
     },
     "zh": {  # Traditional Chinese (Taiwan)
         "report_title": "合規報告",
@@ -641,6 +650,15 @@ MESSAGES = {
         "retrieved_evidence_heading_for_task": "此任務檢索到的證據：({count})", # Already exists
         "evidence_item_title_template_dialog": "證據 {item_num}：{source_file} (頁碼：{page}，分數：{score})", # New
         "no_evidence_found_for_task_message": "未找到此特定任務的證據。", # New
-        "no_audit_tasks_for_clause": "此條款未定義稽核任務。" # New
+        "no_audit_tasks_for_clause": "此條款未定義稽核任務。", # New
+        "export_excel_button": "匯出 Excel...",
+        "save_excel_dialog_title": "另存 Excel 結果",
+        "save_excel_dialog_filter": "Excel Files (*.xlsx);;All Files (*.*)",
+        "excel_exported_dialog_title": "Excel 已匯出",
+        "excel_exported_dialog_message": "Results successfully exported to: {filepath}",
+        "untitled_project_excel_default": "Untitled_Project",
+        "audit_results_excel_default_filename": "{project_name}_稽核結果_{timestamp}.xlsx",
+        "export_error_dialog_message_excel": "無法寫入 Excel 檔案：{error}\n\n請嘗試儲存到不同位置或確認檔案未被開啟。",
+        "settings_label_retrieval_engine": "檢索引擎："
     }
 }
