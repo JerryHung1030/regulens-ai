@@ -108,9 +108,11 @@ class Sidebar(QWidget):
             if proj.is_sample:
                 prefix_tag = ""
                 # These specific project names are identifiers, not for translation
-                if proj.name == "ISO27k-A.9.4.2_強密碼合規稽核範例":
-                    prefix_tag = sample_tag_blue
-                elif proj.name == "ISO27k-A.6.1.2_風險清冊稽核範例":
+                if proj.name == "資通安全實地稽核案例 (Demo)":
+                    prefix_tag = sample_tag_green
+                elif proj.name == "符合規範案例 (Demo)":
+                    prefix_tag = sample_tag_green
+                elif proj.name == "不符合規範案例 (Demo)":
                     prefix_tag = sample_tag_green
                 else:
                     prefix_tag = sample_tag_gray

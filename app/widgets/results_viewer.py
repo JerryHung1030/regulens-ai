@@ -627,8 +627,11 @@ class ResultsViewer(QWidget):
             "col_clause_compliance_status", "col_details" # Changed col_compliance_status to col_clause_compliance_status
         ]
         self.column_headers_defaults = [
-            "ExternalRegulation ID", "ExternalRegulation Title", "Requires Procedure?",
-            "Clause Compliance Status", "Details" # Changed "Compliance Status"
+            self.translator.get("col_external_regulation_id", "ExternalRegulation ID"), 
+            self.translator.get("col_external_regulation_title", "ExternalRegulation Title"), 
+            self.translator.get("col_requires_procedure", "Requires Procedure?"),
+            self.translator.get("col_clause_compliance_status", "Clause Compliance Status"), 
+            self.translator.get("col_details", "Details")
         ]
         self.table_widget.setColumnCount(len(self.column_headers_keys))
         # self.table_widget.setHorizontalHeaderLabels(...) # Done in _retranslate_ui
@@ -1083,7 +1086,7 @@ class ResultsViewer(QWidget):
                         cell.border = thin_border
                     ws_ext.column_dimensions['A'].width = 120
                 except Exception as e:
-                    ws_ext.cell(row=1, column=1, value=f"Error reading file: {e}")
+                    ws_ext.cell(row=1, column=1, value=self.translator.get("excel_error_reading_file", "Error reading file: {error}").format(error=e))
                     ws_ext.cell(row=1, column=1).font = cell_font
                     ws_ext.cell(row=1, column=1).alignment = Alignment(vertical="top", wrap_text=True)
                     ws_ext.cell(row=1, column=1).border = thin_border
@@ -1114,7 +1117,7 @@ class ResultsViewer(QWidget):
                         ws_proc.cell(row=idx, column=2).alignment = Alignment(vertical="top", wrap_text=True)
                         ws_proc.cell(row=idx, column=2).border = thin_border
                     except Exception as e:
-                        ws_proc.cell(row=idx, column=2, value=f"Error reading file: {e}")
+                        ws_proc.cell(row=idx, column=2, value=self.translator.get("excel_error_reading_file", "Error reading file: {error}").format(error=e))
                         ws_proc.cell(row=idx, column=2).font = cell_font
                         ws_proc.cell(row=idx, column=2).alignment = Alignment(vertical="top", wrap_text=True)
                         ws_proc.cell(row=idx, column=2).border = thin_border

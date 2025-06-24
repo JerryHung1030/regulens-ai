@@ -77,7 +77,7 @@ class ProjectStore(QObject):
 
         # Destination for the sample data within the user's app data directory
         dest_sample_data_root = get_app_data_dir() / "sample_data"
-        key_sample_file_path = dest_sample_data_root / "sample2_符合規範Demo" / "procedures" / "internal.txt"
+        key_sample_file_path = dest_sample_data_root / "sample1_資通安全實地稽核Demo" / "procedures" / "internal.txt"
 
         # Copy sample data if it doesn't exist at the destination or is incomplete
         if not dest_sample_data_root.exists() or not key_sample_file_path.exists():
@@ -108,6 +108,13 @@ class ProjectStore(QObject):
             logger.warning(f"Warning: Sample data directory {sample_base_dir} does not exist. Using source paths.")
             sample_base_dir = source_sample_data_root
 
+        project1 = CompareProject(
+            name="資通安全實地稽核案例 (Demo)",
+            external_regulations_json_path=sample_base_dir / "sample1_資通安全實地稽核Demo" / "external_regulations" / "external.json",
+            procedure_doc_paths=[sample_base_dir / "sample1_資通安全實地稽核Demo" / "procedures" / "internal.txt"],
+            run_json_path=sample_base_dir / "sample1_資通安全實地稽核Demo" / "run.json",
+            is_sample=True
+        )
 
         project2 = CompareProject(
             name="符合規範案例 (Demo)",
@@ -127,7 +134,7 @@ class ProjectStore(QObject):
 
         # Ensure self.projects is an empty list before adding samples,
         # and only these sample projects are added.
-        self.projects = [project2, project3]
+        self.projects = [project1, project2, project3]
         self._save()  # Save projects.json
 
     def _save(self):
