@@ -1,16 +1,19 @@
 from __future__ import annotations
 from PySide6.QtCore import QObject, Signal
 from .i18n import MESSAGES
+from .settings import Settings
 
 class Translator(QObject):
     language_changed = Signal()
 
-    def __init__(self, initial_language: str = "en"):
+    def __init__(self, settings: Settings, initial_language: str = "en"):
         super().__init__()  # Call QObject constructor
         self._messages = MESSAGES
-        self._current_language = initial_language
-        if self._current_language not in self._messages:
-            self._current_language = "en"
+        self._settings = settings
+        
+        # 從設定檔讀取語言設定，如果沒有則使用預設值
+        saved_language = self._settings.get("language", initial_language)
+        self._current_language = saved_language if saved_language in self._messages else "en"
 
     def set_language(self, lang_code: str) -> bool:
         """Sets the current language for translations.
@@ -20,6 +23,8 @@ class Translator(QObject):
             changed = self._current_language != lang_code
             if changed:
                 self._current_language = lang_code
+                # 保存語言設定到設定檔
+                self._settings.set("language", lang_code)
                 self.language_changed.emit() # Emit signal
             return changed
         return False

@@ -1,12 +1,30 @@
 from __future__ import annotations
 
 import json
+import sys
+import traceback # Add this import
 from pathlib import Path
 from typing import List
+import shutil # Add this import
 
 from PySide6.QtCore import QObject, Signal
+# Add this import
+from app.logger import logger
 
+from app.app_paths import get_app_data_dir
 from app.models.project import CompareProject
+
+
+def get_resource_path(relative_path: str) -> Path:
+    """獲取資源檔案的路徑，支援 PyInstaller 打包後的路徑"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller 打包後的路徑
+        base_path = Path(sys._MEIPASS)
+    else:
+        # 開發環境的路徑
+        base_path = Path(__file__).parent.parent.parent
+    
+    return base_path / relative_path
 
 
 class ProjectStore(QObject):
@@ -16,7 +34,8 @@ class ProjectStore(QObject):
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
         # Determine path at runtime to respect potential mocks of Path.home() in tests
-        self._PATH: Path = Path.home() / ".config" / "regulens-ai" / "projects.json"
+        # Modify this line
+        self._PATH: Path = get_app_data_dir() / "projects.json"
         self.projects: List[CompareProject] = self._load()
 
     def _load(self) -> List[CompareProject]:
@@ -53,27 +72,69 @@ class ProjectStore(QObject):
         return projects
 
     def _create_sample_projects_and_data(self):
-        # 使用當前工作目錄作為基準
-        current_dir = Path.cwd()
-        sample_base_dir = current_dir / "sample_data"
+        # Source of the sample data, using the new path resolution method
+        source_sample_data_root = get_resource_path("sample_data")
+
+        # Destination for the sample data within the user's app data directory
+        dest_sample_data_root = get_app_data_dir() / "sample_data"
+        key_sample_file_path = dest_sample_data_root / "sample1_資通安全實地稽核Demo" / "procedures" / "internal.txt"
+
+        # Copy sample data if it doesn't exist at the destination or is incomplete
+        if not dest_sample_data_root.exists() or not key_sample_file_path.exists():
+            if source_sample_data_root.exists():
+                try:
+                    # If destination exists but is incomplete, remove it first to avoid copytree error
+                    if dest_sample_data_root.exists():
+                        shutil.rmtree(dest_sample_data_root)
+                    shutil.copytree(source_sample_data_root, dest_sample_data_root)
+                    logger.info(f"Sample data copied from {source_sample_data_root} to {dest_sample_data_root}")
+                except Exception as e:
+                    logger.error(f"Error copying sample data: {e}\n{traceback.format_exc()}")
+                    # If copying fails, the sample projects might not load correctly.
+            elif not source_sample_data_root.exists():
+                logger.warning(f"Source sample data directory not found at {source_sample_data_root}. Cannot copy sample data.")
+        # else:
+            # Destination exists and is complete, or source doesn't, no copy needed or possible.
+
+        # Paths for CompareProject instances now point to the destination directory
+        sample_base_dir = dest_sample_data_root
+
+        # 修正：確保範例專案使用正確的檔案路徑
+        # 如果目標目錄不存在或不完整，則使用原始路徑作為備用
+        if not dest_sample_data_root.exists() or not key_sample_file_path.exists():
+            logger.error(f"Critical: Sample data directory {dest_sample_data_root} is missing or incomplete after copy attempt. Falling back to source path {source_sample_data_root}. This may lead to issues if the source is read-only or not persistent.")
+            sample_base_dir = source_sample_data_root
+        elif not sample_base_dir.exists(): # This case should ideally be covered by the above, but as a fallback
+            logger.warning(f"Warning: Sample data directory {sample_base_dir} does not exist. Using source paths.")
+            sample_base_dir = source_sample_data_root
 
         project1 = CompareProject(
-            name="ISO27k-A.9.4.2_強密碼合規稽核範例",
-            controls_dir=sample_base_dir / "sample1" / "controls",
-            procedures_dir=sample_base_dir / "sample1" / "procedures",
-            evidences_dir=sample_base_dir / "sample1" / "evidences",
-            is_sample=True
-        )
-        project2 = CompareProject(
-            name="ISO27k-A.6.1.2_風險清冊稽核範例",
-            controls_dir=sample_base_dir / "sample2" / "controls",
-            procedures_dir=sample_base_dir / "sample2" / "procedures",
-            evidences_dir=sample_base_dir / "sample2" / "evidences",
+            name="資通安全實地稽核案例 (Demo)",
+            external_regulations_json_path=sample_base_dir / "sample1_資通安全實地稽核Demo" / "external_regulations" / "external.json",
+            procedure_doc_paths=[sample_base_dir / "sample1_資通安全實地稽核Demo" / "procedures" / "internal.txt"],
+            run_json_path=sample_base_dir / "sample1_資通安全實地稽核Demo" / "run.json",
             is_sample=True
         )
 
-        # Ensure self.projects is an empty list before adding samples
-        self.projects = [project1, project2]
+        project2 = CompareProject(
+            name="符合規範案例 (Demo)",
+            external_regulations_json_path=sample_base_dir / "sample2_符合規範Demo" / "external_regulations" / "external.json",
+            procedure_doc_paths=[sample_base_dir / "sample2_符合規範Demo" / "procedures" / "internal.txt"],
+            run_json_path=sample_base_dir / "sample2_符合規範Demo" / "run.json",
+            is_sample=True
+        )
+
+        project3 = CompareProject(
+            name="不符合規範案例 (Demo)",
+            external_regulations_json_path=sample_base_dir / "sample3_不符合規範Demo" / "external_regulations" / "external.json",
+            procedure_doc_paths=[sample_base_dir / "sample3_不符合規範Demo" / "procedures" / "internal.txt"],
+            run_json_path=sample_base_dir / "sample3_不符合規範Demo" / "run.json",
+            is_sample=True
+        )
+
+        # Ensure self.projects is an empty list before adding samples,
+        # and only these sample projects are added.
+        self.projects = [project1, project2, project3]
         self._save()  # Save projects.json
 
     def _save(self):

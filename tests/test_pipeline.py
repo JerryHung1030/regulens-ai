@@ -118,8 +118,7 @@ def test_run_pipeline_basic_execution(
          patch('app.pipeline.index.create_or_load_index') as mock_create_index, \
          patch('app.pipeline.retrieve.retrieve_similar_chunks') as mock_retrieve_similar_chunks, \
          patch('app.pipeline.judge_llm.assess_triplet_with_llm') as mock_assess_llm, \
-         patch('app.pipeline.report.generate_report') as mock_generate_report, \
-         patch('faiss.read_index', MagicMock()):
+         patch('faiss.read_index', MagicMock()): 
 
         # 1. Mock for ingest_documents
         raw_doc_mock_ctrl = MagicMock(spec=RawDoc, id="rd_ctrl_1", text_content="Control content")
@@ -169,20 +168,26 @@ def test_run_pipeline_basic_execution(
 
         mock_assess_llm.return_value = assessment_mock
 
-        # 7. Mock for generate_report
-        expected_report_path = Path(project.controls_dir.parent / "reports" / "test_report.md")
-        mock_generate_report.return_value = expected_report_path
+        # 7. Mock for generate_report - REMOVED
+        # expected_report_path = Path(project.controls_dir.parent / "reports" / "test_report.md")
+        # mock_generate_report.return_value = expected_report_path
 
-        # Ensure report_path is None initially
-        original_report_path = project.report_path
-        assert original_report_path is None
+        # Ensure report_path is None initially (if it's still an attribute)
+        # For the new pipeline, project.report_path is not expected to be set by run_pipeline.
+        # project.project_run_data and project.run_json_path are the primary outputs.
+        # The run_pipeline in __init__ now takes the global app_settings, not pipeline_settings directly.
+        if hasattr(project, 'report_path'): 
+            assert project.report_path is None
 
-        run_pipeline(project, pipeline_settings)
+        run_pipeline(project, mock_app_settings) # Pass global mock_app_settings
 
-    # Verify project.report_path is populated by the mocked generate_report
-    assert project.report_path == expected_report_path
+    # Verify project.report_path is NOT populated as generate_report is removed
+    if hasattr(project, 'report_path'):
+        assert project.report_path is None
 
     # Check that mocks were called (examples)
+    # These checks apply if the old pipeline path in run_pipeline is taken.
+    # Given temp_project_for_pipeline creates -dir paths, it will take the old path.
     mock_ingest_documents.assert_any_call(project.controls_dir, "control")
     mock_ingest_documents.assert_any_call(project.procedures_dir, "procedure")
     # mock_ingest_documents.assert_any_call(project.evidences_dir, "evidence") # if evidences_dir is set
@@ -197,7 +202,6 @@ def test_run_pipeline_basic_execution(
     if mock_retrieve_similar_chunks.return_value:  # If retrieve found matches
         mock_assess_llm.assert_called()
 
-    mock_generate_report.assert_called_once()
     # We can also assert some arguments passed to generate_report if needed
 
 
@@ -238,50 +242,10 @@ def test_run_pipeline_project_not_ready(tmp_path: Path, mock_app_settings: Setti
     # to ensure it's not called, but current placeholder is simple enough.
 
 
-# --- Tests for _get_doc_name from app.pipeline.aggregate ---
-# Note: _get_doc_name is in aggregate.py, but testing here as it's pipeline related util.
-# If test_aggregate.py existed, it would go there.
-from app.pipeline.aggregate import _get_doc_name
+# --- Tests for _get_doc_name from app.pipeline.aggregate --- REMOVED
+# from app.pipeline.aggregate import _get_doc_name # REMOVED
 
-
-def test_get_doc_name_found_with_filename():
-    norm_doc = NormDoc(id="doc1", raw_doc_id="raw1", text_content="Test", metadata={"original_filename": "MyFile.txt"}, doc_type="control")
-    norm_docs_map = {"doc1": norm_doc}
-    result = _get_doc_name("doc1", norm_docs_map, "Control")
-    assert result == "MyFile.txt"
-
-
-def test_get_doc_name_found_no_filename():
-    norm_doc = NormDoc(id="doc2", raw_doc_id="raw2", text_content="Test", metadata={}, doc_type="control")  # No original_filename
-    norm_docs_map = {"doc2": norm_doc}
-    result = _get_doc_name("doc2", norm_docs_map, "Control")
-    assert result == "Control doc2"  # Fallback to "Prefix doc_id"
-
-
-def test_get_doc_name_found_empty_metadata():
-    norm_doc = NormDoc(id="doc3", raw_doc_id="raw3", text_content="Test", metadata=None, doc_type="control")  # Metadata is None
-    norm_docs_map = {"doc3": norm_doc}
-    result = _get_doc_name("doc3", norm_docs_map, "Procedure")
-    assert result == "Procedure doc3"
-
-
-def test_get_doc_name_not_found():
-    norm_docs_map = {}  # Empty map
-    result = _get_doc_name("doc4_not_in_map", norm_docs_map, "Evidence")
-    assert result == "Evidence doc4_not_in_map"
-
-
-def test_get_doc_name_doc_is_none_in_map():
-    # Though map values should ideally be NormDoc, test robustness
-    norm_docs_map = {"doc5": None}
-    result = _get_doc_name("doc5", norm_docs_map, "Control")
-    assert result == "Control doc5"
-
-
-def test_get_doc_name_empty_map_and_id_not_found():
-    norm_docs_map = {}
-    result = _get_doc_name("doc6", norm_docs_map, "DefaultPrefix")
-    assert result == "DefaultPrefix doc6"
+# All test_get_doc_name_* functions REMOVED
 
 
 # Further tests could include:

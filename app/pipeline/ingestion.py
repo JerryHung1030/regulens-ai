@@ -5,6 +5,8 @@ from typing import List, Dict, Any
 import pandas as pd
 from pypdf import PdfReader
 
+from app.logger import logger # Add this import
+
 # This assumes that the script is run from a context where 'app' is a package.
 # If running this file directly for testing, sys.path adjustments might be needed.
 try:
@@ -28,181 +30,163 @@ def _calculate_file_hash(file_path: Path) -> str:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
     except IOError as e:
-        print(f"Error reading file {file_path} for hashing: {e}")
+        logger.error(f"Error reading file {file_path} for hashing: {e}")
         return ""  # Return empty string or raise error
 
 
-def ingest_documents(input_dir: Path, doc_type: str) -> List[RawDoc]:
+def ingest_documents(procedure_pdf_paths: List[Path], doc_type: str) -> List[RawDoc]:
     raw_docs: List[RawDoc] = []
-    supported_extensions = [".pdf", ".txt", ".csv"]
 
-    if not input_dir.is_dir():
-        print(f"Error: Input directory {input_dir} does not exist or is not a directory.")
+    if not procedure_pdf_paths:
+        logger.warning("No procedure PDF paths provided.")
         return raw_docs
 
-    for file_path in input_dir.rglob("*"):
-        if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
-            file_hash = _calculate_file_hash(file_path)
-            if not file_hash:  # Skip if hashing failed
-                continue
+    for file_path in procedure_pdf_paths:
+        if not file_path.is_file() or file_path.suffix.lower() not in [".txt", ".md"]:
+            logger.warning(f"Skipping non-TXT/MD or non-existent file: {file_path}")
+            continue
 
-            content = ""
-            metadata: Dict[str, Any] = {
+        file_hash = _calculate_file_hash(file_path)
+        if not file_hash:
+            logger.warning(f"Skipping file due to hashing error: {file_path}")
+            continue
+
+        content = ""
+        metadata: Dict[str, Any] = {
+            "original_filename": file_path.name,
+            "file_type": file_path.suffix.lower(),
+            "errors": []
+        }
+
+        try:
+            abs_file_path = file_path.resolve()
+
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                # Optionally, add line count to metadata if useful
+                # metadata["num_lines"] = content.count('\n') + 1
+            except Exception as e:
+                logger.error(f"Error processing TXT {file_path}: {e}")
+                metadata["errors"].append(f"TXT processing error: {str(e)}")
+                content = ""
+
+            logger.info(f"Ingesting file: {file_path}, Exists: {file_path.exists()}, Size: {file_path.stat().st_size if file_path.exists() else 'N/A'}")
+            logger.debug(f"Content preview (first 50 chars): {content[:50]}")
+            raw_doc_instance = RawDoc(
+                id=file_hash,
+                source_path=abs_file_path,
+                content=content,
+                metadata=metadata.copy(),
+                doc_type=doc_type
+            )
+            raw_docs.append(raw_doc_instance)
+
+            meta_json_path = file_path.parent / f"{file_path.name}.meta.json"
+            meta_json_content = {
+                "file_sha256": file_hash,
+                "source_path": str(abs_file_path),
                 "original_filename": file_path.name,
-                "file_type": file_path.suffix.lower(),
-                "errors": []
+                "doc_type": doc_type,
+                "num_rows": metadata.get("num_rows"),
+                "num_cols": metadata.get("num_cols"),
+                "headers": metadata.get("headers"),
+                "errors": metadata.get("errors")
             }
+            meta_json_content = {k: v for k, v in meta_json_content.items() if v is not None}
+            # Ensure metadata dictionary itself doesn't carry over "num_pages"
+            if "num_pages" in metadata:
+                del metadata["num_pages"]
             
             try:
-                abs_file_path = file_path.resolve()
+                with open(meta_json_path, 'w', encoding='utf-8') as meta_f:
+                    json.dump(meta_json_content, meta_f, indent=4)
+            except IOError as e:
+                logger.error(f"Error writing .meta.json for {file_path}: {e}")
 
-                if file_path.suffix.lower() == ".pdf":
-                    try:
-                        reader = PdfReader(file_path)
-                        text_by_page = [page.extract_text() or "" for page in reader.pages]
-                        content = "\n".join(text_by_page)
-                        metadata["num_pages"] = len(reader.pages)
-                        # Storing all text_by_page might be too verbose for .meta.json,
-                        # but useful in RawDoc.metadata
-                        # metadata["text_by_page"] = text_by_page 
-                    except Exception as e:
-                        print(f"Error processing PDF {file_path}: {e}")
-                        metadata["errors"].append(f"PDF processing error: {str(e)}")
-                        content = ""  # Ensure content is empty if PDF parsing fails
+        except Exception as e:
+            logger.error(f"Unhandled exception processing file {file_path}: {e}")
+            continue
 
-                elif file_path.suffix.lower() == ".txt":
-                    try:
-                        content = file_path.read_text(encoding="utf-8")
-                    except UnicodeDecodeError as e:
-                        print(f"Encoding error reading TXT {file_path} as UTF-8: {e}. Trying with 'latin-1'.")
-                        metadata["errors"].append(f"UTF-8 decoding error: {str(e)}")
-                        try:
-                            content = file_path.read_text(encoding="latin-1")
-                            metadata["encoding_used"] = "latin-1"
-                        except Exception as e_latin1:
-                            print(f"Error reading TXT {file_path} with latin-1: {e_latin1}")
-                            metadata["errors"].append(f"Latin-1 decoding error: {str(e_latin1)}")
-                            content = ""  # Ensure content is empty
-                    except Exception as e:
-                        print(f"Error reading TXT {file_path}: {e}")
-                        metadata["errors"].append(f"TXT reading error: {str(e)}")
-                        content = ""
-
-                elif file_path.suffix.lower() == ".csv":
-                    try:
-                        df = pd.read_csv(file_path)
-                        content = df.to_csv(index=False)  # Consistent string representation
-                        metadata["num_rows"] = len(df)
-                        metadata["num_cols"] = len(df.columns)
-                        metadata["headers"] = list(df.columns)
-                    except Exception as e:
-                        print(f"Error processing CSV {file_path}: {e}")
-                        metadata["errors"].append(f"CSV processing error: {str(e)}")
-                        content = ""
-
-                # Only add RawDoc if content was successfully extracted or partially extracted
-                # (even with errors, some content might be there)
-                raw_doc_instance = RawDoc(
-                    id=file_hash,
-                    source_path=abs_file_path,
-                    content=content,
-                    metadata=metadata.copy(),  # Use a copy for RawDoc
-                    doc_type=doc_type
-                )
-                raw_docs.append(raw_doc_instance)
-
-                # Create .meta.json file
-                meta_json_path = file_path.parent / f"{file_path.name}.meta.json"
-                meta_json_content = {
-                    "file_sha256": file_hash,
-                    "source_path": str(abs_file_path),
-                    "original_filename": file_path.name,
-                    "doc_type": doc_type,
-                    "num_pages": metadata.get("num_pages"),  # Specific for PDF
-                    "num_rows": metadata.get("num_rows"),   # Specific for CSV
-                    "num_cols": metadata.get("num_cols"),   # Specific for CSV
-                    "headers": metadata.get("headers"),     # Specific for CSV
-                    "errors": metadata.get("errors")
-                }
-                # Remove None values for cleaner JSON
-                meta_json_content = {k: v for k, v in meta_json_content.items() if v is not None}
-                
-                try:
-                    with open(meta_json_path, 'w', encoding='utf-8') as meta_f:
-                        json.dump(meta_json_content, meta_f, indent=4)
-                except IOError as e:
-                    print(f"Error writing .meta.json for {file_path}: {e}")
-                    # This error doesn't stop the RawDoc from being created and returned
-
-            except Exception as e:
-                print(f"Unhandled exception processing file {file_path}: {e}")
-                # Optionally create a RawDoc with error info even if content extraction fails catastrophically
-                # For now, we skip if a major unhandled error occurs before RawDoc creation
-                continue
-                
     return raw_docs
 
 
 if __name__ == '__main__':
-    print("Starting ingestion module test...")
+    logger.info("Starting ingestion module test...")
     # Create a temporary directory structure for testing
     temp_dir = Path("temp_ingestion_test_data")
     temp_dir.mkdir(exist_ok=True)
 
-    sub_dir_controls = temp_dir / "controls"
-    sub_dir_controls.mkdir(exist_ok=True)
-    sub_dir_procedures = temp_dir / "procedures"
-    sub_dir_procedures.mkdir(exist_ok=True)
+    sub_dir_external_regulations = temp_dir / "external_regulations" # Keep for potential other tests, but not used by ingest_documents directly
+    sub_dir_external_regulations.mkdir(exist_ok=True)
+    sub_dir_procedures_pdfs = temp_dir / "procedures_pdfs" # New directory for test PDFs
+    sub_dir_procedures_pdfs.mkdir(exist_ok=True)
 
     # Create dummy files
-    (sub_dir_controls / "control_doc1.txt").write_text("This is a control document in TXT format.", encoding="utf-8")
-    (sub_dir_controls / "control_doc2.pdf").write_text("Dummy PDF content (not a real PDF for this test script). For real PDF test, place a PDF here.")
+    # ExternalRegulation files are not ingested by this function anymore.
+    # (sub_dir_external_regulations / "external_regulation_doc1.txt").write_text("This is a external_regulation document in TXT format.", encoding="utf-8")
     
-    # Create a simple PDF for testing (requires reportlab or manual creation)
-    # For simplicity, this test won't create a real PDF, but pypdf will attempt to read it.
-    # Actual PDF testing should be done with a valid PDF file.
+    # Create simple TXT files for testing procedures
+    procedure_txt_list: List[Path] = []
+    txt_path1 = sub_dir_procedures_pdfs / "procedure_doc1.txt"
+    txt_path1.write_text("This is the content of procedure_doc1.txt.\nIt has multiple lines.", encoding="utf-8")
+    procedure_txt_list.append(txt_path1)
+    logger.info(f"Created a dummy TXT: {txt_path1.name}")
+
+    txt_path2 = sub_dir_procedures_pdfs / "procedure_doc2.txt"
+    txt_path2.write_text("This is procedure_doc2.txt.", encoding="utf-8")
+    procedure_txt_list.append(txt_path2)
+    logger.info(f"Created a dummy TXT: {txt_path2.name}")
+    
+    # Create a TXT file with non-utf-8 content to test error handling
+    error_txt_path = sub_dir_procedures_pdfs / "error_doc.txt"
     try:
-        from reportlab.pdfgen import canvas
-        c = canvas.Canvas(str(sub_dir_controls / "real_control.pdf"))
-        c.drawString(100, 750, "This is page 1 of a real PDF.")
-        c.showPage()
-        c.drawString(100, 750, "This is page 2 of a real PDF.")
-        c.save()
-        print("Created a dummy PDF: real_control.pdf")
-    except ImportError:
-        print("reportlab not found, skipping real PDF creation for test. Place a PDF manually for testing.")
-        (sub_dir_controls / "real_control.pdf").write_text("This is a placeholder for a PDF.")
+        with open(error_txt_path, 'wb') as f_err:
+            f_err.write(b'\xff\xfe\x00\x00This is not valid UTF-8') # Example: UTF-16 BOM with non-UTF-8 chars
+        procedure_txt_list.append(error_txt_path)
+        logger.info(f"Created a dummy TXT with invalid encoding: {error_txt_path.name}")
+    except Exception as e_create:
+        logger.error(f"Could not create error_doc.txt for testing: {e_create}")
 
-    (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8")
-    (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0')  # Invalid UTF-8
 
-    print(f"\nIngesting 'control' documents from: {sub_dir_controls}")
-    control_docs = ingest_documents(sub_dir_controls, "control")
-    for doc in control_docs:
-        print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
-        meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
-        print(f"  Meta JSON exists: {meta_json_file.exists()}")
-        if meta_json_file.exists():
-            with open(meta_json_file, 'r') as f_meta:
-                print(f"  Meta JSON content: {json.load(f_meta)}")
+    # (sub_dir_procedures / "procedure_doc1.csv").write_text("header1,header2\nval1,val2\nval3,val4", encoding="utf-8")
+    # (sub_dir_procedures / "corrupted.txt").write_bytes(b'\x80\x90\xa0')
 
-    print(f"\nIngesting 'procedure' documents from: {sub_dir_procedures}")
-    procedure_docs = ingest_documents(sub_dir_procedures, "procedure")
+    # logger.info(f"\nIngesting 'external_regulation' documents from: {sub_dir_external_regulations}")
+    # external_regulation_docs = ingest_documents(sub_dir_external_regulations, "external_regulation")
+    # for doc in external_regulation_docs:
+    #     logger.info(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
+    #     meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
+    #     logger.info(f"  Meta JSON exists: {meta_json_file.exists()}")
+    #     if meta_json_file.exists():
+    #         with open(meta_json_file, 'r') as f_meta:
+    #             logger.info(f"  Meta JSON content: {json.load(f_meta)}")
+
+    logger.info(f"\nIngesting 'procedure' TXT documents from list: {procedure_txt_list}")
+    procedure_docs = ingest_documents(procedure_txt_list, "procedure") # Pass list of paths
     for doc in procedure_docs:
-        print(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
+        logger.info(f"  RawDoc ID: {doc.id}, Source: {doc.source_path.name}, Type: {doc.doc_type}, Metadata: {doc.metadata}")
         meta_json_file = doc.source_path.parent / f"{doc.source_path.name}.meta.json"
-        print(f"  Meta JSON exists: {meta_json_file.exists()}")
+        logger.info(f"  Meta JSON exists: {meta_json_file.exists()}")
         if meta_json_file.exists():
             with open(meta_json_file, 'r') as f_meta:
-                print(f"  Meta JSON content: {json.load(f_meta)}")
+                loaded_meta = json.load(f_meta)
+                logger.info(f"  Meta JSON content: {loaded_meta}")
+                assert "num_pages" not in loaded_meta # Ensure num_pages is not in the meta file
 
-    # Test with a non-existent directory
-    print("\nIngesting from non-existent directory:")
-    non_existent_docs = ingest_documents(Path("non_existent_dir_test"), "error_test")
-    print(f"  Number of documents found: {len(non_existent_docs)}")
+    # Test with a non-existent directory (now an empty list or list with non-existent paths)
+    logger.info("\nIngesting from a list with a non-existent TXT path:")
+    non_existent_txt_path = Path("non_existent_dir_test/non_existent.txt") # This path won't exist
+    non_existent_docs = ingest_documents([non_existent_txt_path], "error_test")
+    logger.info(f"  Number of documents found: {len(non_existent_docs)}")
+
+    logger.info("\nIngesting from an empty list:")
+    empty_list_docs = ingest_documents([], "empty_test")
+    logger.info(f"  Number of documents found: {len(empty_list_docs)}")
+
 
     # Clean up (optional)
     # import shutil
-    # print(f"\nCleaning up temporary test directory: {temp_dir}")
+    # logger.info(f"\nCleaning up temporary test directory: {temp_dir}")
     # shutil.rmtree(temp_dir)
-    print("\nIngestion module test finished.")
+    logger.info("\nIngestion module test finished.")

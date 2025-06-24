@@ -1,0 +1,146 @@
+{
+  "color_variables": {
+    "primary": {
+      "light": "#1a73e8",
+      "dark": "#1a73e8",
+      "dracula": "#FF79C6"
+    },
+    "primary_hover": {
+      "light": "#1765cc",
+      "dark": "#1765cc",
+      "dracula": "#E0009E"
+    },
+    "primary_pressed": {
+      "light": "#1459b3",
+      "dark": "#1459b3",
+      "dracula": "#C00087"
+    },
+    "secondary": {
+      "light": "#50FA7B",
+      "dark": "#50FA7B",
+      "dracula": "#50FA7B"
+    },
+    "accent": {
+      "light": "#8BE9FD",
+      "dark": "#8BE9FD",
+      "dracula": "#8BE9FD"
+    },
+    "background": {
+      "primary": {
+        "light": "#f0f0f0",
+        "dark": "#2e2e2e",
+        "dracula": "#282A36"
+      },
+      "secondary": {
+        "light": "#e0e0e0",
+        "dark": "#252525",
+        "dracula": "#21222C"
+      },
+      "tertiary": {
+        "light": "#d0d0d0",
+        "dark": "#383838",
+        "dracula": "#44475A"
+      },
+      "surface": {
+        "light": "#ffffff",
+        "dark": "#3a3a3a",
+        "dracula": "#44475A"
+      }
+    },
+    "text": {
+      "primary": {
+        "light": "#000000",
+        "dark": "#e0e0e0",
+        "dracula": "#F8F8F2"
+      },
+      "secondary": {
+        "light": "#666666",
+        "dark": "#c0c0c0",
+        "dracula": "#BBBBBB"
+      },
+      "tertiary": {
+        "light": "#555555",
+        "dark": "#b0b0b0",
+        "dracula": "#BBBBBB"
+      },
+      "on_primary": {
+        "light": "#ffffff",
+        "dark": "#ffffff",
+        "dracula": "#ffffff"
+      },
+      "on_secondary": {
+        "light": "#000000",
+        "dark": "#ffffff",
+        "dracula": "#282A36"
+      },
+      "on_surface": {
+        "light": "#000000",
+        "dark": "#e0e0e0",
+        "dracula": "#F8F8F2"
+      }
+    },
+    "border": {
+      "primary": {
+        "light": "#c0c0c0",
+        "dark": "#4a4a4a",
+        "dracula": "#44475A"
+      },
+      "secondary": {
+        "light": "#a0a0a0",
+        "dark": "#5a5a5a",
+        "dracula": "#6272A4"
+      }
+    },
+    "status": {
+      "success": {
+        "light": "#28a745",
+        "dark": "#28a745",
+        "dracula": "#50FA7B"
+      },
+      "error": {
+        "light": "#dc3545",
+        "dark": "#dc3545",
+        "dracula": "#FF5555"
+      },
+      "warning": {
+        "light": "#ffc107",
+        "dark": "#ffc107",
+        "dracula": "#FFB86C"
+      },
+      "info": {
+        "light": "#6c757d",
+        "dark": "#6c757d",
+        "dracula": "#6272A4"
+      }
+    },
+    "requires_procedure": {
+      "yes": {
+        "light": "#28a745",
+        "dark": "#28a745",
+        "dracula": "#50FA7B"
+      },
+      "no": {
+        "light": "#6c757d",
+        "dark": "#6c757d",
+        "dracula": "#6272A4"
+      }
+    },
+    "interactive": {
+      "hover": {
+        "light": "#e0e0e0",
+        "dark": "#4a4a4a",
+        "dracula": "#44475A"
+      },
+      "selected": {
+        "light": "#a0c0f0",
+        "dark": "#4a4a4a",
+        "dracula": "#50FA7B"
+      },
+      "pressed": {
+        "light": "#b0b0b0",
+        "dark": "#5a5a5a",
+        "dracula": "#3B3F58"
+      }
+    }
+  }
+} 

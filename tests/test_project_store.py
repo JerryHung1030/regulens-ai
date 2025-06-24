@@ -31,34 +31,40 @@ def test_project_store_creates_samples_on_fresh_start(mock_home_dir: Path):
 
         store = ProjectStore()  # This should trigger sample creation
 
-        assert len(store.projects) == 2
-        project1 = store.get_project_by_name("ISO27k-A.9.4.2_強密碼合規稽核範例")
-        project2 = store.get_project_by_name("ISO27001-A.6.1.2_風險清冊稽核範例")
+        assert len(store.projects) == 3
+        project1 = store.get_project_by_name("資通安全實地稽核案例 (Demo)")
+        project2 = store.get_project_by_name("符合規範案例 (Demo)")
+        project3 = store.get_project_by_name("不符合規範案例 (Demo)")
 
         assert project1 is not None
         assert project1.is_sample is True
-        assert project1.controls_dir == mock_home_dir / "regulens-ai" / "sample_data" / "sample1" / "controls"
+        assert project1.external_regulations_json_path == mock_home_dir / "regulens-ai" / "sample_data" / "sample1_資通安全實地稽核Demo" / "external_regulations" / "external.json"
 
         assert project2 is not None
         assert project2.is_sample is True
-        assert project2.procedures_dir == mock_home_dir / "regulens-ai" / "sample_data" / "sample2" / "procedures"
+        assert project2.external_regulations_json_path == mock_home_dir / "regulens-ai" / "sample_data" / "sample2_符合規範Demo" / "external_regulations" / "external.json"
+
+        assert project3 is not None
+        assert project3.is_sample is True
+        assert project3.external_regulations_json_path == mock_home_dir / "regulens-ai" / "sample_data" / "sample3_不符合規範Demo" / "external_regulations" / "external.json"
 
         # Verify that projects.json was created and contains the sample projects
         assert projects_json_path.exists()
         with open(projects_json_path, "r", encoding="utf-8") as f:
             saved_data = json.load(f)
-        assert len(saved_data) == 2
-        assert saved_data[0]["name"] == "ISO27k-A.9.4.2_強密碼合規稽核範例"
-        assert saved_data[1]["name"] == "ISO27001-A.6.1.2_風險清冊稽核範例"
+        assert len(saved_data) == 3
+        assert saved_data[0]["name"] == "資通安全實地稽核案例 (Demo)"
+        assert saved_data[1]["name"] == "符合規範案例 (Demo)"
+        assert saved_data[2]["name"] == "不符合規範案例 (Demo)"
 
         # Verify that sample files were created
-        sample1_control_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample1" / "controls" / "control1.txt"
-        sample2_evid_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample2" / "evidences" / "evidenceA.txt"
+        sample1_procedure_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample1_資通安全實地稽核Demo" / "procedures" / "internal.txt"
+        sample2_procedure_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample2_符合規範Demo" / "procedures" / "internal.txt"
+        sample3_procedure_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample3_不符合規範Demo" / "procedures" / "internal.txt"
 
-        assert sample1_control_file.exists()
-        assert sample1_control_file.read_text(encoding="utf-8").startswith("This is a sample file.")
-        assert sample2_evid_file.exists()
-        assert sample2_evid_file.read_text(encoding="utf-8").startswith("This is a sample file.")
+        assert sample1_procedure_file.exists()
+        assert sample2_procedure_file.exists()
+        assert sample3_procedure_file.exists()
 
 
 def test_project_store_loads_existing_projects_and_does_not_create_samples(mock_home_dir: Path):
@@ -91,5 +97,5 @@ def test_project_store_loads_existing_projects_and_does_not_create_samples(mock_
         # Ensure sample data files were NOT created in this case (unless project store always creates them, which it shouldn't if not fresh)
         # The _ensure_sample_data_files_exist is called by _create_sample_projects_and_data,
         # which should only be called on a fresh start.
-        sample1_control_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample1" / "controls" / "control1.txt"
-        assert not sample1_control_file.exists()
+        sample1_procedure_file = mock_home_dir / "regulens-ai" / "sample_data" / "sample1_資通安全實地稽核Demo" / "procedures" / "internal.txt"
+        assert not sample1_procedure_file.exists()

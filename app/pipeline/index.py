@@ -2,9 +2,12 @@ import json
 import re
 from pathlib import Path
 from typing import List, Optional
+import hashlib
 
 import faiss  # type: ignore
 import numpy as np
+import urllib.parse
+import base64
 
 # Adjust import based on project structure and PYTHONPATH
 try:
@@ -17,10 +20,8 @@ except ImportError:
 
 def _sanitize_filename(name: str) -> str:
     """Sanitizes a string to be filesystem-friendly."""
-    name = name.lower()
-    name = re.sub(r'[^\w\s-]', '', name)  # Remove non-alphanumeric, non-whitespace, non-hyphen
-    name = re.sub(r'[\s-]+', '_', name).strip('_')  # Replace whitespace/hyphens with underscore
-    return name
+    # 使用 MD5 雜湊來產生安全的檔案名稱
+    return hashlib.md5(name.encode('utf-8')).hexdigest()
 
 
 def _create_index_files(
@@ -100,8 +101,9 @@ def create_or_load_index(
 
     index_dir.mkdir(parents=True, exist_ok=True)
 
+    # 使用 MD5 雜湊來產生安全的檔案名稱
     safe_model_name = _sanitize_filename(embedding_model_name)
-    base_filename = f"{doc_type}_{safe_model_name}"
+    base_filename = f"{_sanitize_filename(doc_type)}_{safe_model_name}"
     index_file_path = index_dir / f"{base_filename}.faiss"
     id_mapping_file_path = index_dir / f"{base_filename}_map.json"
 
@@ -173,14 +175,14 @@ if __name__ == '__main__':
     dummy_embed_sets_list: List[EmbedSet] = []
     test_dimension = 8  # Small dimension for testing
     num_dummy_vectors = 20
-    doc_type_test = "control_test"
+    doc_type_test = "external_regulation_test"
     model_name_test = "test-embedding-model/v1"  # With slash for sanitizer testing
 
     for i in range(num_dummy_vectors):
         dummy_embed_sets_list.append(EmbedSet(
-            id=f"embed_set_control_{i}",
-            norm_doc_id=f"norm_doc_control_{i // 3}",
-            chunk_text=f"This is chunk text for control document {i // 3}, chunk index {i % 3}.",
+            id=f"embed_set_external_regulation_{i}",
+            norm_doc_id=f"norm_doc_external_regulation_{i // 3}",
+            chunk_text=f"This is chunk text for external_regulation document {i // 3}, chunk index {i % 3}.",
             embedding=list(np.random.rand(test_dimension).astype('float32')),
             chunk_index=i % 3,
             total_chunks=3,

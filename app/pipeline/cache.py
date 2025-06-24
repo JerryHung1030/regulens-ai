@@ -6,13 +6,17 @@ from typing import Optional, Type, TypeVar
 import numpy as np
 from pydantic import BaseModel
 
+# Add this import
+from app.app_paths import get_app_data_dir
+
 # For generic type hinting of BaseModel subtypes
 T = TypeVar('T', bound=BaseModel)
 
 
 class CacheService:
-    def __init__(self, cache_dir: Path):
-        self.cache_dir = cache_dir
+    def __init__(self, project_name: str): # Modified constructor
+        # Modified to use project-specific cache directory within app_data_dir
+        self.cache_dir = get_app_data_dir() / "cache" / "embeddings" / project_name
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
@@ -101,15 +105,16 @@ class CacheService:
 if __name__ == '__main__':
     # Example Usage (conceptual):
     
-    # Define a dummy Pydantic model for testing
     class MyPydanticModel(BaseModel):
         name: str
         value: int
         items: list[str]
 
-    # Create a cache service instance
-    temp_cache_dir = Path("temp_cache_test")
-    cache_service = CacheService(temp_cache_dir)
+    # Create a cache service instance for a dummy project
+    # This now requires a project_name
+    dummy_project_name = "test_project_cache" 
+    cache_service = CacheService(project_name=dummy_project_name)
+    print(f"Cache directory being used for test_project_cache: {cache_service.cache_dir}")
 
     # Test JSON caching
     print("Testing JSON Caching...")
@@ -166,9 +171,10 @@ if __name__ == '__main__':
     print(f"Loading non-existent NumPy: {cache_service.load_numpy(non_existent_npy_key)}")
     print(f"Checking existence for non-existent NumPy: {cache_service.exists(non_existent_npy_key, 'npy')}")
     
-    # Cleanup (optional - remove the temp cache directory)
+    # Cleanup for __main__ example (optional)
     # import shutil
-    # if temp_cache_dir.exists():
-    #     print(f"\nCleaning up temporary cache directory: {temp_cache_dir}")
-    #     shutil.rmtree(temp_cache_dir)
+    # test_project_cache_path = get_app_data_dir() / "cache" / "embeddings" / dummy_project_name
+    # if test_project_cache_path.exists():
+    #     print(f"\nCleaning up temporary cache directory: {test_project_cache_path}")
+    #     shutil.rmtree(test_project_cache_path)
     print("\nCacheService tests finished.")

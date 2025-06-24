@@ -153,7 +153,7 @@ if __name__ == '__main__':
     # Dummy data parameters
     test_dimension = 5
     num_target_items = 10
-    query_doc_type_name = "control_query"
+    query_doc_type_name = "external_regulation_query"
     target_doc_type_name = "procedure_target"
     test_model = "test-retrieval-model/v1"
 

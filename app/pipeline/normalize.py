@@ -113,14 +113,6 @@ if __name__ == '__main__':
 
     print("Starting normalization module test...")
 
-    raw_doc_sample_1 = RawDoc(
-        id="test_raw_doc_123",
-        source_path=Path("dummy/sample1.txt"),
-        content="  1. Introduction  \n\nThis is   a test. \n\n\nCHAPTER 2: METHODS\n  ARTICLE 1 - Definitions \n 2.1 Sub Method (a) item one \n   This is more text.  \n\n\n   Another paragraph. \n\nSECTION III - RESULTS\n (3.1) Result A\n\n  \n \t Leading and trailing spaces line. \t  \nALL CAPS SECTION HEADER",
-        metadata={"original_filename": "sample1.txt", "author": "tester"},
-        doc_type="control"
-    )
-
     raw_doc_sample_2 = RawDoc(
         id="test_raw_doc_456",
         source_path=Path("dummy/sample2.txt"),
@@ -137,7 +129,7 @@ if __name__ == '__main__':
         doc_type="evidence"
     )
 
-    test_docs = [raw_doc_sample_1, raw_doc_sample_2, raw_doc_sample_3_unicode]
+    test_docs = [raw_doc_sample_2, raw_doc_sample_3_unicode]
 
     for i, raw_doc_sample in enumerate(test_docs):
         print(f"\n--- Normalizing Sample {i + 1} (ID: {raw_doc_sample.id}) ---")

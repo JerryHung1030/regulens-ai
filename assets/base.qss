@@ -13,6 +13,8 @@ QMainWindow {
 QMenuBar {
     background-color: @menubar_background;
     color: @menubar_text;
+    font-family: "jf-openhuninn-2.1", "Microsoft JhengHei", "Microsoft YaHei", "SimHei", "Arial", sans-serif;
+    font-size: 14px;
 }
 
 QMenuBar::item:selected {
@@ -23,6 +25,8 @@ QMenu {
     background-color: @menu_background;
     border: 1px solid @menu_border;
     color: @menu_text;
+    font-family: "jf-openhuninn-2.1", "Microsoft JhengHei", "Microsoft YaHei", "SimHei", "Arial", sans-serif;
+    font-size: 14px;
 }
 
 QMenu::item:selected {
@@ -275,65 +279,337 @@ QSplitter::handle:pressed {
 /* IntroPage and its components */
 
 QWidget#introPage {
-    background-color: @intro_page_background;
-}
-
-QWidget#introPage QLabel {
-    color: @intro_page_label_text;
-    background-color: transparent;
-}
-
-QWidget#introPage QLabel h1, QWidget#introPage QLabel h2, QWidget#introPage QLabel h3 {
-    color: @intro_page_title_text;
-}
-
-QWidget#introPage QLabel p {
-    color: @intro_page_subtitle_text;
-}
-
-QFrame#pipelineCard, QFrame#dataJourneyCard, QFrame#trustCard {
-    background-color: @intro_card_background;
-    border: 1px solid @intro_card_border;
-    border-radius: 8px;
+    background-color: @background_primary;
     padding: 20px;
 }
 
-QFrame#pipelineCard QLabel, QFrame#dataJourneyCard QLabel, QFrame#trustCard QLabel {
-    color: @intro_card_label_text;
+/* General QLabel styling within IntroPage */
+QWidget#introPage QLabel {
+    color: @intro_page_card_content_text;
+    background-color: transparent;
 }
 
-QFrame#pipelineCard QLabel[text="📄"], QFrame#pipelineCard QLabel[text="⚙️"], QFrame#pipelineCard QLabel[text="🤖"], QFrame#pipelineCard QLabel[text="📝"] {
+/* Styling for the main title and subtitle */
+#introPageTitleLabel {
+    color: @intro_page_title_text;
+    font-size: 24pt;
+    font-weight: bold;
+    margin-bottom: 0px;
+    padding: 0px 0;
+    min-height: 90px;
+    line-height: 1.4;
+    position: relative;
+    top: 4px;
+}
+
+#introPageSubtitleLabel {
+    color: @intro_page_subtitle_text;
     font-size: 16pt;
+    margin-top: 0;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    min-height: 35px;
+    line-height: 1.4;
 }
 
-QFrame#pipelineCard QLabel[text="⬇️"] {
-    font-size: 18pt;
+/* Card titles */
+#corePipelineTitleLabel, #keyFeaturesTitleLabel, #howToUseTitleLabel {
+    color: @intro_page_section_title_text;
+    font-size: 20pt;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+/* Card content */
+QFrame#corePipelineCard QLabel, QFrame#keyFeaturesCard QLabel {
+    color: @intro_page_card_content_text;
+    font-size: 16pt;
+    line-height: 1.5;
+    word-wrap: break-word;  /* 允許文字換行 */
+}
+
+/* Icons */
+#corePipelineCard QLabel[text~="📄"], 
+#corePipelineCard QLabel[text~="⚙️"], 
+#corePipelineCard QLabel[text~="🤖"], 
+#corePipelineCard QLabel[text~="📝"],
+#keyFeaturesCard QLabel[text~="✨"],
+#keyFeaturesCard QLabel[text~="📚"],
+#keyFeaturesCard QLabel[text~="🔍"],
+#keyFeaturesCard QLabel[text~="🛡️"],
+#keyFeaturesCard QLabel[text~="⚙️"] {
+    color: @intro_page_icon_color;
+    font-size: 22pt;      /* 增加圖示字體大小 */
+    margin-right: 10px;   /* 增加圖示右側間距 */
+}
+
+/* Updated card styling for Core Pipeline and Key Features */
+QFrame#corePipelineCard, QFrame#keyFeaturesCard {
+    background-color: @intro_card_background;
+    border: 1px solid @intro_card_border;
+    border-radius: @medium_border_radius;
+    padding: 28px;
+    margin-bottom: 20px;
+    min-width: 600px;     /* 設置最小寬度 */
+    min-height: 200px;    /* 設置最小高度 */
+}
+
+/* General text styling within cards */
+QFrame#corePipelineCard QLabel, QFrame#keyFeaturesCard QLabel {
+    color: @intro_card_label_text; /* Default text color for content within cards */
+}
+
+/* Styling for icons in Core Pipeline steps */
+#corePipelineCard QLabel[text="📄"], 
+#corePipelineCard QLabel[text="⚙️"], 
+#corePipelineCard QLabel[text="🤖"], 
+#corePipelineCard QLabel[text="📝"] {
+    font-size: 22pt;      /* 增加圖示字體大小 */
+    color: @icon_color_primary;
+}
+
+/* Styling for arrow icon in Core Pipeline */
+QFrame#corePipelineCard QLabel[text="⬇️"] {
+    font-size: 24pt;      /* 增加箭頭圖示字體大小 */
     color: @intro_arrow_icon_color;
-    margin: 8px 0;
+    margin: 12px 0;       /* 增加箭頭上下間距 */
 }
 
-QFrame#pipelineCard QLabel strong {
-    color: @intro_strong_text_color;
+/* Styling for strong and small text within Core Pipeline, existing styles seem fine */
+QFrame#corePipelineCard QLabel strong { /* Updated selector */
+    color: @intro_strong_text_color; /* Retained from existing */
 }
 
-QFrame#pipelineCard QLabel small {
-    color: @intro_small_text_color;
+QFrame#corePipelineCard QLabel small { /* Updated selector */
+    color: @intro_small_text_color; /* Retained from existing */
 }
 
+/* Styling for icons in Key Features section */
+#keyFeaturesCard QLabel[text~="✨"],
+#keyFeaturesCard QLabel[text~="📚"],
+#keyFeaturesCard QLabel[text~="🔍"],
+#keyFeaturesCard QLabel[text~="🛡️"],
+#keyFeaturesCard QLabel[text~="⚙️"] {
+    font-size: 16pt; /* Restoring font size previously set by inline style */
+    color: @icon_color_primary; /* Using a placeholder, ideally defined in theme.json */
+    margin-right: 5px; /* Add a bit of space between icon and text */
+}
+
+/* Specific styling for text part of feature items if needed, e.g., to ensure consistent line height */
+#keyFeaturesCard QHBoxLayout QLabel:last-child { 
+    /* This selector might be too broad if other QHBoxLayouts are added.
+       A more robust way would be to add a property to these labels in Python if needed.
+       For now, assuming general QLabel styling from #keyFeaturesCard QLabel is enough.
+    */
+}
+
+/* === Primary Action Button Styling === */
+/* These are the main action buttons that should be prominent */
+QPushButton#getStartedButton, /* From intro_page */
+QPushButton#btnCompare, /* From project_editor - main compare button */
+QPushButton#btnExportExcel, /* From results_viewer - export Excel button */
+QPushButton#btnBack { /* From results_viewer - back button */
+    color: @button_get_started_text; /* Text color for primary buttons */
+    background-color: @button_get_started_background; /* Primary button background */
+    border: none; /* Primary buttons are borderless */
+    border-radius: 4px; /* Consistent border radius */
+}
+
+QPushButton#getStartedButton:hover,
+QPushButton#btnCompare:hover,
+QPushButton#btnExportExcel:hover,
+QPushButton#btnBack:hover {
+    background-color: @button_get_started_hover_background; /* Primary button hover */
+}
+
+QPushButton#getStartedButton:pressed,
+QPushButton#btnCompare:pressed,
+QPushButton#btnExportExcel:pressed,
+QPushButton#btnBack:pressed {
+    background-color: @button_get_started_pressed_background; /* Primary button pressed */
+}
+
+/* === Secondary Button Styling === */
+/* These are utility/secondary buttons that should be more subtle */
+QPushButton#external_regulations_json_file_browse_button, /* From project_editor */
+QPushButton#procedure_doc_files_browse_button, /* From project_editor */
+QPushButton#validate_json_button, /* From project_editor */
+QPushButton#viewDetailsButton, /* From results_viewer table */
+QPushButton#okButton, /* From dialogs */
+QPushButton#settingsButtonBrowse { /* From settings_dialog */
+    color: @button_text; /* Use default button text color */
+    background-color: @button_background; /* Use default button background */
+    border: 1px solid @button_border; /* Use default button border */
+    border-radius: 4px; /* Consistent border radius */
+}
+
+QPushButton#external_regulations_json_file_browse_button:hover,
+QPushButton#procedure_doc_files_browse_button:hover,
+QPushButton#validate_json_button:hover,
+QPushButton#viewDetailsButton:hover,
+QPushButton#okButton:hover,
+QPushButton#settingsButtonBrowse:hover {
+    background-color: @button_hover_background; /* Use default button hover */
+    border-color: @button_hover_border; /* Use default button hover border */
+}
+
+QPushButton#external_regulations_json_file_browse_button:pressed,
+QPushButton#procedure_doc_files_browse_button:pressed,
+QPushButton#validate_json_button:pressed,
+QPushButton#viewDetailsButton:pressed,
+QPushButton#okButton:pressed,
+QPushButton#settingsButtonBrowse:pressed {
+    background-color: @button_pressed_background; /* Use default button pressed */
+    border-color: @button_pressed_border; /* Use default button pressed border */
+}
+
+/* === Individual Button Style Overrides (Padding, Font Size, etc.) === */
 QPushButton#getStartedButton {
     font-size: 16px;
     font-weight: 500;
     padding: 12px 32px;
-    border-radius: 4px;
-    color: @button_get_started_text;
-    background-color: @button_get_started_background;
-    border: none;
+    /* Color, background, border, and border-radius are handled by the primary button style */
 }
 
-QPushButton#getStartedButton:hover {
-    background-color: @button_get_started_hover_background;
+QPushButton#btnCompare { /* This is the Re-run sample / Start compare button */
+    font-weight: 500;
+    padding: 10px 24px; /* Large size, similar to getStartedButton */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the primary button style */
 }
 
-QPushButton#getStartedButton:pressed {
-    background-color: @button_get_started_pressed_background;
+QPushButton#external_regulations_json_file_browse_button,
+QPushButton#procedure_doc_files_browse_button {
+    padding: 5px 10px; /* Default padding, keeps them small */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the secondary button style */
+}
+
+QPushButton#validate_json_button {
+    padding: 8px 16px; /* Medium size */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the secondary button style */
+}
+
+QPushButton#btnExportExcel { /* This is the Export Excel button */
+    font-weight: 500;
+    padding: 8px 16px; /* Medium size */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the primary button style */
+}
+
+QPushButton#btnBack { /* This is the Back button */
+    font-weight: 500;
+    padding: 8px 16px; /* Medium size */
+    /* font-size will be from default QPushButton style or OS default */
+    /* Color, background, border, and border-radius are handled by the primary button style */
+}
+
+/* StatsBarChart Status Indicators */
+/* Remove old generic status rules if they were solely for StatsBarChart */
+/* e.g., .status-compliant-bar, QFrame[status="compliant"], QLabel.status-compliant-text etc. are replaced by the following specific rules: */
+
+StatsBarChart QFrame { /* Default for frames within StatsBarChart if needed */
+    border: none; /* Ensure no borders for bar segments */
+}
+
+StatsBarChart QFrame[status="compliant"] {
+    background-color: @status_compliant_color;
+}
+StatsBarChart QFrame[status="compliant"] QLabel {
+    color: @text_color_on_primary;
+    font-weight: bold;
+}
+
+StatsBarChart QFrame[status="non-compliant"] {
+    background-color: @status_non_compliant_color;
+}
+StatsBarChart QFrame[status="non-compliant"] QLabel {
+    color: @text_color_on_danger;
+    font-weight: bold;
+}
+
+StatsBarChart QFrame[status="pending"] {
+    background-color: @status_pending_color;
+}
+StatsBarChart QFrame[status="pending"] QLabel {
+    color: @text_color_on_warning;
+    font-weight: bold;
+}
+
+StatsBarChart QFrame[status="na"] {
+    background-color: @status_na_color;
+}
+StatsBarChart QFrame[status="na"] QLabel {
+    color: @text_color_on_disabled;
+    font-weight: bold;
+}
+
+/* Styling for How to Use step boxes */
+.howToUseStepBox {
+    font-size: 14pt;
+    font-weight: bold;
+    color: @intro_page_card_content_text;
+    background-color: @intro_card_background;
+    border: 1px solid @intro_card_border;
+    border-radius: @medium_border_radius;
+    padding: 10px;
+    text-align: center;
+}
+
+/* Styling for process steps */
+QFrame#corePipelineBottomCard QLabel strong {
+    font-size: 24pt;
+    font-weight: bold;
+    color: @intro_strong_text_color;
+}
+
+QFrame#corePipelineBottomCard QLabel small {
+    font-size: 14pt;
+    color: @intro_small_text_color;
+}
+
+/* Styling for process step icons */
+QFrame#corePipelineBottomCard QLabel[text~="1️⃣"],
+QFrame#corePipelineBottomCard QLabel[text~="2️⃣"],
+QFrame#corePipelineBottomCard QLabel[text~="3️⃣"],
+QFrame#corePipelineBottomCard QLabel[text~="4️⃣"] {
+    font-size: 20px;  /* 設定為 20px */
+    margin-right: 10px;
+}
+
+/* Styling for process step titles (intro_process_step_A_title) */
+QFrame#corePipelineBottomCard QLabel strong {
+    font-size: 20px;  /* 設定為 20px */
+    font-weight: bold;
+    color: @intro_strong_text_color;
+}
+
+/* Styling for process step descriptions (intro_process_step_A_desc) */
+QFrame#corePipelineBottomCard QLabel small {
+    font-size: 16px;  /* 設定為 16px */
+    color: @intro_small_text_color;
+}
+
+/* Styling for feature icons (intro_feature1_icon, etc.) */
+QFrame#keyFeaturesBottomCard QLabel[text~="🔍"],
+QFrame#keyFeaturesBottomCard QLabel[text~="✍️"],
+QFrame#keyFeaturesBottomCard QLabel[text~="📂"],
+QFrame#keyFeaturesBottomCard QLabel[text~="⚖️"],
+QFrame#keyFeaturesBottomCard QLabel[text~="📊"] {
+    font-size: 20px;  /* 設定為 20px */
+    margin-right: 10px;
+}
+
+/* Styling for feature titles (intro_feature1_title, etc.) */
+QFrame#keyFeaturesBottomCard QLabel strong {
+    font-size: 20px;  /* 設定為 20px */
+    font-weight: bold;
+    color: @intro_strong_text_color;
+}
+
+/* Styling for feature descriptions (intro_feature1_desc, etc.) */
+QFrame#keyFeaturesBottomCard QLabel small {
+    font-size: 16px;  /* 設定為 16px */
+    color: @intro_small_text_color;
 }

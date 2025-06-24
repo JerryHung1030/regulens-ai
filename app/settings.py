@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from pydantic import BaseModel # Added import
 
+# Add this import
+from app.app_paths import get_app_data_dir
 
 class Settings:
     """Simple settings manager that persists to JSON.
@@ -14,7 +17,8 @@ class Settings:
     """
 
     def __init__(self) -> None:
-        self._path = Path.home() / ".regulens-ai.json"
+        # Modify this line
+        self._path = get_app_data_dir() / "settings.json"
         self._data: dict[str, Any] = {}
         self._load()
 
@@ -40,3 +44,8 @@ class Settings:
         """Set a setting value and save to disk."""
         self._data[key] = value
         self._save()
+
+# The PipelineSettings class definition has been moved to app.pipeline.__init__.py
+# to keep it co-located with the pipeline logic that uses it and to avoid circular dependencies.
+# It can be imported from there if needed elsewhere in the `app.settings` module,
+# though typically it's instantiated and used closer to the pipeline invocation.

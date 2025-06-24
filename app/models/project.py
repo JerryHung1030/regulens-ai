@@ -7,8 +7,11 @@ from threading import Lock
 
 from PySide6.QtCore import QObject, Signal
 
-from app.models.assessments import PairAssessment
+from app.models.assessments import PairAssessment # Old results structure
+from app.app_paths import get_app_data_dir
 from .docs import NormDoc
+# Import ProjectRunData from the new module
+from .run_data import ProjectRunData
 
 
 class CompareProject(QObject):
@@ -18,9 +21,9 @@ class CompareProject(QObject):
 
     name: str
     results: List[PairAssessment]
-    controls_dir: Optional[Path]
-    procedures_dir: Optional[Path]
-    evidences_dir: Optional[Path]
+    external_regulations_json_path: Optional[Path]  # Changed from external_regulations_dir
+    procedure_doc_paths: List[Path]  # Changed from procedure_pdf_paths
+    run_json_path: Optional[Path]  # Added
     report_path: Optional[Path]
     is_sample: bool
     created_at: datetime
@@ -28,11 +31,12 @@ class CompareProject(QObject):
     viewer_idx: int
     
     _norm_map: Dict[str, NormDoc]  # For storing all types of NormDocs
+    project_run_data: Optional[ProjectRunData] = None
 
     def __init__(self, name: str,
-                 controls_dir: Optional[Path] = None,
-                 procedures_dir: Optional[Path] = None,
-                 evidences_dir: Optional[Path] = None,
+                 external_regulations_json_path: Optional[Path] = None,
+                 procedure_doc_paths: Optional[List[Path]] = None,  # Changed from procedure_pdf_paths
+                 run_json_path: Optional[Path] = None,
                  report_path: Optional[Path] = None,
                  is_sample: bool = False,
                  created_at: Optional[datetime] = None,
@@ -43,21 +47,30 @@ class CompareProject(QObject):
         self.name = name
         self.results: List[PairAssessment] = []
         self._results_lock = Lock()
-        self.controls_dir = controls_dir
-        self.procedures_dir = procedures_dir
-        self.evidences_dir = evidences_dir
+        self.external_regulations_json_path = external_regulations_json_path
+        self.procedure_doc_paths = procedure_doc_paths if procedure_doc_paths is not None else []  # Changed from procedure_pdf_paths
+
+        # Initialize run_json_path with a default if not provided
+        if run_json_path is None:
+            # Use application data directory instead of relative path
+            app_data_dir = get_app_data_dir()
+            self.run_json_path = app_data_dir / "projects" / self.name / "run.json"
+        else:
+            self.run_json_path = run_json_path
+
         self.report_path = report_path
         self.is_sample = is_sample
         self.created_at = created_at if created_at is not None else datetime.now()
         self.editor_idx = editor_idx
         self.viewer_idx = viewer_idx
+        self.project_run_data = None
         
-        self._norm_map: Dict[str, NormDoc] = {}  # Unified map for all NormDocs
+        self._norm_map: Dict[str, NormDoc] = {}
 
     def populate_norm_map(self, norm_docs: List[NormDoc]) -> None:
         """
         Populates the internal map of norm_id to NormDoc object.
-        This map can store controls, procedures, and evidence documents if needed,
+        This map can store external_regulations, procedures, and evidence documents if needed,
         as long as they are passed in norm_docs.
         """
         for norm_doc in norm_docs:
@@ -76,32 +89,44 @@ class CompareProject(QObject):
         return {}
 
     def rename(self, new_name: str):
-        self.name = new_name
+        if not new_name or not new_name.strip():
+            raise ValueError("Project name cannot be empty.")
+        self.name = new_name.strip()
         self.updated.emit()
         self.changed.emit()
 
     @property
     def ready(self) -> bool:
-        def check_dir(dir_path: Optional[Path]) -> bool:
-            if dir_path is None or not dir_path.exists() or not dir_path.is_dir():
-                return False
-            try:
-                for item in dir_path.iterdir():
-                    if item.is_file() and item.suffix.lower() == ".txt":
-                        return True
-                return False
-            except OSError:
-                return False
-        return (check_dir(self.controls_dir) and 
-                check_dir(self.procedures_dir) and 
-                check_dir(self.evidences_dir))
+        # 如果是範例專案，直接返回 True
+        if self.is_sample:
+            return True
+            
+        # 一般專案的檢查邏輯
+        external_regulations_ready = self.external_regulations_json_path is not None and self.external_regulations_json_path.exists() and self.external_regulations_json_path.is_file()
+        procedures_ready = bool(self.procedure_doc_paths) and all(p.exists() and p.is_file() for p in self.procedure_doc_paths)
+        return external_regulations_ready and procedures_ready
 
     @property
     def has_results(self) -> bool:
+        # For v1.1 pipeline, "results" means run.json exists and is valid, or project_run_data is loaded.
+        # The old `self.results` (List[PairAssessment]) might still be used by older pipeline versions.
+        if self.project_run_data is not None and self.project_run_data.external_regulation_clauses:
+            return True
+        if self.run_json_path and self.run_json_path.exists() and self.run_json_path.is_file():
+            # Basic check for existence and being a file.
+            # A more robust check would try to load/validate its content.
+            try:
+                with open(self.run_json_path, 'r') as f:
+                    content = f.read()
+                    return bool(content.strip() and content.strip() != "{}") # Non-empty JSON
+            except Exception:
+                return False # Error reading implies no valid results
+
+        # Fallback to old results structure if new one is not present
         with self._results_lock:
             return bool(self.results)
 
-    def set_results(self, assessments: List[PairAssessment]):
+    def set_results(self, assessments: List[PairAssessment]): # This is for the old pipeline's results
         with self._results_lock:
             self.results = assessments
         self.updated.emit()
@@ -110,20 +135,20 @@ class CompareProject(QObject):
         with self._results_lock:
             return list(self.results)
 
-    def set_controls_dir(self, path: Path | None):
-        self.controls_dir = path
+    def set_external_regulations_json_path(self, path: Path | None):  # Changed
+        self.external_regulations_json_path = path
         with self._results_lock:
             self.results = []
         self.changed.emit()
 
-    def set_procedures_dir(self, path: Path | None):
-        self.procedures_dir = path
+    def set_procedure_doc_paths(self, paths: List[Path] | None):  # Changed from set_procedure_pdf_paths
+        self.procedure_doc_paths = paths if paths is not None else []
         with self._results_lock:
             self.results = []
         self.changed.emit()
 
-    def set_evidences_dir(self, path: Path | None):
-        self.evidences_dir = path
+    def set_run_json_path(self, path: Path | None):  # Added
+        self.run_json_path = path
         with self._results_lock:
             self.results = []
         self.changed.emit()
@@ -131,9 +156,9 @@ class CompareProject(QObject):
     def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
-            "controls_dir": str(self.controls_dir) if self.controls_dir else None,
-            "procedures_dir": str(self.procedures_dir) if self.procedures_dir else None,
-            "evidences_dir": str(self.evidences_dir) if self.evidences_dir else None,
+            "external_regulations_json_path": str(self.external_regulations_json_path) if self.external_regulations_json_path else None,
+            "procedure_doc_paths": [str(p) for p in self.procedure_doc_paths],  # Changed from procedure_pdf_paths
+            "run_json_path": str(self.run_json_path) if self.run_json_path else None,
             "report_path": str(self.report_path) if self.report_path else None,
             "is_sample": self.is_sample,
             "created_at": self.created_at.isoformat(),
@@ -153,12 +178,15 @@ class CompareProject(QObject):
         else:
             created_at_dt = datetime.now()
 
-        project = cls(  # Create instance first
+        procedure_paths_str = data.get("procedure_doc_paths", [])  # Changed from procedure_pdf_paths
+        procedure_doc_paths = [Path(p) for p in procedure_paths_str] if procedure_paths_str else []
+
+        project = cls(
             name=data["name"],
-            controls_dir=Path(data["controls_dir"]) if data["controls_dir"] else None,
-            procedures_dir=Path(data["procedures_dir"]) if data["procedures_dir"] else None,
-            evidences_dir=Path(data["evidences_dir"]) if data["evidences_dir"] else None,
-            report_path=Path(data["report_path"]) if data["report_path"] else None,
+            external_regulations_json_path=Path(data["external_regulations_json_path"]) if data.get("external_regulations_json_path") else None,
+            procedure_doc_paths=procedure_doc_paths,  # Changed from procedure_pdf_paths
+            run_json_path=Path(data["run_json_path"]) if data.get("run_json_path") else None,
+            report_path=Path(data["report_path"]) if data.get("report_path") else None,
             is_sample=data.get("is_sample", False),
             created_at=created_at_dt,
         )

@@ -11,13 +11,15 @@ venv/
 # PyInstaller build
 build/
 dist/
-*.spec
 
 # Logs
 logs/
 cache/
 output/
 *.meta.json
+run.json
+projects/
+user_data/
 
 # Test outputs
 htmlcov/
