@@ -783,7 +783,7 @@ class ResultsViewer(QWidget):
             table_font = get_display_font(size=10) # Ensure this uses display_font
             item.setFont(table_font)
             self.table_widget.setItem(0, 0, item)
-            self.table_widget.setSpan(0, 0, self.table_widget.columnCount()) # Span all columns
+            self.table_widget.setSpan(0, 0, self.table_widget.rowCount(), self.table_widget.columnCount()) # Span all columns
             return
 
         table_font = get_display_font(size=10) # Ensure this uses display_font for all items
