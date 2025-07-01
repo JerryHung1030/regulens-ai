@@ -1,232 +1,508 @@
-# 大綱
+# Regulens-AI
 
-1. [簡介](#1-簡介)
-2. [主要功能](#2-主要功能)
-3. [快速開始](#3-快速開始)
-
-   1. [選項一：使用預建執行檔（推薦）](#31-選項一使用預建執行檔推薦)
-   2. [選項二：原始碼開發與環境設定](#32-選項二原始碼開發與環境設定)
-4. [使用 PyInstaller 打包](#4-使用-pyinstaller-打包)
-5. [範例專案](#5-範例專案)
-6. [設定檔與配置](#6-設定檔與配置)
-7. [基本操作流程](#7-基本操作流程)
-8. [報告匯出](#8-報告匯出)
-9. [測試](#9-測試)
-10. [常見問題](#10-常見問題)
-11. [專案結構](#11-專案結構)
-12. [快取機制](#12-快取機制)
-13. [Pipeline 流程](#13-pipeline-流程)
-14. [PyInstaller 打包 tiktoken 完整指引](#14-pyinstaller-打包-tiktoken-完整指引)
-15. [參考連結](#15-參考連結)
+> **An intelligent desktop application** that assists users in **compliance analysis** through a **Retrieval Augmented Generation (RAG)** workflow. It allows users to centralize various external regulations, controls, and procedure documents, and automatically generate compliance assessment reports.
 
 ---
 
-## 1. 簡介
+## Authors
 
-Regulens-AI 是一款桌面應用程式，透過 Retrieval Augmented Generation (RAG) 流程協助使用者進行合規性分析。它可讓使用者將各類外部法規、控制項（Controls）、程序（Procedures）文件與證據檔案集中管理，並自動產生合規性評估報告。
+*   [Jerry Hung](https://github.com/JerryHung1030)
+*   [Ken Su](https://github.com/ken22i)
+*   [SJ](https://github.com/shih1999)
 
-## 2. 主要功能
+---
 
-1. **專案化工作流程**：將不同合規性評估以專案形式管理。
-2. **兩欄式檔案輸入**：依序定義「控制項（Controls）」、「程序（Procedures）」檔案路徑。
-3. **自動化 RAG Pipeline**：自動處理文件檢索與生成合規性洞察。
-4. **本地向量庫**：採用 FAISS 建立文件嵌入向量庫，加速相似度搜尋。
-5. **LLM 整合**：呼叫大型語言模型 (如 OpenAI GPT 系列) 執行評估與判斷。
-6. **CSV 報告**：自動產生詳細的合規報告，可匯出為 CSV。
-7. **內建範例專案**：首次啟動時自動建立範例專案，協助用戶快速上手。
-8. **可配置設定**：在設定對話框中調整 OpenAI API 金鑰、嵌入模型、LLM 模型及其他參數。
-9. **主題支援**：提供 Light、Dark、Dracula 介面主題。
-10. **多語言介面**：支援繁體中文 (zh) 與英文 (en)。
+## Table of Contents
 
-## 3. 快速開始
+1.  [✨ Features](#-features)
+2.  [🗺️ Architecture Overview](#️-architecture-overview)
+3.  [🚀 Quick Start](#-quick-start)
+    *   [Option 1: Using Pre-built Executable (Recommended)](#option-1-using-pre-built-executable-recommended)
+    *   [Option 2: Source Code Development & Environment Setup](#option-2-source-code-development--environment-setup)
+4.  [📂 Project Structure](#-project-structure)
+5.  [⚙️ Configuration](#️-configuration)
+    *   [Key Configuration Options (Managed via Settings Dialog)](#key-configuration-options-managed-via-settings-dialog)
+    *   [Cache Mechanism](#cache-mechanism)
+6.  [🛠️ Basic Operation Flow](#️-basic-operation-flow)
+7.  [📦 Packaging with PyInstaller](#-packaging-with-pyinstaller)
+8.  [📋 Sample Projects](#-sample-projects)
+9.  [🚧 Development Status & Roadmap](#-development-status--roadmap)
+10. [🧪 Testing](#-testing)
+11. [❓ FAQ](#-faq)
+12. [🤝 Contributing](#-contributing)
+13. [📄 License](#-license)
+14. [🔗 References](#-references)
 
-### 3.1 選項一：使用預建執行檔（推薦）
+---
 
-1. 於 [發布頁面](#)下載最新版本
-2. 解壓縮 ZIP 檔至指定目錄
-3. 直接執行 `RegulensAI.exe`，無需安裝！
+## ✨ Features
 
-### 3.2 選項二：原始碼開發與環境設定
+*   **Project-Based Workflow:** Manage different compliance assessments as distinct projects (`CompareProject` model).
+*   **Flexible Document Input:** Supports external regulations via JSON (`external_regulations.json`) and internal procedures from text files (`internal.txt`).
+*   **Automated RAG Pipeline (`pipeline_v1_1.py`):**
+    *   **Need-Check:** LLM-powered determination (`execute_need_check_step`) of whether an external regulation clause requires corresponding internal procedures.
+    *   **Audit-Plan Generation:** LLM-driven creation (`execute_audit_plan_step`) of specific audit tasks (search queries) for each relevant regulation clause.
+    *   **Evidence Retrieval (Search):**
+        *   Ingestion (`ingest_documents`) and normalization (`normalize_document`) of procedure documents.
+        *   Efficient text embedding (`generate_embeddings`) using configurable models (e.g., OpenAI `text-embedding-3-large`) with `CacheService`.
+        *   Local, persistent FAISS vector store (`create_or_load_index`) for procedure document chunks, stored in the application's data directory.
+        *   Semantic search (`retrieve_similar_chunks`) to find relevant procedure excerpts for each audit task.
+    *   **Compliance Judgment:** LLM-based assessment (`execute_judge_step`) of compliance for each regulation clause based on aggregated retrieved evidence, providing a boolean outcome, descriptive reasoning, and improvement suggestions.
+*   **Comprehensive Data Management:** All project inputs, intermediate results, and final judgments are stored in a structured `run.json` file per project (`ProjectRunData` model).
+*   **Progressive Saving:** Pipeline progress is saved incrementally to `run.json`, allowing resumption or review of partial results.
+*   **Configurable LLM & Embedding Models:** Users can specify OpenAI API keys and choose different LLM models (e.g., `gpt-4o`, `gpt-3.5-turbo`) and embedding models via a settings dialog (`Settings` class, `config_default.yaml`).
+*   **User-Friendly GUI (PySide6):**
+    *   Intuitive interface (`MainWindow`, `Workspace`) for project management, configuration, and viewing results.
+    *   Dedicated views for project editing (`ProjectEditor`), results display (`ResultsViewer`), and an introductory guide (`IntroPage`).
+    *   Real-time progress updates during analysis (`progress_callback`).
+*   **Theme Support:** Light, Dark, Dracula, and System-default themes (`ThemeManager`).
+*   **Multi-Language Interface:** Supports Traditional Chinese (zh) and English (en) (`Translator` class).
+*   **Built-in Sample Projects:** Facilitates quick understanding and onboarding.
+*   **CSV Reporting:** Export detailed compliance reports.
+*   **Robust Caching:** Caches embeddings and LLM responses to accelerate subsequent runs and reduce API calls. Managed by `CacheService` and file modification time checks for invalidation.
 
-```bash
-# 建立並啟用虛擬環境
-python -m venv .venv
-# macOS / Linux
-source .venv/bin/activate
-# Windows
-.\.venv\Scripts\activate
+---
 
-# 安裝相依套件
-pip install -r requirements.txt
-```
+## 🗺️ Architecture Overview
 
-1. 首次啟動時，程式會自動建立範例專案。
-2. 開啟「設定」(File > Settings...)，填入 **OpenAI API Key**。
-3. 調整 **Embedding Model**、**LLM Model** 及其他參數。
-4. 執行應用程式：
-
-   ```bash
-   # 方式一：entry point 腳本
-   python run_app.py
-
-   # 方式二：模組執行
-   python -m app.main
-   ```
-
-## 4. 使用 PyInstaller 打包
-
-1. 安裝 PyInstaller：
-
-   ```bash
-   pip install pyinstaller
-   pip install -r requirements.txt
-   ```
-2. 使用範本腳本打包（推薦）：
-
-   ```bash
-   # Windows
-   build.bat
-   # Linux / macOS
-   chmod +x build.sh
-   ./build.sh
-   ```
-3. 手動使用 spec 檔：
-
-   ```bash
-   pyinstaller --clean regulens-ai.spec
-   ```
-
-**輸出結果**：
-
-* `dist/RegulensAI.exe`
-* `build/` 目錄（可刪除）
-* `regulens-ai.spec`
-
-## 5. 範例專案
-
-1. **符合規範 Demo（Sample 2）**
-   - 外部法規：`external_regulations/external.json`（資通安全管理辦法，含事件分級與專責人員配置要求）
-   - 程序（Procedures）：`procedures/internal.txt`
-   - 內容特色：程序（Procedures）完整對應外部法規要求，包含四級事件分級、應變流程，以及明確規範「至少配置兩名具專業資格之資安專責人員」等細節，完全符合法規規範。
-
-2. **不符合規範 Demo（Sample 3）**
-   - 外部法規：同上
-   - 程序（Procedures）：`procedures/internal.txt`
-   - 內容特色：程序（Procedures）內容有缺漏，例如僅配置一名資安專責人員，且部分事件分級與應變流程未完整覆蓋外部法規要求，系統將自動判斷為「不符合」並顯示合規缺口。
-
-## 6. 設定檔與配置
-
-1. **設定檔路徑**：
-
-   * Windows: `%APPDATA%\regulens-ai\settings.json`
-   * macOS: `~/Library/Application Support/regulens-ai/settings.json`
-   * Linux: `~/.config/regulens-ai/settings.json`
-2. **主要選項**：
-
-   1. OpenAI API Key (必要)
-   2. 主題 (light / dark / dracula / system)
-   3. 語言 (zh / en)
-   4. 嵌入模型 (預設 `text-embedding-3-large`)
-   5. LLM 模型 (預設 `gpt-4o`)
-
-## 7. 基本操作流程
-
-1. 啟動程式（執行 EXE 或 `python -m run_app.py`）。
-2. 使用範例專案快速體驗。
-3. 建立新專案：
-
-   1. 點選「新增專案」
-   2. 選擇 `external.json` 與 `internal.txt`
-   3. 點擊「開始比對」或「執行分析」
-4. 分析完成後：
-
-   1. 檢視合規性結果、稽核計畫與詳細報告
-   2. 匯出 Markdown 或 PDF 報告
-5. 於「設定」中切換主題、語言與 API 金鑰。
-
-## 8. 報告匯出
-
-1. 支援匯出：CSV。
-2. 報告內容：合規性摘要、稽核計畫、詳細比對紀錄。
-3. 原始結果檔：`run.json`。
-
-## 9. 測試
-
-執行測試套件：
-
-```bash
-pytest
-```
-
-## 10. 常見問題
-
-1. **OpenAI API Key 無效？** 確認金鑰與餘額。
-2. **cache 目錄能否刪除？** 可刪除，系統會自動重建。
-3. **找不到 `run.json`？** 確認 `sample_data` 已正確複製。
-4. **如何切換語言？** 於「設定」切換後重啟。
-5. **如何切換主題？** 同上，立即生效。
-6. **匯出格式？** CSV。
-7. **自訂範例資料？** 新增專案時選擇自定檔案。
-8. **Unknown encoding cl100k_base？** 參考「PyInstaller 打包 tiktoken 完整指引」。
-
-## 11. 專案結構
-
-```plain
-app/
-assets/
-config_default.yaml
-docs/
-tests/
-sample_data/
-run_app.py
-regulens-ai.spec
-build.bat
-build.sh
-requirements.txt
-~/.config/.../cache
-~/.config/.../projects.json
-```
-
-## 12. 快取機制
-
-1. **快取目錄**：
-
-   * Windows: `%APPDATA%/regulens-ai/cache/`
-   * macOS: `~/Library/Application Support/regulens-ai/cache/`
-   * Linux: `~/.local/share/regulens-ai/cache/`
-2. **快取內容**：向量嵌入、FAISS 索引、LLM 回應快取、Pipeline 臨時檔
-3. **管理**：自動檢查並載入快取，必要時重新計算。
-
-## 13. Pipeline 流程
+Regulens-AI processes compliance documents through a multi-stage pipeline. The user interacts with the GUI to define project parameters and initiate analysis. The Pipeline Orchestrator then manages the flow of data through several analytical steps, leveraging Large Language Models (LLMs), a local vector store (FAISS), and caching mechanisms to produce a compliance report.
 
 ```mermaid
-graph TD
-    A[載入專案資料] --> B[載入外部法規]
-    B --> C[載入內部程序]
-    C --> D[嵌入向量化與快取]
-    D --> E[建立向量索引]
-    E --> F[Need-Check]
-    F --> G[Search]
-    G --> H[Audit-Plan]
-    H --> I[Judge]
-    I --> J[產生 run.json]
-    J --> K[UI 顯示與報告匯出]
+sequenceDiagram
+    actor User
+    participant GUI as MainWindow/Workspace
+    participant PipelineOrchestrator as run_project_pipeline_v1_1
+    participant NeedCheck as execute_need_check_step
+    participant AuditPlan as execute_audit_plan_step
+    participant Search as execute_search_step
+    participant Judge as execute_judge_step
+    participant LLMService as call_llm_api
+    participant VectorStore as FAISS Index
+    participant CacheService as CacheService
+    participant FileSystem
+
+    User->>+GUI: 1. Configure Project (select external_reg.json, procedure_docs)
+    User->>GUI: 2. Start Analysis
+    GUI->>+PipelineOrchestrator: run_project_pipeline_v1_1(project, settings, progress_callback)
+
+    PipelineOrchestrator->>FileSystem: Load external_regulations.json
+    PipelineOrchestrator->>FileSystem: Load run.json (if exists)
+    PipelineOrchestrator->>PipelineOrchestrator: Perform Cache Invalidation Checks (file mtime)
+
+    PipelineOrchestrator->>+NeedCheck: execute_need_check_step()
+    loop For each Regulation Clause (if not cached or invalidated)
+        NeedCheck->>+LLMService: call_llm_api(prompt_need_check)
+        LLMService-->>-NeedCheck: {requires_procedure: boolean}
+        NeedCheck->>PipelineOrchestrator: Update Clause.need_procedure
+        PipelineOrchestrator->>FileSystem: Save run.json (progressive)
+    end
+    NeedCheck-->>-PipelineOrchestrator: Need-Check Complete
+
+    PipelineOrchestrator->>+AuditPlan: execute_audit_plan_step()
+    loop For each relevant Clause (if not cached or invalidated)
+        AuditPlan->>+LLMService: call_llm_api(prompt_audit_plan)
+        LLMService-->>-AuditPlan: {audit_tasks: [{id, sentence}]}
+        AuditPlan->>PipelineOrchestrator: Update Clause.tasks
+        PipelineOrchestrator->>FileSystem: Save run.json (progressive)
+        AuditPlan->>GUI: progress_callback(AuditPlanClauseUIData for UI update)
+    end
+    AuditPlan-->>-PipelineOrchestrator: Audit-Plan Complete
+
+    PipelineOrchestrator->>+Search: execute_search_step()
+    Search->>FileSystem: ingest_documents(procedure_docs)
+    Search->>Search: normalize_document()
+    loop For each Procedure Document Chunk
+        Search->>+CacheService: Check for existing embeddings (for procedure doc chunks)
+        alt Embeddings not cached or invalid
+            Search->>+LLMService: generate_embeddings() (embedding model)
+            LLMService-->>-Search: document_embeddings
+            Search->>CacheService: Save embeddings
+        else Embeddings cached
+            CacheService-->>-Search: cached_document_embeddings
+        end
+    end
+    Search->>+VectorStore: create_or_load_index(all_proc_embed_sets) (FAISS index in app_data_dir/cache)
+    VectorStore-->>-Search: FAISS Index Ready
+    loop For each Audit Task (if evidence not cached or invalidated)
+        Search->>+LLMService: generate_embeddings(task.sentence) (embedding model)
+        LLMService-->>-Search: task_embedding
+        Search->>+VectorStore: retrieve_similar_chunks(task_embedding, k)
+        VectorStore-->>-Search: top_k_results (MatchSet)
+        Search->>PipelineOrchestrator: Update Task.top_k
+        PipelineOrchestrator->>FileSystem: Save run.json (progressive)
+    end
+    Search->>FileSystem: Cleanup FAISS index temp dir (if applicable, current seems persistent in cache)
+    Search-->>-PipelineOrchestrator: Search Complete
+
+    PipelineOrchestrator->>+Judge: execute_judge_step()
+    loop For each Clause with evidence (if not judged or invalidated)
+        Judge->>Judge: Aggregate evidence for clause
+        Judge->>+LLMService: call_llm_api(prompt_judge_compliance)
+        LLMService-->>-Judge: {compliant, description, suggestions}
+        Judge->>PipelineOrchestrator: Update Clause.metadata (compliance) & Task.compliant
+        PipelineOrchestrator->>FileSystem: Save run.json (final for clause)
+    end
+    Judge-->>-PipelineOrchestrator: Judge Complete
+
+    PipelineOrchestrator-->>-GUI: Pipeline Complete (via progress_callback)
+    GUI-->>User: Display Results from run.json
 ```
 
-## 14. PyInstaller 打包 tiktoken 完整指引
+**Brief Workflow Explanation:**
 
-1. **問題現象**：Unknown encoding 'cl100k_base'.
-2. **原因**：tiktoken plugin 未被打包。
-3. **解決**：
+1.  **Project Setup (User & GUI):** The user defines a project in the GUI, specifying paths to external regulations (JSON) and internal procedure documents (TXT).
+2.  **Initiation (GUI to Pipeline):** On starting analysis, the GUI invokes the `PipelineOrchestrator` (`run_project_pipeline_v1_1`) with project details and settings.
+3.  **Data Loading & Cache Check (Pipeline):** The orchestrator loads the external regulations and any existing `run.json` (containing previous results). It checks file modification times to invalidate outdated cached results.
+4.  **Need-Check (Pipeline & LLM):** For each regulation clause, this step uses an LLM to determine if internal procedures are required. Results are saved to `run.json`.
+5.  **Audit-Plan (Pipeline & LLM):** For clauses needing procedures, an LLM generates specific audit tasks (essentially, focused search queries). Tasks are saved to `run.json`. The GUI is updated with these tasks.
+6.  **Search (Pipeline, Cache, VectorStore, LLM for embeddings):**
+    *   Internal procedure documents are ingested, normalized, and broken into chunks.
+    *   Embeddings are generated for these chunks (using an embedding model via LLMService or similar) and cached by `CacheService`.
+    *   A FAISS vector index is built from these embeddings and stored locally.
+    *   For each audit task, its sentence is embedded, and the FAISS index is queried to find the most relevant procedure chunks (`top_k` results). These findings are saved to `run.json`.
+7.  **Judge (Pipeline & LLM):** For each regulation clause, the retrieved evidence (top\_k procedure chunks from all its tasks) is aggregated and presented to an LLM. The LLM assesses whether the evidence demonstrates documented compliance, providing a boolean outcome, a textual description, and improvement suggestions. These judgments are saved to `run.json`.
+8.  **Results Display (Pipeline to GUI):** The pipeline signals completion. The GUI then loads the final `run.json` data to display the comprehensive compliance assessment report to the user.
 
-   * 檢查並更新 tiktoken。
-   * 在 spec 加入 hidden-imports: `tiktoken_ext`, `tiktoken_ext.openai_public`。
-   * CLI 加上 `--hidden-import` 與 `--collect-data`。
-4. **驗證**：執行 exe，確認 `Plugins found: ['tiktoken_ext.openai_public']`。
+---
 
-## 15. 參考連結
+## 🚀 Quick Start
 
-* tiktoken Issue #89
-* tiktoken Issue #221
-* Knowledge Oasis: pyinstaller-tiktoken
-* StackOverflow: Unknown Encoding TikToken Error
+### Option 1: Using Pre-built Executable (Recommended)
+
+1.  Download the latest version from the [Releases Page](#) (Note: Link to be updated by project maintainers).
+2.  Extract the ZIP file to your desired directory.
+3.  Run `RegulensAI.exe` directly – no installation required!
+
+### Option 2: Source Code Development & Environment Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url> # Replace <repository_url> with actual URL
+    cd regulens-ai 
+    ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv .venv
+    # macOS / Linux
+    source .venv/bin/activate
+    # Windows
+    .\.venv\Scripts\activate
+    ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Initial Setup:**
+    *   On first launch, the application will automatically create sample projects.
+    *   Open "Settings" (File > Settings...) and enter your **OpenAI API Key**.
+    *   Adjust **Embedding Model**, **LLM Model**, and other parameters as needed.
+5.  **Run the application:**
+    ```bash
+    # Option A: Using the entry point script
+    python run_app.py
+
+    # Option B: Running as a module
+    python -m app.main
+    ```
+
+---
+
+## 📂 Project Structure
+
+The project is organized to separate core logic, UI components, data models, and assets:
+
+```text
+regulens-ai/
+├── .github/                    # GitHub Actions workflows (e.g., CI if configured)
+├── app/                        # Main application source code (Python modules)
+│   ├── __init__.py
+│   ├── app_paths.py            # Manages application-specific file paths (cache, settings)
+│   ├── i18n.py                 # Internationalization setup
+│   ├── logger.py               # Logging configuration (Loguru)
+│   ├── main.py                 # Main application entry point for GUI (initializes QApplication, MainWindow)
+│   ├── mainwindow.py           # Defines the main application window structure and core interactions
+│   ├── models/                 # Pydantic models for data structures
+│   │   ├── __init__.py
+│   │   ├── assessments.py      # (Likely related to assessment data, if used)
+│   │   ├── docs.py             # Models for documents (ExternalRegulationClause, AuditTask, RawDoc, NormDoc, EmbedSet)
+│   │   ├── project.py          # Defines CompareProject (project configuration)
+│   │   ├── run_data.py         # Defines ProjectRunData (stores all results for a project run)
+│   │   └── settings.py         # Pydantic model for application settings
+│   ├── pipeline/               # Core RAG pipeline logic
+│   │   ├── __init__.py
+│   │   ├── cache.py            # CacheService for embeddings and LLM responses
+│   │   ├── embed.py            # Embedding generation logic
+│   │   ├── index.py            # FAISS index creation and loading
+│   │   ├── ingestion.py        # Document ingestion (reading files)
+│   │   ├── llm_utils.py        # Utilities for interacting with LLMs (call_llm_api)
+│   │   ├── normalize.py        # Text normalization and chunking
+│   │   ├── pipeline_v1_1.py    # Main pipeline orchestrator (run_project_pipeline_v1_1)
+│   │   └── retrieve.py         # Logic for retrieving chunks from FAISS index
+│   ├── pipeline_settings.py    # Pydantic model for pipeline-specific settings
+│   ├── settings.py             # Application settings management (loading/saving settings.json)
+│   ├── settings_dialog.py      # UI for the settings dialog
+│   ├── stores/                 # Data persistence for application state
+│   │   └── project_store.py    # Manages the list of user projects (projects.json)
+│   ├── translator.py           # Handles language translation
+│   ├── utils/                  # Shared utility modules
+│   │   ├── font_manager.py
+│   │   ├── icon_manager.py
+│   │   ├── theme_manager.py
+│   │   └── windows_taskbar_advanced.py # Windows-specific taskbar features
+│   ├── views/                  # More complex view components
+│   │   └── workspace.py        # Main workspace view, likely hosts project editor and results
+│   └── widgets/                # Reusable UI widgets (PySide6)
+│       ├── intro_page.py       # Welcome/Introduction screen
+│       ├── progress_panel.py   # Panel for displaying progress
+│       ├── project_editor.py   # UI for editing project details
+│       ├── results_viewer.py   # UI for displaying analysis results
+│       └── sidebar.py          # Sidebar for navigation (e.g., project list)
+│
+├── assets/                     # Static assets used by the application
+│   ├── fonts/                  # Custom fonts
+│   ├── icons/                  # Application icons
+│   └── themes/                 # QSS stylesheets and color definitions for themes (dark.json, light.json, etc.)
+│
+├── sample_data/                # Sample projects for demonstration
+│   ├── sampleX_.../
+│       ├── external_regulations/external.json
+│       └── procedures/internal.txt
+│
+├── tests/                      # PyTest test suites
+│
+├── .gitignore                  # Specifies intentionally untracked files for Git
+├── build.bat                   # Windows build script for PyInstaller
+├── build.sh                    # Linux/macOS build script for PyInstaller
+├── config_default.yaml         # Default application configuration values
+├── LICENSE                     # (To be added by user if different from template)
+├── README.md                   # This document
+├── requirements.txt            # Python package dependencies
+├── regulens-ai.spec            # PyInstaller specification file for building executable
+└── run_app.py                  # Convenience script to run the application (imports and calls app.main)
+```
+
+*User-specific data (managed by `app_paths.py`):*
+*   **Settings & Project List:**
+    *   Windows: `%APPDATA%\regulens-ai\` (contains `settings.json`, `projects.json`)
+    *   macOS: `~/Library/Application Support/regulens-ai/`
+    *   Linux: `~/.config/regulens-ai/`
+*   **Cache (Embeddings, FAISS indexes, LLM responses):**
+    *   Windows: `%APPDATA%\regulens-ai\cache\`
+    *   macOS: `~/Library/Application Support/regulens-ai/cache\`
+    *   Linux: `~/.local/share/regulens-ai/cache/`
+*   **Project-specific `run.json` files:** Stored within each project's directory, as defined when the project is created/selected.
+
+---
+
+## ⚙️ Configuration
+
+The application uses a default configuration file (`config_default.yaml`) for baseline settings and a user-specific `settings.json` file for overrides and user preferences. Project configurations are stored in `projects.json` and individual project results in `run.json` files within project directories.
+
+1.  **Default Configuration (`config_default.yaml`):**
+    *   Located in the project root.
+    *   Contains default values for LLM models, embedding models, UI settings, etc.
+    *   Serves as a fallback if user settings are missing or incomplete.
+
+2.  **User Settings (`settings.json`):**
+    *   Stores user-specific configurations like API keys, selected models, theme, and language.
+    *   Managed via the "Settings" dialog in the application.
+    *   Path (managed by `app_paths.py`):
+        *   Windows: `%APPDATA%\regulens-ai\settings.json`
+        *   macOS: `~/Library/Application Support/regulens-ai\settings.json`
+        *   Linux: `~/.config/regulens-ai\settings.json`
+
+### Key Configuration Options (Managed via Settings Dialog):
+
+*   **OpenAI API Key:** (Required) Your personal API key for accessing OpenAI models.
+*   **Theme:** Interface theme (Light, Dark, Dracula, System).
+*   **Language:** Application language (English `en`, Traditional Chinese `zh`).
+*   **Embedding Model:** Model for generating text embeddings (e.g., `text-embedding-3-large`, `text-embedding-ada-002`).
+*   **LLM Models:**
+    *   **Need-Check Model:** LLM used for the Need-Check step.
+    *   **Audit-Plan Model:** LLM used for generating audit tasks.
+    *   **Judge Model:** LLM used for the final compliance judgment.
+    *   (Defaults like `gpt-4o` or `gpt-3.5-turbo` can be set in `config_default.yaml` and overridden by user).
+*   **Audit Retrieval Top-K:** Number of relevant procedure chunks to retrieve for each audit task.
+
+### Cache Mechanism:
+
+*   **Cache Directory** (managed by `app_paths.py` and `CacheService`):
+    *   Windows: `%APPDATA%\regulens-ai\cache\`
+    *   macOS: `~/Library/Application Support/regulens-ai\cache\`
+    *   Linux: `~/.local/share/regulens-ai\cache\`
+*   **Cached Content:**
+    *   **Vector Embeddings:** Embeddings for procedure document chunks are cached to avoid re-computation.
+    *   **FAISS Indexes:** The generated FAISS index for procedure documents is stored persistently within the project's cache directory or a global cache for faster loading. The current implementation in `pipeline_v1_1.py` suggests a project-specific hash for the FAISS index path under `app_data_dir/cache/faiss_index/`.
+    *   **LLM Responses:** Responses from LLM calls (Need-Check, Audit-Plan, Judge) can be cached to avoid repeated API calls for the same input.
+*   **Management:** The application uses `CacheService` and checks file modification timestamps of source documents to invalidate and refresh cache entries when necessary. The cache directory can be manually deleted; the system will rebuild it.
+
+---
+
+## 🛠️ Basic Operation Flow
+
+1.  **Launch Application:** Run `RegulensAI.exe` or use `python run_app.py` / `python -m app.main` from source. The `IntroPage` might be shown first.
+2.  **Manage Projects (Sidebar & Workspace):**
+    *   The sidebar lists existing projects. Select a project to load it into the `Workspace`.
+    *   Create a new project using a "New Project" button/action.
+3.  **Configure a Project (`ProjectEditor`):**
+    *   For a new or existing project, define:
+        *   Project Name.
+        *   Path to "External Regulations" JSON file.
+        *   Path(s) to "Internal Procedures" document(s) (TXT files).
+4.  **Run Analysis (Workspace):**
+    *   With a project loaded and configured, click an "Analyze" or "Run Pipeline" button.
+    *   The `ProgressPanel` will show the status of the ongoing RAG pipeline steps.
+5.  **Review Results (`ResultsViewer`):**
+    *   Once the pipeline completes, the `ResultsViewer` displays:
+        *   Compliance status for each external regulation clause.
+        *   Generated audit tasks.
+        *   Retrieved evidence snippets from procedure documents.
+        *   LLM's compliance descriptions and improvement suggestions.
+6.  **Export Report:**
+    *   Use an "Export" function to save the structured compliance report as a CSV file.
+    *   The detailed raw output of the analysis is also available in the `run.json` file located in the project's specific data directory.
+7.  **Adjust Settings (`SettingsDialog`):**
+    *   Access File > Settings... to configure API keys, LLM/embedding models, UI theme, and language. Some settings may require an application restart.
+
+---
+
+## 📦 Packaging with PyInstaller
+
+To create a standalone executable for distribution:
+
+1.  **Ensure Prerequisites:**
+    *   Python environment with all dependencies from `requirements.txt` installed.
+    *   PyInstaller installed (`pip install pyinstaller`).
+2.  **Use Build Scripts (Recommended):**
+    *   **Windows:** Execute `build.bat` from the command line.
+    *   **Linux / macOS:** Make the script executable (`chmod +x build.sh`) and then run `./build.sh`.
+    These scripts typically invoke PyInstaller with the `regulens-ai.spec` file.
+3.  **Manual Build (using the .spec file):**
+    ```bash
+    pyinstaller --clean regulens-ai.spec
+    ```
+    The `regulens-ai.spec` file is pre-configured to include necessary data files (like assets) and handle hidden imports, especially for libraries like `tiktoken`.
+
+**Output:**
+*   The distributable application will be located in the `dist/` directory (e.g., `dist/RegulensAI` or `dist/RegulensAI.exe`).
+*   The `build/` directory contains intermediate files and can be deleted after a successful build.
+
+**Important Note for `tiktoken`:**
+The "Unknown encoding cl100k_base" error during runtime of a packaged application commonly occurs if `tiktoken`'s necessary encoding files are not included. The `regulens-ai.spec` file should have entries like:
+```python
+# In .spec file analysis section:
+# hiddenimports=['tiktoken_ext.openai_public', 'tiktoken_ext.common'],
+# datas=[('path/to/your/venv/Lib/site-packages/tiktoken/py.typed', 'tiktoken'), 
+#        ('path/to/your/venv/Lib/site-packages/tiktoken_ext', 'tiktoken_ext')] 
+# Note: Actual paths for `datas` might need to be dynamically determined or correctly set in the .spec file.
+# The provided build scripts and .spec file aim to manage these details.
+```
+The provided build scripts and `.spec` file aim to manage these details.
+
+---
+
+## 📋 Sample Projects
+
+The application includes sample projects (located in `sample_data/`) to help users quickly understand its functionality:
+
+1.  **Compliant Demo (e.g., `sample_data/sample2_符合規範Demo/`)**
+    *   **External Regulations:** Contains rules like specific IT security management practices, incident classification levels, and requirements for dedicated cybersecurity personnel.
+    *   **Internal Procedures:** This document fully aligns with the external regulations, detailing corresponding incident response processes, staffing commitments (e.g., "at least two professionally qualified cybersecurity personnel"), etc.
+    *   **Expected Outcome:** Regulens-AI should analyze these and determine a "Compliant" status, showing strong alignment between regulations and procedures.
+
+2.  **Non-Compliant Demo (e.g., `sample_data/sample3_不符合規範Demo/`)**
+    *   **External Regulations:** Same as the compliant demo.
+    *   **Internal Procedures:** This document exhibits gaps when compared to the regulations. For instance, it might only allocate one cybersecurity staff member where regulations require more, or its incident classification might not cover all mandated levels.
+    *   **Expected Outcome:** Regulens-AI should flag these as "Non-Compliant" (or partially compliant) and highlight the specific discrepancies and areas for improvement in the internal procedures.
+
+---
+
+## 🚧 Development Status & Roadmap
+
+**Status: Beta** (Project maintainers should update this based on current maturity)
+
+The core RAG pipeline for compliance analysis is implemented and functional. The PySide6 GUI provides essential project management, configuration options, and results visualization. Key features include local FAISS vector storage, configurable OpenAI model integration, and comprehensive data management via `run.json`.
+
+### ✅ Completed
+
+*   Core RAG pipeline: Need-Check, Audit-Plan Generation, Evidence Retrieval (Embedding & FAISS Search), Compliance Judgment.
+*   Project-based workflow with persistence (`CompareProject`, `ProjectRunData`, `project_store.py`).
+*   Loading external regulations (JSON) and internal procedures (TXT).
+*   Local FAISS vector store for semantic search of procedure documents.
+*   Integration with OpenAI for LLM tasks and embeddings.
+*   CSV and `run.json` export for analysis results.
+*   Automatic creation of sample projects for new users.
+*   User-configurable settings for API keys, models, theme, and language (`settings.json`, `SettingsDialog`).
+*   Robust caching for embeddings and LLM responses (`CacheService`).
+*   PySide6 GUI: `MainWindow`, `IntroPage`, `Workspace` (with `ProjectEditor`, `ResultsViewer`, `Sidebar`), `ProgressPanel`.
+*   Theming (Light, Dark, Dracula, System) and Internationalization (en, zh).
+*   PyInstaller packaging scripts and `.spec` file for creating distributables.
+
+### 🛠️ In Progress / 🗓️ What's Next
+
+*(Project maintainers to update with current development activities and future plans)*
+
+*   **Enhanced Error Handling:** More granular error reporting and recovery within the pipeline and GUI.
+*   **Broader Document Format Support:** Allow ingestion of other document types (e.g., .docx, .pdf) for internal procedures.
+*   **Advanced Chunking Strategies:** Implement more sophisticated text chunking methods for better context in embeddings.
+*   **Offline Model Support:** Explore integration of local/open-source LLMs and embedding models (e.g., via llama.cpp, Sentence Transformers).
+*   **Batch Processing:** Ability to run analysis on multiple projects or documents in batch mode.
+*   **Improved Visualization:** More interactive ways to explore relationships between regulations, tasks, and evidence.
+*   **User Authentication & Role Management:** (If applicable for future multi-user versions).
+*   **Comprehensive Test Coverage:** Expand unit and integration tests for all components.
+
+---
+
+## ❓ FAQ
+
+1.  **Invalid OpenAI API Key?**
+    *   Double-check that the API key entered in File > Settings... is correct and that your OpenAI account has active billing and sufficient credits.
+2.  **Can the `cache` directory be deleted?**
+    *   Yes. The application will rebuild the cache (embeddings, FAISS index parts, LLM responses) automatically as needed. Deleting it will force re-processing for subsequent analyses, which might take longer and consume more API credits if applicable.
+    *   Cache location:
+        *   Windows: `%APPDATA%\regulens-ai\cache\`
+        *   macOS: `~/Library/Application Support/regulens-ai\cache\`
+        *   Linux: `~/.local/share/regulens-ai\cache\`
+3.  **`run.json` not found for my project?**
+    *   `run.json` is generated within each project's specific working directory *after* an analysis pipeline has been successfully run (or partially run) for that project. Ensure you have selected/created a project and executed the analysis.
+4.  **How to switch display languages?**
+    *   Go to File > Settings..., choose your desired language from the dropdown, and save. A restart of Regulens-AI is typically required for all UI elements to reflect the change.
+5.  **How to switch interface themes?**
+    *   Go to File > Settings..., select your preferred theme. The change should apply immediately or upon the next window interaction for most elements.
+6.  **What formats can I export the report in?**
+    *   Currently, a summary report can be exported in CSV format. The complete, detailed output of the analysis, including all intermediate data, is stored in the `run.json` file within the project's directory.
+7.  **How do I use my own regulatory and procedure documents?**
+    *   When creating a "New Project," the application will prompt you to select your external regulations file (typically a JSON structured like the samples) and your internal procedure document(s) (currently TXT files).
+8.  **"Unknown encoding cl100k_base" error after packaging with PyInstaller?**
+    *   This error is related to `tiktoken`, the tokenizer used by OpenAI models. It means PyInstaller didn't include necessary `tiktoken` data. The `regulens-ai.spec` file and build scripts (`build.bat`, `build.sh`) are configured to handle this. If you modify the build process or build manually, ensure that hidden imports for `tiktoken_ext.openai_public` and `tiktoken_ext.common` are included, and `tiktoken`'s data files are correctly added to the package. Refer to the "Packaging with PyInstaller" section for more details.
+
+---
+
+## 🤝 Contributing
+
+*(Project maintainers should fill this section. Example:)*
+We welcome contributions! Please see `CONTRIBUTING.md` (if one exists) for guidelines on how to submit issues, feature requests, and pull requests.
+
+*(If not open to contributions yet:)*
+Currently, this project is not accepting external contributions. However, feel free to fork the repository and experiment.
+
+---
+
+## 📄 License
+
+Proprietary Software License Agreement
+
+Copyright (c) 2025 Institute for Information Industry (III), Cyber Security Technology Institute (CSTI)
+
+All rights reserved. This software is proprietary and confidential. Unauthorized copying, modification, distribution, or use is strictly prohibited.
+
+> © 2025 Institute for Information Industry (III), Cyber Security Technology Institute (CSTI).
+
+---
+## 🔗 References
+
+*Original README references for `tiktoken` issues:*
+*   tiktoken GitHub Issue #89
+*   tiktoken GitHub Issue #221
+*   Knowledge Oasis Blog: Solving pyinstaller TIKTOKEN Packaging Problems
+*   StackOverflow: Unknown Encoding TikToken Error with Pyinstaller Nuitka cx_Freeze
