@@ -478,16 +478,6 @@ The core RAG pipeline for compliance analysis is implemented and functional. The
 
 ---
 
-## 🤝 Contributing
-
-*(Project maintainers should fill this section. Example:)*
-We welcome contributions! Please see `CONTRIBUTING.md` (if one exists) for guidelines on how to submit issues, feature requests, and pull requests.
-
-*(If not open to contributions yet:)*
-Currently, this project is not accepting external contributions. However, feel free to fork the repository and experiment.
-
----
-
 ## 📄 License
 
 Proprietary Software License Agreement
